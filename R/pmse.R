@@ -26,7 +26,7 @@ pmse <- function(data_orig, data_syn, formula = id ~ ., cp = 0.01) {
   prop_cart <- rpart::rpart(formula, data = comb_data, cp = cp, method = "class")
   pred_prob <- predict(prop_cart)[, 2]
   
-  variable_importance <- summary(prop_cart)[["variable.importance"]]
+  variable_importance <- prop_cart[["variable.importance"]]
   
   ## estimate observed pmse
   pmse <- mean((pred_prob - (nrow(data_syn) / nrow(comb_data))) ^ 2)
