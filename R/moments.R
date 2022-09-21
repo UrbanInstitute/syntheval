@@ -103,7 +103,7 @@ moments <- function(postsynth,
   summary_stats <- summary_stats  %>%
     dplyr::mutate(
       difference = .data$synthetic - .data$original,
-      percent_difference = .data$difference / .data$original * 100
+      proportion_difference = .data$difference / .data$original
     )
     
   
