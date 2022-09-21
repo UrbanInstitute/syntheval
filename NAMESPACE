@@ -2,9 +2,11 @@
 
 export("%>%")
 export(cor_fit)
+export(moments)
 export(null_pmse)
 export(pmse)
 export(pmse_ratio)
+export(weighted_skewness)
 importFrom(magrittr,"%>%")
 importFrom(rlang,.data)
 importFrom(stats,predict)

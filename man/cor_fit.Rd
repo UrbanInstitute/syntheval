@@ -26,4 +26,8 @@ cells in the correlation matrix.
 \description{
 Calculate the correlation fit metric of a confidential data set.
 }
+\seealso{
+Other utility functions: 
+\code{\link{moments}()}
+}
 \concept{utility functions}
