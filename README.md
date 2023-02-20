@@ -8,12 +8,12 @@
 
 The goal of syntheval is to make it simple to evaluate the utility and
 disclosure risk of synthetic data. The package works with
-`library(tidysynthesis)` and any
+`library(tidysynthesis)`.
 
 ## Installation
 
 You can install the development version of syntheval by cloning this
-respository and building the packahe in RStudio.
+respository and building the package in RStudio.
 
 ## Example
 
