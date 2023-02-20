@@ -1,0 +1,133 @@
+#' Calculate summary statistics for original and synthetic data.
+#'
+#' @param full Use all rows (vs only nonzero)? Defaults to `TRUE`.
+#'
+#' @return A `data.frame` of summary statistics.
+#'
+#' @family utility functions
+#'
+#' @export
+#'
+moments <- function(postsynth,
+                    data,
+                    weight_var = NULL, 
+                    drop_zeros = FALSE) {
+  
+  # catch binding error
+  . <- NULL
+
+  if (is_postsynth(postsynth)) {
+    
+    synthetic_data <- postsynth$synthetic_data
+    
+    variable_order <- 
+      levels(postsynth$jth_synthesis_time$variable)
+    
+  } else {
+    
+    synthetic_data <- postsynth
+  
+  }
+  
+  # drop non-numeric variables
+  data <- data %>%
+    dplyr::select_if(is.numeric)
+  
+  synthetic_data <- synthetic_data %>%
+    dplyr::select_if(is.numeric)
+  
+  # combine both data sources
+  combined_data <- dplyr::bind_rows(
+    `original` = data,
+    `synthetic` = synthetic_data,
+    .id = "source"
+  )
+    
+  na.rm_toggle <- FALSE
+  if (drop_zeros) {
+    
+    combined_data[combined_data == 0] <- NA
+    na.rm_toggle <- TRUE
+    
+  }
+  
+  # set weight to 1 for unweighted statistics
+  if (missing(weight_var)) {
+
+
+    
+    summary_stats <- combined_data %>%
+      dplyr::mutate(temp_weight = 1) %>%
+      dplyr::group_by(source) %>%
+      dplyr::summarise_at(
+        .vars = dplyr::vars(-temp_weight),
+        .funs = dplyr::funs(
+          count = sum((!is.na(.)), na.rm = na.rm_toggle),
+          have = sum((. != 0), na.rm = na.rm_toggle),
+          mean = stats::weighted.mean(x = ., w = temp_weight, na.rm = na.rm_toggle),
+          sd = weighted_sd(x = ., w = temp_weight, na.rm = na.rm_toggle),
+          skewness  = weighted_skewness(x = ., w = temp_weight, na.rm = na.rm_toggle),
+          kurtosis  = weighted_kurtosis(x = ., w = temp_weight, na.rm = na.rm_toggle)
+        )
+      ) %>%
+      tidyr::gather(key = "variable", value = "value", -source) %>%
+      tidyr::separate(col = .data$variable,
+                      into = c("variable", "statistic"),
+                      sep = "_(?!.*_)") %>%
+      tidyr::spread(key = source, value = .data$value)
+
+  } else {
+
+    summary_stats <- combined_data %>%
+      dplyr::group_by(source) %>%
+      dplyr::summarise_at(
+        .vars = dplyr::vars(- {{ weight_var }}),
+        .funs = dplyr::funs(
+          count = sum((!is.na(.)) * {{ weight_var }}, na.rm = na.rm_toggle),
+          have = sum((. != 0) * {{ weight_var }}, na.rm = na.rm_toggle),
+          mean = stats::weighted.mean(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle),
+          sd = weighted_sd(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle),
+          skewness  = weighted_skewness(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle),
+          kurtosis  = weighted_kurtosis(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle)
+        )
+      ) %>%
+      tidyr::gather(key = "variable", value = "value", -source) %>%
+      tidyr::separate(col = .data$variable,
+                      into = c("variable", "statistic"),
+                      sep = "_(?!.*_)") %>%
+      tidyr::spread(key = source, value = .data$value)
+    
+  }
+    
+  
+  summary_stats <- summary_stats  %>%
+    dplyr::mutate(
+      difference = .data$synthetic - .data$original,
+      proportion_difference = .data$difference / .data$original
+    )
+    
+  
+
+    
+  statistics_order <- 
+    c("count", "have", "mean", "sd", "skewness", "kurtosis")  
+  
+  if (!is_postsynth(postsynth)) {
+    
+    variable_order <- names(dplyr::select(combined_data, -source))
+    
+  }
+  
+  summary_stats <- summary_stats %>%
+    dplyr::mutate(
+      variable = factor(variable, levels = variable_order),
+      statistic = factor(statistic, levels = statistics_order)
+    ) %>%
+    dplyr::arrange(variable, statistic)
+    
+  return(summary_stats)
+  
+}
+
+# add grouping variable
+
