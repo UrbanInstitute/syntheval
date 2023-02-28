@@ -7,16 +7,23 @@
 moments(postsynth, data, weight_var = NULL, drop_zeros = FALSE)
 }
 \arguments{
-\item{full}{Use all rows (vs only nonzero)? Defaults to \code{TRUE}.}
+\item{postsynth}{A postsynth object or tibble with synthetic data}
+
+\item{data}{A data frame with the original data}
+
+\item{weight_var}{An unquoted name of a weight variable}
+
+\item{drop_zeros}{A Boolean for if zeros should be dropped}
 }
 \value{
-A \code{data.frame} of summary statistics.
+A \code{tibble} of summary statistics.
 }
 \description{
 Calculate summary statistics for original and synthetic data.
 }
 \seealso{
 Other utility functions: 
-\code{\link{cor_fit}()}
+\code{\link{cor_fit}()},
+\code{\link{tails}()}
 }
 \concept{utility functions}
