@@ -60,14 +60,14 @@ moments <- function(postsynth,
       dplyr::mutate(temp_weight = 1) %>%
       dplyr::group_by(source) %>%
       dplyr::summarise_at(
-        .vars = dplyr::vars(-temp_weight),
+        .vars = dplyr::vars(-.data$temp_weight),
         .funs = dplyr::funs(
           count = sum((!is.na(.)), na.rm = na.rm_toggle),
           have = sum((. != 0), na.rm = na.rm_toggle),
-          mean = stats::weighted.mean(x = ., w = temp_weight, na.rm = na.rm_toggle),
-          sd = weighted_sd(x = ., w = temp_weight, na.rm = na.rm_toggle),
-          skewness  = weighted_skewness(x = ., w = temp_weight, na.rm = na.rm_toggle),
-          kurtosis  = weighted_kurtosis(x = ., w = temp_weight, na.rm = na.rm_toggle)
+          mean = stats::weighted.mean(x = ., w = .data$temp_weight, na.rm = na.rm_toggle),
+          sd = weighted_sd(x = ., w = .data$temp_weight, na.rm = na.rm_toggle),
+          skewness  = weighted_skewness(x = ., w = .data$temp_weight, na.rm = na.rm_toggle),
+          kurtosis  = weighted_kurtosis(x = ., w = .data$temp_weight, na.rm = na.rm_toggle)
         )
       ) %>%
       tidyr::gather(key = "variable", value = "value", -source) %>%
@@ -123,7 +123,7 @@ moments <- function(postsynth,
       variable = factor(variable, levels = variable_order),
       statistic = factor(statistic, levels = statistics_order)
     ) %>%
-    dplyr::arrange(variable, statistic)
+    dplyr::arrange(.data$variable, .data$statistic)
     
   return(summary_stats)
   
