@@ -1,8 +1,11 @@
 #' Calculate summary statistics for original and synthetic data.
 #'
-#' @param full Use all rows (vs only nonzero)? Defaults to `TRUE`.
+#' @param postsynth A postsynth object or tibble with synthetic data
+#' @param data A data frame with the original data
+#' @param weight_var An unquoted name of a weight variable
+#' @param drop_zeros A Boolean for if zeros should be dropped
 #'
-#' @return A `data.frame` of summary statistics.
+#' @return A `tibble` of summary statistics.
 #'
 #' @family utility functions
 #'
@@ -54,8 +57,6 @@ moments <- function(postsynth,
   # set weight to 1 for unweighted statistics
   if (missing(weight_var)) {
 
-
-    
     summary_stats <- combined_data %>%
       dplyr::mutate(temp_weight = 1) %>%
       dplyr::group_by(source) %>%
