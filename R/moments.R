@@ -129,6 +129,3 @@ moments <- function(postsynth,
   return(summary_stats)
   
 }
-
-# add grouping variable
-

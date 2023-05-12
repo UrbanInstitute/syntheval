@@ -26,6 +26,7 @@ Explore the tails of numeric variables
 \seealso{
 Other utility functions: 
 \code{\link{cor_fit}()},
-\code{\link{moments}()}
+\code{\link{moments}()},
+\code{\link{percentiles}()}
 }
 \concept{utility functions}
