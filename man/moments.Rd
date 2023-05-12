@@ -4,7 +4,7 @@
 \alias{moments}
 \title{Calculate summary statistics for original and synthetic data.}
 \usage{
-moments(postsynth, data, weight_var = NULL, drop_zeros = FALSE)
+moments(postsynth, data, weight_var = 1, group_var = NULL, drop_zeros = FALSE)
 }
 \arguments{
 \item{postsynth}{A postsynth object or tibble with synthetic data}

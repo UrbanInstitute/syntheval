@@ -1,5 +1,3 @@
-library(dplyr)
-
 # test df (8 /8 combinations)
 df <- data.frame(
   a = c(1000, 1000, 1000),
@@ -184,4 +182,27 @@ test_that("moments nonzero weighted -- df", {
     round(summary_stats$synthetic, 2),
     c(200, 200, 10, NaN, NaN, NaN)
   )
+})
+
+test_that("moments test grouping var ", {
+
+  summary_stats <-
+    moments(
+      postsynth = syn,
+      data = df,
+      weight_var = weight,
+      group_var = c
+    ) %>%
+    dplyr::filter(variable == "d", statistic %in% c("count", "have", "mean"))
+  
+  expect_equal(
+    summary_stats$original,
+    c(200, 200, 0, 200, 0, 10)
+  )
+  expect_equal(
+    round(summary_stats$synthetic, 2),
+    c(300, 100, 300, 0, 15, 0)
+  )
+
+
 })
