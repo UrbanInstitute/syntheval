@@ -55,7 +55,7 @@ moments <- function(postsynth,
     
   }
   
-  # set weight to 1 for unweighted statistics
+  # calculate summary statistics
   summary_stats <- combined_data %>%
     dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
     dplyr::group_by(source, {{ group_var }}) %>%
