@@ -13,7 +13,8 @@
 #'
 moments <- function(postsynth,
                     data,
-                    weight_var = NULL, 
+                    weight_var = 1,
+                    group_var = NULL,
                     drop_zeros = FALSE) {
   
   # catch binding error
@@ -34,10 +35,10 @@ moments <- function(postsynth,
   
   # drop non-numeric variables
   data <- data %>%
-    dplyr::select_if(is.numeric)
+    dplyr::select(tidyselect::where(is.numeric), {{ group_var }})
   
   synthetic_data <- synthetic_data %>%
-    dplyr::select_if(is.numeric)
+    dplyr::select(tidyselect::where(is.numeric), {{ group_var }})
   
   # combine both data sources
   combined_data <- dplyr::bind_rows(
@@ -54,61 +55,34 @@ moments <- function(postsynth,
     
   }
   
-  # set weight to 1 for unweighted statistics
-  if (missing(weight_var)) {
-
-    summary_stats <- combined_data %>%
-      dplyr::mutate(temp_weight = 1) %>%
-      dplyr::group_by(source) %>%
-      dplyr::summarise_at(
-        .vars = dplyr::vars(-.data$temp_weight),
-        .funs = dplyr::funs(
-          count = sum((!is.na(.)), na.rm = na.rm_toggle),
-          have = sum((. != 0), na.rm = na.rm_toggle),
-          mean = stats::weighted.mean(x = ., w = .data$temp_weight, na.rm = na.rm_toggle),
-          sd = weighted_sd(x = ., w = .data$temp_weight, na.rm = na.rm_toggle),
-          skewness  = weighted_skewness(x = ., w = .data$temp_weight, na.rm = na.rm_toggle),
-          kurtosis  = weighted_kurtosis(x = ., w = .data$temp_weight, na.rm = na.rm_toggle)
+  # calculate summary statistics
+  summary_stats <- combined_data %>%
+    dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
+    dplyr::group_by(source, {{ group_var }}) %>%
+    dplyr::summarise(
+      dplyr::across(
+        .cols = -.temp_weight,
+        .fns = list(
+          count = ~ sum((!is.na(.)) * .temp_weight, na.rm = na.rm_toggle),
+          have = ~ sum((. != 0) * .temp_weight, na.rm = na.rm_toggle),
+          mean = ~ stats::weighted.mean(x = ., w = .temp_weight, na.rm = na.rm_toggle),
+          sd = ~ weighted_sd(x = ., w = .temp_weight, na.rm = na.rm_toggle),
+          skewness = ~ weighted_skewness(x = ., w = .temp_weight, na.rm = na.rm_toggle),
+          kurtosis = ~ weighted_kurtosis(x = ., w = .temp_weight, na.rm = na.rm_toggle)
         )
-      ) %>%
-      tidyr::gather(key = "variable", value = "value", -source) %>%
-      tidyr::separate(col = .data$variable,
-                      into = c("variable", "statistic"),
-                      sep = "_(?!.*_)") %>%
-      tidyr::spread(key = source, value = .data$value)
-
-  } else {
-
-    summary_stats <- combined_data %>%
-      dplyr::group_by(source) %>%
-      dplyr::summarise_at(
-        .vars = dplyr::vars(- {{ weight_var }}),
-        .funs = dplyr::funs(
-          count = sum((!is.na(.)) * {{ weight_var }}, na.rm = na.rm_toggle),
-          have = sum((. != 0) * {{ weight_var }}, na.rm = na.rm_toggle),
-          mean = stats::weighted.mean(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle),
-          sd = weighted_sd(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle),
-          skewness  = weighted_skewness(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle),
-          kurtosis  = weighted_kurtosis(x = ., w = {{ weight_var }}, na.rm = na.rm_toggle)
-        )
-      ) %>%
-      tidyr::gather(key = "variable", value = "value", -source) %>%
-      tidyr::separate(col = .data$variable,
-                      into = c("variable", "statistic"),
-                      sep = "_(?!.*_)") %>%
-      tidyr::spread(key = source, value = .data$value)
-    
-  }
-    
+      )
+    ) %>%
+    tidyr::gather(key = "variable", value = "value", -source, - {{ group_var }}) %>%
+    tidyr::separate(col = .data$variable,
+                    into = c("variable", "statistic"),
+                    sep = "_(?!.*_)") %>%
+    tidyr::spread(key = source, value = .data$value)
   
   summary_stats <- summary_stats  %>%
     dplyr::mutate(
       difference = .data$synthetic - .data$original,
       proportion_difference = .data$difference / .data$original
     )
-    
-  
-
     
   statistics_order <- 
     c("count", "have", "mean", "sd", "skewness", "kurtosis")  
@@ -129,6 +103,3 @@ moments <- function(postsynth,
   return(summary_stats)
   
 }
-
-# add grouping variable
-
