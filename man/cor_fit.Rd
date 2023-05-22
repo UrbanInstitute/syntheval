@@ -28,6 +28,7 @@ Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
 Other utility functions: 
-\code{\link{moments}()}
+\code{\link{moments}()},
+\code{\link{tails}()}
 }
 \concept{utility functions}

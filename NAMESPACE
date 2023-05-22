@@ -2,10 +2,12 @@
 
 export("%>%")
 export(cor_fit)
+export(discriminator_auc)
 export(moments)
 export(null_pmse)
 export(pmse)
 export(pmse_ratio)
+export(tails)
 export(weighted_skewness)
 importFrom(magrittr,"%>%")
 importFrom(rlang,.data)
