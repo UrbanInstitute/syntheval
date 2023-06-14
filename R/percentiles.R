@@ -2,7 +2,9 @@
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
-#' @param probs A numeric vector of probabilities with values in [0,1][0,1].
+#' @param probs A numeric vector of probabilities with values in [0,1]. The 
+#' percentiles are interpolated using an empirical CDF. It's possible that the
+#' percentiles are an approximation; especially when weights are used.
 #' @param weight_var An unquoted name of a weight variable
 #' @param drop_zeros A Boolean for if zeros should be dropped
 #'
@@ -62,7 +64,6 @@ percentiles <- function(postsynth,
     summary_stats <- combined_data %>%
       dplyr::group_by(source) %>%
       dplyr::summarise(
-        p = probs,
         across(
           .cols = dplyr::everything(),
           .fns = ~ stats::quantile(
@@ -70,19 +71,21 @@ percentiles <- function(postsynth,
             probs = probs, 
             na.rm = na.rm_toggle
           )
-        )
+        ),
+        p = probs
       ) %>%
+      dplyr::select(p, dplyr::everything()) %>%
       dplyr::ungroup() %>%
       tidyr::gather(key = "variable", value = "value", -source, -p) %>%
-      tidyr::spread(key = source, value = value)
+      tidyr::spread(key = source, value = value) %>%
+      dplyr::arrange(variable)
 
   } else {
 
     summary_stats <- combined_data %>%
       dplyr::group_by(source) %>%
       dplyr::summarise(
-        p = probs,
-        across(
+        dplyr::across(
           .cols = dplyr::everything(),
           .fns = ~ Hmisc::wtd.quantile(
             x = ., 
@@ -90,11 +93,14 @@ percentiles <- function(postsynth,
             probs = probs, 
             na.rm = na.rm_toggle
           )
-        )
+        ),
+        p = probs
       ) %>%
+      dplyr::select(p, dplyr::everything()) %>%
       dplyr::ungroup() %>%
       tidyr::gather(key = "variable", value = "value", -source, -p) %>%
-      tidyr::spread(key = source, value = value)
+      tidyr::spread(key = source, value = value) %>%
+      dplyr::arrange(variable)
     
   }
     
