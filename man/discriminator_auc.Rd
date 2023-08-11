@@ -20,6 +20,8 @@ discriminator_auc(
 \item{formula}{A formula for the predictive model}
 
 \item{cp}{A hyperparameter for rpart}
+
+\item{model}{A character vector with the model name of choice}
 }
 \value{
 joint distributional utility metric (num)
