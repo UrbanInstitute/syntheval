@@ -58,11 +58,11 @@ discriminator_auc <- function(
   }
 
   ## calculate the auc
-  auc <- yardstick::roc_auc(data = comb_data, truth = id, estimate = pred_prob)
+  auc <- yardstick::roc_auc_vec(truth = comb_data$id, estimate = comb_data$pred_prob)
   
   return(
     list(
-      auc = auc$.estimate
+      auc = auc
     )
   )
   

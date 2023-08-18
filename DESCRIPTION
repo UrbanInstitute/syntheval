@@ -14,10 +14,15 @@ Suggests:
 Config/testthat/edition: 3
 Imports: 
     dplyr,
+    gower,
+    Hmisc,
     magrittr,
     rlang,
     rpart,
-    ranger
+    ranger,
+    tidyr,
+    tidyselect,
+    yardstick
 Depends: 
     R (>= 2.10)
 LazyData: true
