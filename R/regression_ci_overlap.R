@@ -2,7 +2,7 @@
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
-#' @param formula A formula for the regression model
+#' @param formula A formula for a linear regression model
 #'
 #' @return A list with the regression confidence interval overlap and estimated 
 #' coefficients
@@ -54,12 +54,12 @@ regression_ci_overlap <- function(postsynth, data, formula) {
     dplyr::mutate(
       coef_diff = .data$estimate_synthetic - .data$estimate_original,
       std_coef_diff = (.data$estimate_synthetic - .data$estimate_original) / .data$std.error_original,
-      sign_match = (.data$estimate_original < 0 & .data$estimate_synthetic < 0) | 
+      sign_match = (.data$estimate_original <= 0 & .data$estimate_synthetic <= 0) | 
         (.data$estimate_original > 0 & .data$estimate_synthetic > 0),
-      inference_match = (.data$p.value_original < 0.05 & .data$p.value_synthetic < 0.05) | 
+      significance_match = (.data$p.value_original < 0.05 & .data$p.value_synthetic < 0.05) | 
         (.data$p.value_original > 0.05 & .data$p.value_synthetic > 0.05)
     ) |>
-    dplyr::select("term", "overlap", "coef_diff", "std_coef_diff", "sign_match", "inference_match")
+    dplyr::select("term", "overlap", "coef_diff", "std_coef_diff", "sign_match", "significance_match")
   
   
   list(

@@ -6,7 +6,7 @@ test_that("overlap is zero for identical data ", {
   expect_equal(overlap1$ci_overlap$overlap, c(1, 1))
   expect_equal(overlap1$ci_overlap$coef_diff, c(0, 0))
   expect_equal(overlap1$ci_overlap$sign_match, c(TRUE, TRUE))
-  expect_equal(overlap1$ci_overlap$inference_match, c(TRUE, TRUE))
+  expect_equal(overlap1$ci_overlap$significance_match, c(TRUE, TRUE))
   
   original1 <- overlap1$coefficient |>
     dplyr::filter(source == "original") |>

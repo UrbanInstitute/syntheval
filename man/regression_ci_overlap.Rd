@@ -11,7 +11,7 @@ regression_ci_overlap(postsynth, data, formula)
 
 \item{data}{A data frame with the original data}
 
-\item{formula}{A formula for the regression model}
+\item{formula}{A formula for a linear regression model}
 }
 \value{
 A list with the regression confidence interval overlap and estimated
