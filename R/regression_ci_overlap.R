@@ -57,9 +57,14 @@ regression_ci_overlap <- function(postsynth, data, formula) {
       sign_match = (.data$estimate_original <= 0 & .data$estimate_synthetic <= 0) | 
         (.data$estimate_original > 0 & .data$estimate_synthetic > 0),
       significance_match = (.data$p.value_original < 0.05 & .data$p.value_synthetic < 0.05) | 
-        (.data$p.value_original > 0.05 & .data$p.value_synthetic > 0.05)
+        (.data$p.value_original > 0.05 & .data$p.value_synthetic > 0.05),
+      ss_match = sign_match & significance_match,
+      sso_match = sign_match & overlap > 0
     ) |>
-    dplyr::select("term", "overlap", "coef_diff", "std_coef_diff", "sign_match", "significance_match")
+    dplyr::select(
+      "term", "overlap", "coef_diff", "std_coef_diff", "sign_match", 
+      "significance_match", "ss_match", "sso_match"
+    )
   
   
   list(
