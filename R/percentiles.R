@@ -2,7 +2,8 @@
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
-#' @param probs A numeric vector of probabilities with values in [0,1][0,1].
+#' @param probs A numeric vector of probabilities that must be between 0 and 1 
+#' inclusive.
 #' @param weight_var An unquoted name of a weight variable
 #' @param drop_zeros A Boolean for if zeros should be dropped
 #'

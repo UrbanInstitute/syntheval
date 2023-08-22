@@ -4,6 +4,7 @@
 #' @param data A postsynth object or data frame with confidential data
 #' @param formula A formula for the predictive model
 #' @param cp A hyperparameter for rpart
+#' @param model A character vector with the model name of choice
 #' 
 #' @return joint distributional utility metric (num)
 #' 
