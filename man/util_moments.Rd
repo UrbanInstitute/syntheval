@@ -25,8 +25,8 @@ Calculate summary statistics for original and synthetic data.
 }
 \seealso{
 Other utility functions: 
-\code{\link{cor_fit}()},
-\code{\link{percentiles}()},
-\code{\link{tails}()}
+\code{\link{util_corr_fit}()},
+\code{\link{util_percentiles}()},
+\code{\link{util_tails}()}
 }
 \concept{utility functions}

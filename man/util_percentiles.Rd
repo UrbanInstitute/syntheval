@@ -32,8 +32,8 @@ Calculate summary statistics for original and synthetic data.
 }
 \seealso{
 Other utility functions: 
-\code{\link{cor_fit}()},
-\code{\link{moments}()},
-\code{\link{tails}()}
+\code{\link{util_corr_fit}()},
+\code{\link{util_moments}()},
+\code{\link{util_tails}()}
 }
 \concept{utility functions}
