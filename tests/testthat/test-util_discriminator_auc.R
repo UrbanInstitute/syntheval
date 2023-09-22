@@ -11,12 +11,12 @@ postsynth <- list(
 test_that("Identical data lead to AUC = 0.5", {
 
   expect_equal(
-    discriminator_auc(postsynth = postsynth, data = data)$auc, 
+    util_discriminator_auc(postsynth = postsynth, data = data)$auc, 
     0.5
   )
   
   expect_equal(
-    discriminator_auc(postsynth = postsynth, data = data, model = "random forest")$auc, 
+    util_discriminator_auc(postsynth = postsynth, data = data, model = "random forest")$auc, 
     0.5
   )
   

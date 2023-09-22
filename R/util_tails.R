@@ -12,7 +12,7 @@
 #'
 #' @export
 #'
-tails <- function(postsynth,
+util_tails <- function(postsynth,
                   data,
                   n = 10,
                   weight_var = 1,

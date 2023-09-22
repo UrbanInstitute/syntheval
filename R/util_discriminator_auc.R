@@ -12,7 +12,7 @@
 #' @importFrom rlang .data
 #' 
 #' @export
-discriminator_auc <- function(
+util_discriminator_auc <- function(
     postsynth, 
     data, 
     formula = id ~ ., 
