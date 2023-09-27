@@ -50,9 +50,9 @@ util_proportions <- function(postsynth, data, weight_var = 1,
   
   
   combined_data <- combined_data |>
-    dplyr::count({{ group_var }}, source, variable, class, .temp_weight) |>
-    dplyr::group_by({{ group_var }}, source, variable) |>
-    dplyr::mutate(prop = n*.temp_weight / sum(n*.temp_weight)) |>
+    dplyr::group_by({{ group_var }}, source, variable, class) |>
+    dplyr::summarise(n = n(), .mean_weight = mean(.temp_weight)) |>
+    dplyr::mutate(prop = n*.mean_weight / sum(n*.mean_weight)) |>
     dplyr::ungroup()
   
   # variable -- class -- original -- synthetic
