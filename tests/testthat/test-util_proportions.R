@@ -19,7 +19,7 @@ syn <- list(
   structure(class = "postsynth")
 
 # testing variable selection
-test_that("proportions only uses fct and chr variblaes", {
+test_that("proportions only uses fct and chr variables", {
   
   summary_stats <-
     util_proportions(
@@ -63,8 +63,8 @@ test_that("proportions are correct -- df", {
   )
 })
 
-# full with groupvar specified 
-test_that("proportions and classess are correct w/ groupvar -- postsynth", {
+# full with group_var specified 
+test_that("proportions and classes are correct w/ group_var -- postsynth", {
   
   summary_stats <-
     util_proportions(
@@ -73,7 +73,7 @@ test_that("proportions and classess are correct w/ groupvar -- postsynth", {
       group_var = c
     ) 
   
-  summary_stats <- summary_stats %>%
+  summary_stats <- summary_stats |>
     arrange(source)
   
   expect_equal(
@@ -83,7 +83,7 @@ test_that("proportions and classess are correct w/ groupvar -- postsynth", {
   
 })
 
-test_that("proportions and classess are correct w/ groupvar -- df", {
+test_that("proportions and classes are correct w/ group_var -- df", {
   
   summary_stats <-
     util_proportions(
@@ -92,7 +92,7 @@ test_that("proportions and classess are correct w/ groupvar -- df", {
       group_var = c
     ) 
   
-  summary_stats <- summary_stats %>%
+  summary_stats <- summary_stats |>
     arrange(source)
   
   expect_equal(

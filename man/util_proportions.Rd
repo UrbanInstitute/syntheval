@@ -4,12 +4,14 @@
 \alias{util_proportions}
 \title{Calculate frequency tables for categorical variables}
 \usage{
-util_proportions(postsynth, data, group_var = NULL)
+util_proportions(postsynth, data, weight_var = 1, group_var = NULL)
 }
 \arguments{
 \item{postsynth}{A postsynth object or tibble with synthetic data}
 
 \item{data}{A data frame with the original data}
+
+\item{weight_var}{An unquoted name of a weight variable}
 
 \item{group_var}{}
 }
