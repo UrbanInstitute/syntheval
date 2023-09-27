@@ -12,6 +12,7 @@
 util_proportions <- function(postsynth, data, weight_var = 1, 
                              group_var = NULL) {
   
+  
   if ("postsynth" %in% class(postsynth)) {
     
     synthetic_data <- postsynth$synthetic_data
@@ -22,35 +23,36 @@ util_proportions <- function(postsynth, data, weight_var = 1,
     
   }
   
+  
   synthetic_data <- synthetic_data |>
-    dplyr::select(dplyr::where(is.factor), where(is.character), 
-                  {{ weight_var }})
-
+    dplyr::mutate(.temp_weight = {{ weight_var }}) |>
+    dplyr::select(dplyr::where(is.factor), where(is.character), .temp_weight)
   
   data <- data |>
-    dplyr::select(dplyr::where(is.factor), where(is.character), 
-                  {{ weight_var }})
+    dplyr::mutate(.temp_weight = {{ weight_var }}) |>
+    dplyr::select(dplyr::where(is.factor), where(is.character), .temp_weight)
+  
   
   combined_data <- 
     dplyr::bind_rows(
       synthetic = synthetic_data,
       original = data,
       .id = "source"
-    )
+    ) 
   
   
-  combined_data <- combined_data |>
+  combined_data <- combined_data |> 
     tidyr::pivot_longer(
-      cols = -c(source, {{ group_var }}, {{ weight_var }}), 
+      cols = -c(source, {{ group_var }}, .temp_weight), 
       names_to = "variable", 
       values_to = "class"
     ) 
   
   
   combined_data <- combined_data |>
-    dplyr::count({{ group_var }}, source, variable, class, {{ weight_var }}) |>
+    dplyr::count({{ group_var }}, source, variable, class, .temp_weight) |>
     dplyr::group_by({{ group_var }}, source, variable) |>
-    dplyr::mutate(prop = n*{{ weight_var }} / sum(n*{{ weight_var }})) |>
+    dplyr::mutate(prop = n*.temp_weight / sum(n*.temp_weight)) |>
     dplyr::ungroup()
   
   # variable -- class -- original -- synthetic
