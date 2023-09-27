@@ -2,7 +2,8 @@
 df <- data.frame(
   a = c(1, 2, 1),
   b = c("orange", "yellow", "green"),
-  c = as.factor(c("1", "1", "2"))
+  c = as.factor(c("1", "1", "2")),
+  weight = c(100, 100, 200)
 )
 
 # postsynth data object
@@ -10,10 +11,11 @@ syn <- list(
   synthetic_data = data.frame(
     a = c(2, 2, 2),
     b = c("orange", "yellow", "green"),
-    c = as.factor(c("1", "2", "2"))
+    c = as.factor(c("1", "2", "2")),
+    weight = c(150, 150, 100)
   ),
   jth_synthesis_time = data.frame(
-    variable = factor(c("a", "b", "c"))
+    variable = factor(c("a", "b", "c", "weight"))
   )
 ) %>%
   structure(class = "postsynth")
