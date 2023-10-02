@@ -24,7 +24,7 @@ syn <- list(
 
 test_that("unweighted percentiles make sense ", {
   
-  test1 <- percentiles(postsynth = syn, data = df, probs = 0.5)
+  test1 <- util_percentiles(postsynth = syn, data = df, probs = 0.5)
   
   # does the dimension make sense?
   expect_equal(
@@ -48,7 +48,7 @@ test_that("unweighted percentiles make sense ", {
 
 test_that("weighted percentiles make sense ", {
   
-  test2 <- percentiles(
+  test2 <- util_percentiles(
     postsynth = syn, 
     data = df, 
     probs = 0.5, 
@@ -77,7 +77,7 @@ test_that("weighted percentiles make sense ", {
 
 test_that("percentiles can handle multiple percentile ", {
 
-  test3 <- percentiles(postsynth = syn, probs = c(0.01, 0.99), data = df, weight_var = weight)
+  test3 <- util_percentiles(postsynth = syn, probs = c(0.01, 0.99), data = df, weight_var = weight)
   
   # does the dimension make sense?
   expect_equal(
