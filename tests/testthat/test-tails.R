@@ -24,7 +24,7 @@ syn <- list(
 
 test_that("unweighted tails make sense ", {
   
-  test1 <- util_tails(postsynth = syn, data = df, n = 2)
+  test1 <- tails(postsynth = syn, data = df, n = 2)
   
   # does the dimension make sense?
   expect_equal(
@@ -49,7 +49,7 @@ test_that("unweighted tails make sense ", {
 
 test_that("weighted tails make sense ", {
   
-  test2 <- util_tails(syn, df, weight_var = weight, n = 2)
+  test2 <- tails(syn, df, weight_var = weight, n = 2)
   
   expect_equal(
     test2$.value * 100,
