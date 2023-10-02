@@ -12,7 +12,7 @@
 #'
 #' @export
 #'
-moments <- function(postsynth,
+util_moments <- function(postsynth,
                     data,
                     weight_var = 1,
                     group_var = NULL,

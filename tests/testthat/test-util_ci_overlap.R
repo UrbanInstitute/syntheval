@@ -1,7 +1,7 @@
 # test with postsynth
 test_that("overlap is zero for identical data ", {
   
-  overlap1 <- regression_ci_overlap(postsynth = cars, data = cars, formula = dist ~ speed)
+  overlap1 <- util_ci_overlap(postsynth = cars, data = cars, formula = dist ~ speed)
   
   expect_equal(overlap1$ci_overlap$overlap, c(1, 1))
   expect_equal(overlap1$ci_overlap$coef_diff, c(0, 0))
@@ -36,7 +36,7 @@ test_that("overlap is 1 for adjacent data ", {
   cars2 <- cars
   cars2$dist <- cars$dist + offset
   
-  overlap2 <- regression_ci_overlap(postsynth = cars, data = cars2, formula = dist ~ speed)
+  overlap2 <- util_ci_overlap(postsynth = cars, data = cars2, formula = dist ~ speed)
   
   expect_equal(overlap2$ci_overlap$overlap, c(0, 1))
   
