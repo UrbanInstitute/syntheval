@@ -8,7 +8,7 @@
 #' coefficients
 #' 
 #' @export
-util_ci_overlap <- function(postsynth, data, formula) {
+regression_ci_overlap <- function(postsynth, data, formula) {
   
   if (is_postsynth(postsynth)) {
     
