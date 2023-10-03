@@ -17,8 +17,9 @@ util_percentiles(
 
 \item{data}{A data frame with the original data}
 
-\item{probs}{A numeric vector of probabilities that must be between 0 and 1
-inclusive.}
+\item{probs}{A numeric vector of probabilities with values in \link{0,1}. The
+percentiles are interpolated using an empirical CDF. It's possible that the
+percentiles are an approximation; especially when weights are used.}
 
 \item{weight_var}{An unquoted name of a weight variable}
 
