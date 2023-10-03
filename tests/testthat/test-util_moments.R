@@ -26,7 +26,7 @@ syn <- list(
 test_that("moments full unweighted -- postsynth ", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn, 
       data = df
     ) %>%
@@ -45,7 +45,7 @@ test_that("moments full unweighted -- postsynth ", {
 test_that("moments full unweighted -- df ", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df, 
       data = df
     ) %>%
@@ -65,7 +65,7 @@ test_that("moments full unweighted -- df ", {
 test_that("moments full weighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       weight_var = weight
@@ -85,7 +85,7 @@ test_that("moments full weighted -- postsynth", {
 test_that("moments full weighted -- df", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df,
       data = df,
       weight_var = weight
@@ -105,7 +105,7 @@ test_that("moments full weighted -- df", {
 test_that("moments nonzero unweighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       drop_zeros = TRUE
@@ -125,7 +125,7 @@ test_that("moments nonzero unweighted -- postsynth", {
 test_that("moments nonzero unweighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df,
       data = df,
       drop_zeros = TRUE
@@ -145,7 +145,7 @@ test_that("moments nonzero unweighted -- postsynth", {
 test_that("moments nonzero weighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       weight_var = weight,
@@ -166,7 +166,7 @@ test_that("moments nonzero weighted -- postsynth", {
 test_that("moments nonzero weighted -- df", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df,
       data = df,
       weight_var = weight,
@@ -187,7 +187,7 @@ test_that("moments nonzero weighted -- df", {
 test_that("moments test grouping var ", {
 
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       weight_var = weight,

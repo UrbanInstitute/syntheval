@@ -14,7 +14,7 @@
 #'
 #' @export
 #'
-percentiles <- function(postsynth,
+util_percentiles <- function(postsynth,
                         data,
                         probs = c(0.1, 0.5, 0.9),
                         weight_var = NULL, 
