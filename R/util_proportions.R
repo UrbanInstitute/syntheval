@@ -52,7 +52,7 @@ util_proportions <- function(postsynth, data, weight_var = 1,
   
   # calculating proportions for each level of each variable 
   combined_data <- combined_data %>%
-    dplyr::group_by({{ group_var }}, source, variable, class) %>%
+    dplyr::group_by(dplyr::across({{ group_var }}), source, variable, class) %>%
     dplyr::summarise(.total_weight = sum(.data$.temp_weight)) %>%
     dplyr::mutate(prop = (.total_weight) / sum(.total_weight)) %>%
     dplyr::ungroup()
@@ -60,7 +60,7 @@ util_proportions <- function(postsynth, data, weight_var = 1,
   # formatting results, getting proportion difference
   combined_data <- combined_data %>%
     tidyr::pivot_wider(names_from = source, values_from = prop) %>%
-    dplyr::group_by({{ group_var }}, variable, class) %>%
+    dplyr::group_by(dplyr::across({{ group_var }}), variable, class) %>%
     dplyr::summarise(synthetic = sum(synthetic, na.rm = T),
                      original = sum(original, na.rm = T)) %>%
     dplyr::mutate(difference = synthetic - original)
