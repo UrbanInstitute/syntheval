@@ -3,7 +3,7 @@
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
 #' @param weight_var An unquoted name of a weight variable
-#' @param group_var 
+#' @param group_var An unquoted name of a grouping variable
 #'
 #' @return A tibble with variables, classes, and relative frequencies
 #' 
@@ -23,16 +23,18 @@ util_proportions <- function(postsynth, data, weight_var = 1,
     
   }
   
-  
-  synthetic_data <- synthetic_data |>
-    dplyr::mutate(.temp_weight = {{ weight_var }}) |>
-    dplyr::select(dplyr::where(is.factor), where(is.character), .temp_weight)
+  # dropping columns that are numeric (excluding the weight variable)
+  synthetic_data <- synthetic_data %>%
+    dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
+    dplyr::select(tidyselect::where(is.factor), tidyselect::where(is.character), 
+                  .temp_weight)
   
   data <- data |>
-    dplyr::mutate(.temp_weight = {{ weight_var }}) |>
-    dplyr::select(dplyr::where(is.factor), where(is.character), .temp_weight)
+    dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
+    dplyr::select(tidyselect::where(is.factor), tidyselect::where(is.character), 
+                  .temp_weight)
   
-  
+  # combining confidential and synthetic data 
   combined_data <- 
     dplyr::bind_rows(
       synthetic = synthetic_data,
@@ -40,22 +42,31 @@ util_proportions <- function(postsynth, data, weight_var = 1,
       .id = "source"
     ) 
   
-  
-  combined_data <- combined_data |> 
+  # lengthening combined data to find proportions for each level
+  combined_data <- combined_data %>%
     tidyr::pivot_longer(
-      cols = -c(source, {{ group_var }}, .temp_weight), 
+      cols = -c(source, {{ group_var }}, .data$.temp_weight), 
       names_to = "variable", 
       values_to = "class"
     ) 
   
-  
-  combined_data <- combined_data |>
-    dplyr::group_by({{ group_var }}, source, variable, class) |>
-    dplyr::summarise(n = n(), .mean_weight = mean(.temp_weight)) |>
-    dplyr::mutate(prop = n*.mean_weight / sum(n*.mean_weight)) |>
+  # calculating proportions for each level of each variable 
+  combined_data <- combined_data %>%
+    dplyr::group_by({{ group_var }}, source, variable, class) %>%
+    dplyr::summarise(.total_weight = sum(.data$.temp_weight)) %>%
+    dplyr::mutate(prop = (.total_weight) / sum(.total_weight)) %>%
     dplyr::ungroup()
   
-  # variable -- class -- original -- synthetic
+  # formatting results, getting proportion difference
+  combined_data <- combined_data %>%
+    tidyr::pivot_wider(names_from = source, values_from = prop) %>%
+    dplyr::group_by({{ group_var }}, variable, class) %>%
+    dplyr::summarise(synthetic = sum(synthetic, na.rm = T),
+                     original = sum(original, na.rm = T)) %>%
+    dplyr::mutate(difference = synthetic - original)
+    
+  
+  # (group_var) -- variable -- class -- original -- synthetic -- difference
   return(combined_data)
   
 }

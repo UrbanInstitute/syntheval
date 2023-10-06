@@ -13,7 +13,7 @@ util_proportions(postsynth, data, weight_var = 1, group_var = NULL)
 
 \item{weight_var}{An unquoted name of a weight variable}
 
-\item{group_var}{}
+\item{group_var}{An unquoted name of a grouping variable}
 }
 \value{
 A tibble with variables, classes, and relative frequencies

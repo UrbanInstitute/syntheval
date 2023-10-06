@@ -13,9 +13,6 @@ syn <- list(
     b = c("orange", "yellow", "green"),
     c = as.factor(c("1", "2", "2")),
     weight = c(150, 150, 100)
-  ),
-  jth_synthesis_time = data.frame(
-    variable = factor(c("a", "b", "c", "weight"))
   )
 ) %>%
   structure(class = "postsynth")
@@ -45,9 +42,14 @@ test_that("testing if proportions are correct -- postsynth", {
     ) 
   
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.333, 0.333, 0.333, 0.667, 0.333, 0.333, 0.333, 0.333, 0.333, 0.667)
+    round(summary_stats$original, 3),
+    c(0.333, 0.333, 0.333, 0.667, 0.333)
   )
+  expect_equal(
+    round(summary_stats$synthetic, 3),
+    c(0.333, 0.333, 0.333, 0.333, 0.667)
+  )
+  
 })
 
 
@@ -60,12 +62,17 @@ test_that("testing if proportions are correct -- df", {
     ) 
   
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.333, 0.333, 0.333, 0.667, 0.333, 0.333, 0.333, 0.333, 0.667, 0.333)
+    round(summary_stats$original, 3),
+    c(0.333, 0.333, 0.333, 0.667, 0.333)
   )
+  expect_equal(
+    round(summary_stats$synthetic, 3),
+    c(0.333, 0.333, 0.333, 0.667, 0.333)
+  )
+  
 })
 
-# full with group_var specified 
+# with group_var specified 
 test_that("testing if proportions are correct w/ group_var -- postsynth", {
   
   summary_stats <-
@@ -75,12 +82,13 @@ test_that("testing if proportions are correct w/ group_var -- postsynth", {
       group_var = c
     ) 
   
-  summary_stats <- summary_stats |>
-    arrange(source)
-  
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.5, 0.5, 1, 1, 0.5, 0.5)
+    summary_stats$original,
+    c(0.5, 0.5, 1, 0)
+  )
+  expect_equal(
+    summary_stats$synthetic,
+    c(1, 0, 0.5, 0.5)
   )
   
 })
@@ -94,12 +102,13 @@ test_that("testing if proportions are correct w/ group_var -- df", {
       group_var = c
     ) 
   
-  summary_stats <- summary_stats |>
-    arrange(source)
-  
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.5, 0.5, 1, 0.5, 0.5, 1)
+    summary_stats$original,
+    c(0.5, 0.5, 1, 0)
+  )
+  expect_equal(
+    summary_stats$synthetic,
+    c(0.5, 0.5, 1, 0)
   )
   
 })
@@ -114,12 +123,15 @@ test_that("testing if proportions w/ weight_var are correct  -- postsynth", {
       weight_var = weight
     ) 
   
-  
-  
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.375, 0.375, 0.375, 0.625)
+    summary_stats$original,
+    c(0.5, 0.25, 0.25, 0.5, 0.5)
   )
+  expect_equal(
+    summary_stats$synthetic,
+    c(0.25, 0.375, 0.375, 0.375, 0.625)
+  )
+  
 })
 
 
@@ -132,12 +144,15 @@ test_that("testing if proportions w/ weight_var are correct -- df", {
       weight_var = weight
     ) 
   
-  
-  
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.5, 0.25, 0.25, 0.5, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5)
+    summary_stats$original,
+    c(0.5, 0.25, 0.25, 0.5, 0.5)
   )
+  expect_equal(
+    summary_stats$synthetic,
+    c(0.5, 0.25, 0.25, 0.5, 0.5)
+  )
+  
 })
 
 
@@ -153,13 +168,15 @@ test_that("testing if proportions w/ weight_var and group_var are correct
       group_var = c
     ) 
   
-  summary_stats <- summary_stats |>
-    arrange(source)
-  
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.5, 0.5, 1, 1, 0.4, 0.6)
+    summary_stats$original,
+    c(0.5, 0.5, 1, 0)
   )
+  expect_equal(
+    summary_stats$synthetic,
+    c(1, 0, 0.4, 0.6)
+  )
+  
 })
 
 
@@ -174,11 +191,13 @@ test_that("testing if proportions w/ weight_var and group_var are correct
       group_var = c
     ) 
   
-  summary_stats <- summary_stats |>
-    arrange(source)
-  
   expect_equal(
-    round(summary_stats$prop, 3),
-    c(0.5, 0.5, 1, 0.5, 0.5, 1)
+    summary_stats$original,
+    c(0.5, 0.5, 1, 0)
   )
+  expect_equal(
+    summary_stats$synthetic,
+    c(0.5, 0.5, 1, 0)
+  )
+  
 })
