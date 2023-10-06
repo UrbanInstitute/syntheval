@@ -104,16 +104,16 @@ test_that("testing if proportions are correct w/ group_var -- df", {
   
   expect_equal(
     summary_stats$original,
-    c(0.5, 0.5, 1, 0)
+    c(0.5, 0.5, 1)
   )
   expect_equal(
     summary_stats$synthetic,
-    c(0.5, 0.5, 1, 0)
+    c(0.5, 0.5, 1)
   )
   
 })
 
-# full with weight_var specified  
+# with weight_var specified  
 test_that("testing if proportions w/ weight_var are correct  -- postsynth", {
   
   summary_stats <-
@@ -156,7 +156,7 @@ test_that("testing if proportions w/ weight_var are correct -- df", {
 })
 
 
-# full with group_var and weight_var specified 
+# with group_var and weight_var specified 
 test_that("testing if proportions w/ weight_var and group_var are correct
           -- postsynth", {
   
@@ -193,11 +193,11 @@ test_that("testing if proportions w/ weight_var and group_var are correct
   
   expect_equal(
     summary_stats$original,
-    c(0.5, 0.5, 1, 0)
+    c(0.5, 0.5, 1)
   )
   expect_equal(
     summary_stats$synthetic,
-    c(0.5, 0.5, 1, 0)
+    c(0.5, 0.5, 1)
   )
   
 })
