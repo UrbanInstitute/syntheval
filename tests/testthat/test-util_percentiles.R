@@ -51,7 +51,7 @@ test_that("weighted percentiles make sense ", {
   test2 <- util_percentiles(
     postsynth = syn, 
     data = df, 
-    probs = 0.5, 
+    probs = 0.5,
     weight_var = weight
   )
   
@@ -72,7 +72,7 @@ test_that("weighted percentiles make sense ", {
     test2$synthetic,
     c(1400, 1000, 20, 300)
   )
-
+  
 })
 
 test_that("percentiles can handle multiple percentile ", {
@@ -83,6 +83,19 @@ test_that("percentiles can handle multiple percentile ", {
   expect_equal(
     dim(test3),
     c(8, 6)
+  )
+  
+  test4 <- percentiles(
+    postsynth = syn, 
+    data = df, 
+    probs = c(0.1, 0.5, 0.9),
+    weight_var = weight
+  )
+  
+  # are the correct p labels returned
+  expect_equal(
+    unique(test4$p),
+    c(0.1, 0.5, 0.9)
   )
   
 })
