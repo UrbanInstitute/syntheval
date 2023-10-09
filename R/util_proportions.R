@@ -1,4 +1,4 @@
-#' Calculate frequency tables for categorical variables
+#' Calculate relative frequency tables for categorical variables
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
@@ -26,17 +26,18 @@ util_proportions <- function(postsynth, data, weight_var = 1,
   # dropping columns that are numeric (excluding the weight variable)
   synthetic_data <- synthetic_data %>%
     dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
-    dplyr::select(tidyselect::where(is.factor), tidyselect::where(is.character), 
+    dplyr::select(tidyselect::where(is.factor), 
+                  tidyselect::where(is.character), 
                   .temp_weight)
   
-  data <- data |>
+  data <- data %>%
     dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
-    dplyr::select(tidyselect::where(is.factor), tidyselect::where(is.character), 
+    dplyr::select(tidyselect::where(is.factor), 
+                  tidyselect::where(is.character), 
                   .temp_weight)
   
   # combining confidential and synthetic data 
-  combined_data <- 
-    dplyr::bind_rows(
+  combined_data <- dplyr::bind_rows(
       synthetic = synthetic_data,
       original = data,
       .id = "source"
@@ -61,11 +62,11 @@ util_proportions <- function(postsynth, data, weight_var = 1,
   combined_data <- combined_data %>%
     tidyr::pivot_wider(names_from = source, values_from = prop) %>%
     dplyr::group_by({{ group_var }}, variable, class) %>%
-    dplyr::summarise(synthetic = sum(synthetic, na.rm = T),
-                     original = sum(original, na.rm = T)) %>%
-    dplyr::mutate(difference = synthetic - original)
+    dplyr::summarise(synthetic = sum(synthetic, na.rm = TRUE),
+                     original = sum(original, na.rm = TRUE)) %>%
+    dplyr::mutate(difference = .data$synthetic - .data$original) %>%
+    dplyr::ungroup()
     
-  
   # (group_var) -- variable -- class -- original -- synthetic -- difference
   return(combined_data)
   

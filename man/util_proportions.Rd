@@ -2,7 +2,7 @@
 % Please edit documentation in R/util_proportions.R
 \name{util_proportions}
 \alias{util_proportions}
-\title{Calculate frequency tables for categorical variables}
+\title{Calculate relative frequency tables for categorical variables}
 \usage{
 util_proportions(postsynth, data, weight_var = 1, group_var = NULL)
 }
@@ -19,5 +19,5 @@ util_proportions(postsynth, data, weight_var = 1, group_var = NULL)
 A tibble with variables, classes, and relative frequencies
 }
 \description{
-Calculate frequency tables for categorical variables
+Calculate relative frequency tables for categorical variables
 }
