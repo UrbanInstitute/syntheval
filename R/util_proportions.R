@@ -3,14 +3,14 @@
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
 #' @param weight_var An unquoted name of a weight variable
-#' @param group_var An unquoted name of a grouping variable
+#' @param group_by An unquoted name of a grouping variable
 #'
 #' @return A tibble with variables, classes, and relative frequencies
 #' 
 #' @export
 #'
 util_proportions <- function(postsynth, data, weight_var = 1, 
-                             group_var = NULL) {
+                             group_by = NULL) {
   
   
   if ("postsynth" %in% class(postsynth)) {
@@ -46,14 +46,14 @@ util_proportions <- function(postsynth, data, weight_var = 1,
   # lengthening combined data to find proportions for each level
   combined_data <- combined_data %>%
     tidyr::pivot_longer(
-      cols = -c(source, {{ group_var }}, .data$.temp_weight), 
+      cols = -c(source, {{ group_by }}, .data$.temp_weight), 
       names_to = "variable", 
       values_to = "class"
     ) 
   
   # calculating proportions for each level of each variable 
   combined_data <- combined_data %>%
-    dplyr::group_by({{ group_var }}, source, variable, class) %>%
+    dplyr::group_by(dplyr::across({{ group_by }}), source, variable, class) %>%
     dplyr::summarise(.total_weight = sum(.data$.temp_weight)) %>%
     dplyr::mutate(prop = (.total_weight) / sum(.total_weight)) %>%
     dplyr::ungroup()
@@ -61,13 +61,12 @@ util_proportions <- function(postsynth, data, weight_var = 1,
   # formatting results, getting proportion difference
   combined_data <- combined_data %>%
     tidyr::pivot_wider(names_from = source, values_from = prop) %>%
-    dplyr::group_by({{ group_var }}, variable, class) %>%
+    dplyr::group_by(dplyr::across({{ group_by }}), variable, class) %>%
     dplyr::summarise(synthetic = sum(synthetic, na.rm = TRUE),
                      original = sum(original, na.rm = TRUE)) %>%
-    dplyr::mutate(difference = .data$synthetic - .data$original) %>%
-    dplyr::ungroup()
+    dplyr::mutate(difference = .data$synthetic - .data$original)
     
-  # (group_var) -- variable -- class -- original -- synthetic -- difference
+  # (group_by) -- variable -- class -- original -- synthetic -- difference
   return(combined_data)
   
 }

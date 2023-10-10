@@ -72,14 +72,14 @@ test_that("testing if proportions are correct -- df", {
   
 })
 
-# with group_var specified 
-test_that("testing if proportions are correct w/ group_var -- postsynth", {
+# with group_by specified 
+test_that("testing if proportions are correct w/ group_by -- postsynth", {
   
   summary_stats <-
     util_proportions(
       postsynth = syn, 
       data = df,
-      group_var = c
+      group_by = c
     ) 
   
   expect_equal(
@@ -93,13 +93,13 @@ test_that("testing if proportions are correct w/ group_var -- postsynth", {
   
 })
 
-test_that("testing if proportions are correct w/ group_var -- df", {
+test_that("testing if proportions are correct w/ group_by -- df", {
   
   summary_stats <-
     util_proportions(
       postsynth = df, 
       data = df,
-      group_var = c
+      group_by = c
     ) 
   
   expect_equal(
@@ -156,8 +156,8 @@ test_that("testing if proportions w/ weight_var are correct -- df", {
 })
 
 
-# with group_var and weight_var specified 
-test_that("testing if proportions w/ weight_var and group_var are correct
+# with group_by and weight_var specified 
+test_that("testing if proportions w/ weight_var and group_by are correct
           -- postsynth", {
   
   summary_stats <-
@@ -165,7 +165,7 @@ test_that("testing if proportions w/ weight_var and group_var are correct
       postsynth = syn, 
       data = df,
       weight_var = weight,
-      group_var = c
+      group_by = c
     ) 
   
   expect_equal(
@@ -180,7 +180,7 @@ test_that("testing if proportions w/ weight_var and group_var are correct
 })
 
 
-test_that("testing if proportions w/ weight_var and group_var are correct 
+test_that("testing if proportions w/ weight_var and group_by are correct 
           -- df", {
   
   summary_stats <-
@@ -188,7 +188,7 @@ test_that("testing if proportions w/ weight_var and group_var are correct
       postsynth = df, 
       data = df,
       weight_var = weight,
-      group_var = c
+      group_by = c
     ) 
   
   expect_equal(
@@ -201,3 +201,53 @@ test_that("testing if proportions w/ weight_var and group_var are correct
   )
   
 })
+
+test_that("test util_proportions() with multiple grouping variables", {
+  
+  # original data
+  df2 <- data.frame(
+    var1 = c(1, 1, 2),
+    var2 = c("orange", "orange", "green"),
+    var3 = as.factor(c("1", "1", "2")),
+    var4 = c("a", "a", "b"), 
+    weight = c(100, 100, 200)
+  )
+  
+  # postsynth data object
+  syn2 <- list(
+    synthetic_data = data.frame(
+      var1 = c(1, 1, 2),
+      var2 = c("orange", "orange", "green"),
+      var3 = as.factor(c("1", "1", "2")),
+      var4 = c("a", "a", "b"),      
+      weight = c(50, 150, 200)
+    )
+  ) %>%
+    structure(class = "postsynth")
+  
+  
+  summary_stats <-
+    util_proportions(
+      postsynth = syn2, 
+      data = df2,
+      weight_var = weight,
+      group_by = c(var2, var3)
+    ) 
+  
+  expect_equal(
+    summary_stats$original,
+    c(1, 1)
+  )
+  expect_equal(
+    summary_stats$synthetic,
+    c(1, 1)
+  )
+  expect_equal(
+    summary_stats$difference,
+    c(0, 0)
+  )
+  
+})
+
+
+
