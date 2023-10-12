@@ -85,7 +85,7 @@ test_that("percentiles can handle multiple percentile ", {
     c(8, 6)
   )
   
-  test4 <- percentiles(
+  test4 <- util_percentiles(
     postsynth = syn, 
     data = df, 
     probs = c(0.1, 0.5, 0.9),
