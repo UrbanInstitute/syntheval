@@ -8,7 +8,7 @@ util_moments(
   postsynth,
   data,
   weight_var = 1,
-  group_var = NULL,
+  group_by = NULL,
   drop_zeros = FALSE
 )
 }
@@ -19,7 +19,7 @@ util_moments(
 
 \item{weight_var}{An unquoted name of a weight variable}
 
-\item{group_var}{The unquoted name of a grouping variable}
+\item{group_by}{The unquoted name of a grouping variable}
 
 \item{drop_zeros}{A Boolean for if zeros should be dropped}
 }
