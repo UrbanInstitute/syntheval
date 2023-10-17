@@ -59,7 +59,7 @@ util_moments <- function(postsynth,
   # calculate summary statistics
   summary_stats <- combined_data %>%
     dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
-    dplyr::group_by(source, dplyr::across({{ group_by }})) %>%
+    dplyr::group_by(source, dplyr::across({{ group_by }})) %>% 
     dplyr::summarise(
       dplyr::across(
         .cols = -.temp_weight,
@@ -77,7 +77,8 @@ util_moments <- function(postsynth,
     tidyr::separate(col = .data$variable,
                     into = c("variable", "statistic"),
                     sep = "_(?!.*_)") %>%
-    tidyr::spread(key = source, value = .data$value)
+    tidyr::spread(key = source, value = .data$value) %>%
+    dplyr::ungroup() 
   
   summary_stats <- summary_stats  %>%
     dplyr::mutate(
