@@ -22,8 +22,17 @@ membership_inference_test <- function(postsynth, data, holdout_data, threshold_p
 
   }
 
+  # test the threshold percentile
   # calculate threshold percentile for when the data are imbalanced
-  if (is.null(threshold_percentile)) {
+  if (!is.null(threshold_percentile)) {
+    
+    if (threshold_percentile < 0 || threshold_percenitle > 1) {
+      
+      stop("error: threshold_percnetile must be in [0, 1]")
+      
+    }
+    
+  } else {
     
     threshold_percentile <- nrow(data) / (nrow(data) + nrow(holdout_data))
     
@@ -63,11 +72,13 @@ membership_inference_test <- function(postsynth, data, holdout_data, threshold_p
   precision <- yardstick::precision(blended_data, truth = source, estimate = prediction)$.estimate
 
   # calculate metrics
-  list(
+  membership_metrics <- list(
     precision = precision,
     recall = yardstick::recall(blended_data, truth = source, estimate = prediction)$.estimate,
     auc = yardstick::roc_auc_vec(truth = blended_data$source, estimate = blended_data$pseudo_probability),
     conf_mat = yardstick::conf_mat(blended_data, truth = source, estimate = prediction)
   )
 
+  return(membership_metrics)
+  
 }

@@ -101,6 +101,38 @@ test_that("Identical training and holdout data", {
   
 })
 
+test_that("membership_inference_test() input errors ", {
+  
+  expect_error(
+    membership_inference_test(
+      postsynth = postsynth,
+      data = data3, 
+      holdout_data = data3,
+      threshold_percentile = "abc"
+    )
+  )
+  
+  expect_error(
+    membership_inference_test(
+      postsynth = postsynth,
+      data = data3, 
+      holdout_data = data3,
+      threshold_percentile = -1
+    )
+  )
+  
+  expect_error(
+    membership_inference_test(
+      postsynth = postsynth,
+      data = data3, 
+      holdout_data = data3,
+      threshold_percentile = 1.1
+    )
+  )
+
+  
+})
+
 
 
 

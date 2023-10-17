@@ -2,7 +2,6 @@
 
 export("%>%")
 export(cor_fit)
-export(discriminator_auc)
 export(membership_inference_test)
 export(moments)
 export(null_pmse)
