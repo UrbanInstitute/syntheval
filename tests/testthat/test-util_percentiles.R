@@ -1,5 +1,5 @@
 # test df (8 /8 combinations)
-ddf <- data.frame(
+df <- data.frame(
   a = c(1000, 1000, 1000),
   b = c(-1200, -800, 1000),
   c = c("1", "1", "2"),
@@ -26,7 +26,11 @@ syn <- list(
 
 test_that("unweighted percentiles make sense ", {
   
-  test1 <- util_percentiles(postsynth = syn, data = df, probs = 0.5)
+  test1 <- util_percentiles(
+    postsynth = syn, 
+    data = df, 
+    probs = 0.5
+  )
   
   # does the dimension make sense?
   expect_equal(
@@ -79,8 +83,12 @@ test_that("weighted percentiles make sense ", {
 
 test_that("percentiles can handle multiple percentile ", {
 
-  test3 <- util_percentiles(postsynth = syn, probs = c(0.01, 0.99), data = df, 
-                            weight_var = weight)
+  test3 <- util_percentiles(
+    postsynth = syn, 
+    data = df, 
+    probs = c(0.01, 0.99), 
+    weight_var = weight
+  )
   
   # does the dimension make sense?
   expect_equal(
@@ -105,8 +113,12 @@ test_that("percentiles can handle multiple percentile ", {
 
 test_that("unweighted percentiles grouped by one variable ", {
   
-  test5 <- util_percentiles(postsynth = syn, data = df, probs = 0.5, 
-                            group_by = c)
+  test5 <- util_percentiles(
+    postsynth = syn, 
+    data = df,
+    probs = 0.5, 
+    group_by = c
+  )
   
   # does the dimension make sense?
   expect_equal(
@@ -131,8 +143,12 @@ test_that("unweighted percentiles grouped by one variable ", {
 
 test_that("unweighted percentiles grouped by multiple variables ", {
   
-  test6 <- util_percentiles(postsynth = syn, data = df, probs = 0.5, 
-                            group_by = c(c, e))
+  test6 <- util_percentiles(
+    postsynth = syn,
+    data = df,
+    probs = 0.5,
+    group_by = c(c, e)
+  )
   
   # does the dimension make sense?
   expect_equal(
