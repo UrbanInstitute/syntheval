@@ -4,6 +4,7 @@ df <- data.frame(
   b = c(-1200, -800, 1000),
   c = c("1", "1", "2"),
   d = c(0, 0, 10), 
+  e = c("a", "b", "a"),
   weight = c(300, 100, 100)
 )
 
@@ -14,6 +15,7 @@ syn <- list(
     b = c(1000, 1000, 1000),
     c = c("1", "1", "2"),
     d = c(20, 10, 0), 
+    e = c("a", "b", "a"),
     weight = c(300, 100, 100)
   ),
   jth_synthesis_time = data.frame(
@@ -24,7 +26,11 @@ syn <- list(
 
 test_that("unweighted percentiles make sense ", {
   
-  test1 <- util_percentiles(postsynth = syn, data = df, probs = 0.5)
+  test1 <- util_percentiles(
+    postsynth = syn, 
+    data = df, 
+    probs = 0.5
+  )
   
   # does the dimension make sense?
   expect_equal(
@@ -77,7 +83,12 @@ test_that("weighted percentiles make sense ", {
 
 test_that("percentiles can handle multiple percentile ", {
 
-  test3 <- util_percentiles(postsynth = syn, probs = c(0.01, 0.99), data = df, weight_var = weight)
+  test3 <- util_percentiles(
+    postsynth = syn, 
+    data = df, 
+    probs = c(0.01, 0.99), 
+    weight_var = weight
+  )
   
   # does the dimension make sense?
   expect_equal(
@@ -96,6 +107,65 @@ test_that("percentiles can handle multiple percentile ", {
   expect_equal(
     unique(test4$p),
     c(0.1, 0.5, 0.9)
+  )
+  
+})
+
+test_that("unweighted percentiles grouped by one variable ", {
+  
+  test5 <- util_percentiles(
+    postsynth = syn, 
+    data = df,
+    probs = 0.5, 
+    group_by = c
+  )
+  
+  # does the dimension make sense?
+  expect_equal(
+    dim(test5),
+    c(8, 7) # additional col for group by variable 
+  )
+  
+  # do the original values make sense
+  expect_equal(
+    test5$original,
+    c(1000, 1000, -1000, 1000, 0, 10, 200, 100)
+  )
+  
+  # do the synthetic values make sense
+  expect_equal(
+    test5$synthetic,
+    c(700, 1000, 1000, 1000, 15, 0, 200, 100)
+  )
+  
+})
+
+
+test_that("unweighted percentiles grouped by multiple variables ", {
+  
+  test6 <- util_percentiles(
+    postsynth = syn,
+    data = df,
+    probs = 0.5,
+    group_by = c(c, e)
+  )
+  
+  # does the dimension make sense?
+  expect_equal(
+    dim(test6),
+    c(12, 8) # additional cols for group by variables 
+  )
+  
+  # do the original values make sense
+  expect_equal(
+    test6$original,
+    c(1000, 1000, 1000, -1200, -800, 1000, 0, 0, 10, 300, 100, 100)
+  )
+  
+  # do the synthetic values make sense
+  expect_equal(
+    test6$synthetic,
+    c(1400, 0, 1000, 1000, 1000, 1000, 20, 10, 0, 300, 100, 100)
   )
   
 })

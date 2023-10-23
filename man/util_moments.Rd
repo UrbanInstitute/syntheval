@@ -19,7 +19,7 @@ util_moments(
 
 \item{weight_var}{An unquoted name of a weight variable}
 
-\item{group_by}{The unquoted name of a grouping variable}
+\item{group_by}{The unquoted name of a (or multiple) grouping variable(s)}
 
 \item{drop_zeros}{A Boolean for if zeros should be dropped}
 }

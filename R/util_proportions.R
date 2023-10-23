@@ -3,7 +3,7 @@
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
 #' @param weight_var An unquoted name of a weight variable
-#' @param group_by An unquoted name of a grouping variable
+#' @param group_by An unquoted name of a (or multiple) grouping variable(s)
 #'
 #' @return A tibble with variables, classes, and relative frequencies
 #' 

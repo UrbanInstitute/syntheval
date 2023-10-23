@@ -5,6 +5,7 @@
 #' @param probs A numeric vector of probabilities with values in [0,1]. The 
 #' percentiles are interpolated using an empirical CDF. It's possible that the
 #' percentiles are an approximation; especially when weights are used.
+#' @param group_by An unquoted name of a (or multiple) grouping variable(s)
 #' @param weight_var An unquoted name of a weight variable
 #' @param drop_zeros A Boolean for if zeros should be dropped
 #'
@@ -18,6 +19,7 @@ util_percentiles <- function(postsynth,
                         data,
                         probs = c(0.1, 0.5, 0.9),
                         weight_var = NULL, 
+                        group_by = NULL,
                         drop_zeros = FALSE) {
   
   # catch binding error
@@ -36,12 +38,12 @@ util_percentiles <- function(postsynth,
   
   }
   
-  # drop non-numeric variables
+  # drop non-numeric variables except grouping variables
   data <- data %>%
-    dplyr::select_if(is.numeric)
+    dplyr::select(tidyselect::where(is.numeric), {{ group_by }}) 
   
   synthetic_data <- synthetic_data %>%
-    dplyr::select_if(is.numeric)
+    dplyr::select(tidyselect::where(is.numeric), {{ group_by }}) 
   
   # combine both data sources
   combined_data <- dplyr::bind_rows(
@@ -49,6 +51,7 @@ util_percentiles <- function(postsynth,
     `synthetic` = synthetic_data,
     .id = "source"
   )
+  
     
   na.rm_toggle <- FALSE
   if (drop_zeros) {
@@ -58,11 +61,12 @@ util_percentiles <- function(postsynth,
     
   }
   
+  
   # set weight to 1 for unweighted statistics
   if (missing(weight_var)) {
 
     summary_stats <- combined_data %>%
-      dplyr::group_by(source) %>%
+      dplyr::group_by(source, dplyr::across({{ group_by }})) %>%
       dplyr::summarise(
         across(
           .cols = dplyr::everything(),
@@ -76,14 +80,15 @@ util_percentiles <- function(postsynth,
       ) %>%
       dplyr::select(p, dplyr::everything()) %>%
       dplyr::ungroup() %>%
-      tidyr::gather(key = "variable", value = "value", -source, -p) %>%
+      tidyr::gather(key = "variable", value = "value", -source, -p, 
+                    -{{ group_by }}) %>%
       tidyr::spread(key = source, value = value) %>%
       dplyr::arrange(variable)
 
   } else {
 
     summary_stats <- combined_data %>%
-      dplyr::group_by(source) %>%
+      dplyr::group_by(source, dplyr::across({{ group_by }})) %>%
       dplyr::summarise(
         dplyr::across(
           .cols = dplyr::everything(),
@@ -98,7 +103,8 @@ util_percentiles <- function(postsynth,
       ) %>%
       dplyr::select(p, dplyr::everything()) %>%
       dplyr::ungroup() %>%
-      tidyr::gather(key = "variable", value = "value", -source, -p) %>%
+      tidyr::gather(key = "variable", value = "value", -source, -p, 
+                    -{{ group_by }}) %>%
       tidyr::spread(key = source, value = value) %>%
       dplyr::arrange(variable)
     
