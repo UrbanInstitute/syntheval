@@ -28,7 +28,7 @@ syn <- list(
 test_that("moments full unweighted -- postsynth ", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = syn, 
       data = df
     ) %>%
@@ -36,18 +36,18 @@ test_that("moments full unweighted -- postsynth ", {
   
   expect_equal(
     summary_stats$original,
-    c(3, 1000, 0, NaN, NaN)
+    c(3, 3000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(2, 800, 721.11, -0.47, -1.5)
+    c(2, 2400)
   )
 })
 
 test_that("moments full unweighted -- df ", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = df, 
       data = df
     ) %>%
@@ -55,11 +55,11 @@ test_that("moments full unweighted -- df ", {
   
   expect_equal(
     summary_stats$original,
-    c(3, 1000, 0, NaN, NaN)
+    c(3, 3000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(3, 1000, 0, NaN, NaN)
+    c(3, 3000)
   )
 })
 
@@ -67,7 +67,7 @@ test_that("moments full unweighted -- df ", {
 test_that("moments full weighted -- postsynth", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = syn,
       data = df,
       weight_var = weight
@@ -76,18 +76,18 @@ test_that("moments full weighted -- postsynth", {
   
   expect_equal(
     summary_stats$original,
-    c(400, 1000, 0, NaN, NaN)
+    c(400, 400000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(250, 775, 765.32, -0.34, -1.69)
+    c(250, 310000)
   )
 })
 
 test_that("moments full weighted -- df", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = df,
       data = df,
       weight_var = weight
@@ -96,18 +96,18 @@ test_that("moments full weighted -- df", {
   
   expect_equal(
     summary_stats$original,
-    c(400, 1000, 0, NaN, NaN)
+    c(400, 400000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(400, 1000, 0, NaN, NaN)
+    c(400, 400000)
   )
 })
 
 test_that("moments nonzero unweighted -- postsynth", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = syn,
       data = df,
       drop_zeros = TRUE
@@ -116,18 +116,18 @@ test_that("moments nonzero unweighted -- postsynth", {
   
   expect_equal(
     summary_stats$original,
-    c(1, 10, NaN, NaN, NaN)
+    c(1, 10)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(2, 15, 7.07, 0, -2)
+    c(2, 30)
   )
 })
 
 test_that("moments nonzero unweighted -- postsynth", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = df,
       data = df,
       drop_zeros = TRUE
@@ -136,18 +136,18 @@ test_that("moments nonzero unweighted -- postsynth", {
   
   expect_equal(
     summary_stats$original,
-    c(1, 10, NaN, NaN, NaN)
+    c(1, 10)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(1, 10, NaN, NaN, NaN)
+    c(1, 10)
   )
 })
 
 test_that("moments nonzero weighted -- postsynth", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = syn,
       data = df,
       weight_var = weight,
@@ -157,18 +157,18 @@ test_that("moments nonzero weighted -- postsynth", {
   
   expect_equal(
     summary_stats$original,
-    c(200, 10, NaN, NaN, NaN)
+    c(200, 2000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(300, 15, 7.07, 0, -2)
+    c(300, 4500)
   )
 })
 
 test_that("moments nonzero weighted -- df", {
   
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = df,
       data = df,
       weight_var = weight,
@@ -178,32 +178,32 @@ test_that("moments nonzero weighted -- df", {
   
   expect_equal(
     summary_stats$original,
-    c(200, 10, NaN, NaN, NaN)
+    c(200, 2000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(200, 10, NaN, NaN, NaN)
+    c(200, 2000)
   )
 })
 
 test_that("moments test grouping var ", {
 
   summary_stats <-
-    util_moments(
+    util_totals(
       postsynth = syn,
       data = df,
       weight_var = weight,
       group_by = c
     ) %>%
-    dplyr::filter(variable == "d", statistic %in% c("count", "mean"))
+    dplyr::filter(variable == "d")
   
   expect_equal(
     summary_stats$original,
-    c(0, 200, 0, 10)
+    c(0, 200, 0, 2000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(300, 0, 15, 0)
+    c(300, 0, 4500, 0)
   )
 
 
@@ -211,21 +211,21 @@ test_that("moments test grouping var ", {
 
 test_that("moments grouping by multiple variables", {
   summary_stats <- 
-    util_moments(
+    util_totals(
       postsynth = syn,
       data = df,
       weight_var = weight,
       group_by = c(c, e)
     ) %>%
-    dplyr::filter(variable == "d", statistic %in% c("count", "mean"))
+    dplyr::filter(variable == "d")
   
   expect_equal(
     summary_stats$original,
-    c(0, 0, 200, 0, 0, 10)
+    c(0, 0, 200, 0, 0, 2000)
   )
   expect_equal(
     round(summary_stats$synthetic, 2),
-    c(150, 150, 0, 20, 10, 0)
+    c(150, 150, 0, 3000, 1500, 0)
   )
   
 })

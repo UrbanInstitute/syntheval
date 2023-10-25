@@ -30,6 +30,7 @@ Calculate the correlation fit metric of a confidential data set.
 Other utility functions: 
 \code{\link{util_moments}()},
 \code{\link{util_percentiles}()},
-\code{\link{util_tails}()}
+\code{\link{util_tails}()},
+\code{\link{util_totals}()}
 }
 \concept{utility functions}
