@@ -1,6 +1,6 @@
 Package: syntheval
 Title: A set of tools for evaluating synthetic data utility and disclosure risk
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: 
     person("Aaron", "Williams", , "awilliams@urban.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5564-1938"))
@@ -13,6 +13,7 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
+    broom,
     dplyr,
     gower,
     Hmisc,
@@ -20,6 +21,7 @@ Imports:
     rlang,
     rpart,
     ranger,
+    tibble,
     tidyr,
     tidyselect,
     yardstick

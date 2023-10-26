@@ -4,6 +4,7 @@ df <- data.frame(
   b = c(1200, 800, 1000),
   c = c("1", "1", "2"),
   d = c(0, 0, 10), 
+  e = c("a", "b", "b"),
   weight = c(100, 100, 200)
 )
 
@@ -14,6 +15,7 @@ syn <- list(
     b = c(1000, 1000, 1000),
     c = c("1", "1", "2"),
     d = c(20, 10, 0), 
+    e = c("a", "b", "b"),
     weight = c(150, 150, 100)
   ),
   jth_synthesis_time = data.frame(
@@ -26,7 +28,7 @@ syn <- list(
 test_that("moments full unweighted -- postsynth ", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn, 
       data = df
     ) %>%
@@ -45,7 +47,7 @@ test_that("moments full unweighted -- postsynth ", {
 test_that("moments full unweighted -- df ", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df, 
       data = df
     ) %>%
@@ -65,7 +67,7 @@ test_that("moments full unweighted -- df ", {
 test_that("moments full weighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       weight_var = weight
@@ -85,7 +87,7 @@ test_that("moments full weighted -- postsynth", {
 test_that("moments full weighted -- df", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df,
       data = df,
       weight_var = weight
@@ -105,7 +107,7 @@ test_that("moments full weighted -- df", {
 test_that("moments nonzero unweighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       drop_zeros = TRUE
@@ -125,7 +127,7 @@ test_that("moments nonzero unweighted -- postsynth", {
 test_that("moments nonzero unweighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df,
       data = df,
       drop_zeros = TRUE
@@ -145,7 +147,7 @@ test_that("moments nonzero unweighted -- postsynth", {
 test_that("moments nonzero weighted -- postsynth", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       weight_var = weight,
@@ -166,7 +168,7 @@ test_that("moments nonzero weighted -- postsynth", {
 test_that("moments nonzero weighted -- df", {
   
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = df,
       data = df,
       weight_var = weight,
@@ -187,11 +189,11 @@ test_that("moments nonzero weighted -- df", {
 test_that("moments test grouping var ", {
 
   summary_stats <-
-    moments(
+    util_moments(
       postsynth = syn,
       data = df,
       weight_var = weight,
-      group_var = c
+      group_by = c
     ) %>%
     dplyr::filter(variable == "d", statistic %in% c("count", "have", "mean"))
   
@@ -205,4 +207,25 @@ test_that("moments test grouping var ", {
   )
 
 
+})
+
+test_that("moments grouping by multiple variables", {
+  summary_stats <- 
+    util_moments(
+      postsynth = syn,
+      data = df,
+      weight_var = weight,
+      group_by = c(c, e)
+    ) %>%
+    dplyr::filter(variable == "d", statistic %in% c("count", "have", "mean"))
+  
+  expect_equal(
+    summary_stats$original,
+    c(100, 100, 200, 0, 0, 200, 0, 0, 10)
+  )
+  expect_equal(
+    round(summary_stats$synthetic, 2),
+    c(150, 150, 100, 150, 150, 0, 20, 10, 0)
+  )
+  
 })

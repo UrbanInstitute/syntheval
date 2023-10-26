@@ -3,6 +3,7 @@
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
 #' @param weight_var An unquoted name of a weight variable
+#' @param group_by The unquoted name of a (or multiple) grouping variable(s)
 #' @param drop_zeros A Boolean for if zeros should be dropped
 #'
 #' @return A `tibble` of summary statistics.
@@ -11,10 +12,10 @@
 #'
 #' @export
 #'
-moments <- function(postsynth,
+util_moments <- function(postsynth,
                     data,
                     weight_var = 1,
-                    group_var = NULL,
+                    group_by = NULL,
                     drop_zeros = FALSE) {
   
   # catch binding error
@@ -35,10 +36,10 @@ moments <- function(postsynth,
   
   # drop non-numeric variables
   data <- data %>%
-    dplyr::select(tidyselect::where(is.numeric), {{ group_var }})
+    dplyr::select(tidyselect::where(is.numeric), {{ group_by }})
   
   synthetic_data <- synthetic_data %>%
-    dplyr::select(tidyselect::where(is.numeric), {{ group_var }})
+    dplyr::select(tidyselect::where(is.numeric), {{ group_by }})
   
   # combine both data sources
   combined_data <- dplyr::bind_rows(
@@ -58,7 +59,7 @@ moments <- function(postsynth,
   # calculate summary statistics
   summary_stats <- combined_data %>%
     dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
-    dplyr::group_by(source, {{ group_var }}) %>%
+    dplyr::group_by(source, dplyr::across({{ group_by }})) %>% 
     dplyr::summarise(
       dplyr::across(
         .cols = -.temp_weight,
@@ -72,11 +73,12 @@ moments <- function(postsynth,
         )
       )
     ) %>%
-    tidyr::gather(key = "variable", value = "value", -source, - {{ group_var }}) %>%
+    tidyr::gather(key = "variable", value = "value", -source, - {{ group_by }}) %>%
     tidyr::separate(col = .data$variable,
                     into = c("variable", "statistic"),
                     sep = "_(?!.*_)") %>%
-    tidyr::spread(key = source, value = .data$value)
+    tidyr::spread(key = source, value = .data$value) %>%
+    dplyr::ungroup() 
   
   summary_stats <- summary_stats  %>%
     dplyr::mutate(

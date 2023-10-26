@@ -16,7 +16,7 @@
 #'
 #' @export
 
-cor_fit <- function(postsynth, data) {
+util_corr_fit <- function(postsynth, data) {
   
   if (is_postsynth(postsynth)) {
   
