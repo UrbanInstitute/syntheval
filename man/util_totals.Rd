@@ -4,13 +4,7 @@
 \alias{util_totals}
 \title{Calculate totals for original and synthetic data.}
 \usage{
-util_totals(
-  postsynth,
-  data,
-  weight_var = 1,
-  group_by = NULL,
-  drop_zeros = FALSE
-)
+util_totals(postsynth, data, weight_var = 1, group_by = NULL)
 }
 \arguments{
 \item{postsynth}{A postsynth object or tibble with synthetic data}
@@ -20,8 +14,6 @@ util_totals(
 \item{weight_var}{An unquoted name of a weight variable}
 
 \item{group_by}{The unquoted name of a (or multiple) grouping variable(s)}
-
-\item{drop_zeros}{A Boolean for if zeros should be dropped}
 }
 \value{
 A \code{tibble} of totals.

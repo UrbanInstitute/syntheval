@@ -4,7 +4,6 @@
 #' @param data A data frame with the original data
 #' @param weight_var An unquoted name of a weight variable
 #' @param group_by The unquoted name of a (or multiple) grouping variable(s)
-#' @param drop_zeros A Boolean for if zeros should be dropped
 #'
 #' @return A `tibble` of totals.
 #'
@@ -15,8 +14,7 @@
 util_totals<- function(postsynth,
                        data,
                        weight_var = 1,
-                       group_by = NULL,
-                       drop_zeros = FALSE) {
+                       group_by = NULL) {
   
   # catch binding error
   . <- NULL
@@ -49,12 +47,6 @@ util_totals<- function(postsynth,
   )
     
   na.rm_toggle <- FALSE
-  if (drop_zeros) {
-    
-    combined_data[combined_data == 0] <- NA
-    na.rm_toggle <- TRUE
-    
-  }
   
   # calculate summary statistics
   totals <- combined_data %>%

@@ -109,8 +109,7 @@ test_that("moments nonzero unweighted -- postsynth", {
   summary_stats <-
     util_totals(
       postsynth = syn,
-      data = df,
-      drop_zeros = TRUE
+      data = df
     ) %>%
     dplyr::filter(variable == "d")
   
@@ -129,8 +128,7 @@ test_that("moments nonzero unweighted -- postsynth", {
   summary_stats <-
     util_totals(
       postsynth = df,
-      data = df,
-      drop_zeros = TRUE
+      data = df
     ) %>%
     dplyr::filter(variable == "d")
   
@@ -150,8 +148,7 @@ test_that("moments nonzero weighted -- postsynth", {
     util_totals(
       postsynth = syn,
       data = df,
-      weight_var = weight,
-      drop_zeros = TRUE
+      weight_var = weight
     ) %>%
     dplyr::filter(variable == "d")
   
@@ -171,8 +168,7 @@ test_that("moments nonzero weighted -- df", {
     util_totals(
       postsynth = df,
       data = df,
-      weight_var = weight,
-      drop_zeros = TRUE
+      weight_var = weight
     ) %>%
     dplyr::filter(variable == "d")
   
