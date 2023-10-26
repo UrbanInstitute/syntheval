@@ -26,7 +26,7 @@ class(postsynth) <- "postsynth"
 
 test_that("Perfect training match and perfect holdout lack of match", {
 
-  test1 <- membership_inference_test(
+  test1 <- disc_mit(
     postsynth = postsynth,
     data = data1, 
     holdout_data = data2
@@ -52,7 +52,7 @@ test_that("Perfect training match and perfect holdout lack of match", {
 
 test_that("Perfect training lack of match and perfect holdout match", {
   
-  test2 <- membership_inference_test(
+  test2 <- disc_mit(
     postsynth = postsynth,
     data = data2, 
     holdout_data = data1
@@ -78,7 +78,7 @@ test_that("Perfect training lack of match and perfect holdout match", {
 
 test_that("Identical training and holdout data", {
   
-  test3 <- membership_inference_test(
+  test3 <- disc_mit(
     postsynth = postsynth,
     data = data3, 
     holdout_data = data3
@@ -101,10 +101,10 @@ test_that("Identical training and holdout data", {
   
 })
 
-test_that("membership_inference_test() input errors ", {
+test_that("disc_mit() input errors ", {
   
   expect_error(
-    membership_inference_test(
+    disc_mit(
       postsynth = postsynth,
       data = data3, 
       holdout_data = data3,
@@ -113,7 +113,7 @@ test_that("membership_inference_test() input errors ", {
   )
   
   expect_error(
-    membership_inference_test(
+    disc_mit(
       postsynth = postsynth,
       data = data3, 
       holdout_data = data3,
@@ -122,7 +122,7 @@ test_that("membership_inference_test() input errors ", {
   )
   
   expect_error(
-    membership_inference_test(
+    disc_mit(
       postsynth = postsynth,
       data = data3, 
       holdout_data = data3,

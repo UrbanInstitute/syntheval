@@ -2,7 +2,7 @@
 
 export("%>%")
 export(cor_fit)
-export(membership_inference_test)
+export(disc_mit)
 export(moments)
 export(null_pmse)
 export(percentiles)
