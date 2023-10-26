@@ -7,3 +7,4 @@
 * Add `util_corr_fit()` for comparing the correlation matrices from the original and synthetic data.
 * Add `util_ci_overlap()` for calculating regression confidence interval overlap.
 * Add `pmse()`, `null_pmse()`, and `pmse_ratio()` for calculating one version of the pMSE ratio. 
+* Add `disc_mit()` for a basic membership inference test.
