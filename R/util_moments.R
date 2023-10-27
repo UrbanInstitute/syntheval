@@ -62,13 +62,13 @@ util_moments <- function(postsynth,
     dplyr::group_by(source, dplyr::across({{ group_by }})) %>% 
     dplyr::summarise(
       dplyr::across(
-        .cols = -.temp_weight,
+        .cols = -".temp_weight",
         .fns = list(
-          count = ~ sum((. != 0) * .temp_weight, na.rm = na.rm_toggle),
-          mean = ~ stats::weighted.mean(x = ., w = .temp_weight, na.rm = na.rm_toggle),
-          sd = ~ weighted_sd(x = ., w = .temp_weight, na.rm = na.rm_toggle),
-          skewness = ~ weighted_skewness(x = ., w = .temp_weight, na.rm = na.rm_toggle),
-          kurtosis = ~ weighted_kurtosis(x = ., w = .temp_weight, na.rm = na.rm_toggle)
+          count = ~ sum((. != 0) * .data$.temp_weight, na.rm = na.rm_toggle),
+          mean = ~ stats::weighted.mean(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
+          sd = ~ weighted_sd(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
+          skewness = ~ weighted_skewness(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
+          kurtosis = ~ weighted_kurtosis(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle)
         )
       )
     ) %>%
@@ -96,8 +96,8 @@ util_moments <- function(postsynth,
   
   summary_stats <- summary_stats %>%
     dplyr::mutate(
-      variable = factor(variable, levels = variable_order),
-      statistic = factor(statistic, levels = statistics_order)
+      variable = factor(.data$variable, levels = variable_order),
+      statistic = factor(.data$statistic, levels = statistics_order)
     ) %>%
     dplyr::arrange(.data$variable, .data$statistic)
     

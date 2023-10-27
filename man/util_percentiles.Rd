@@ -18,7 +18,7 @@ util_percentiles(
 
 \item{data}{A data frame with the original data}
 
-\item{probs}{A numeric vector of probabilities with values in \link{0,1}. The
+\item{probs}{A numeric vector of probabilities with values in [0,1]. The
 percentiles are interpolated using an empirical CDF. It's possible that the
 percentiles are an approximation; especially when weights are used.}
 

@@ -2,7 +2,7 @@ Package: syntheval
 Title: A set of tools for evaluating synthetic data utility and disclosure risk
 Version: 0.0.1
 Authors@R: c(
-    person(given = "Aaron", family = "Williams", middle = "R.", 
+    person(given = "Aaron R.", family = "Williams", 
            email = "awilliams@urban.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5564-1938")),
     person("Gabe", "Morrison", , "gmorrison@urban.org", role = "ctb"),
@@ -28,7 +28,6 @@ Imports:
     magrittr,
     rlang,
     rpart,
-    ranger,
     tibble,
     tidyr,
     tidyselect,

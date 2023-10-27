@@ -58,8 +58,8 @@ util_ci_overlap <- function(postsynth, data, formula) {
         (.data$estimate_original > 0 & .data$estimate_synthetic > 0),
       significance_match = (.data$p.value_original < 0.05 & .data$p.value_synthetic < 0.05) | 
         (.data$p.value_original > 0.05 & .data$p.value_synthetic > 0.05),
-      ss_match = sign_match & significance_match,
-      sso_match = sign_match & overlap > 0
+      ss_match = .data$sign_match & .data$significance_match,
+      sso_match = .data$sign_match & .data$overlap > 0
     ) |>
     dplyr::select(
       "term", "overlap", "coef_diff", "std_coef_diff", "sign_match", 

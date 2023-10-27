@@ -30,7 +30,7 @@ disc_mit <- function(postsynth, data, holdout_data, threshold_percentile = NULL)
   if (!is.null(threshold_percentile)) {
     
     # test the threshold percentile
-    if (threshold_percentile < 0 || threshold_percenitle > 1) {
+    if (threshold_percentile < 0 || threshold_percentile > 1) {
       
       stop("error: threshold_percentile must be in [0, 1]")
       
@@ -60,7 +60,7 @@ disc_mit <- function(postsynth, data, holdout_data, threshold_percentile = NULL)
 
   # convert distances into predictions for if the record from the blended data
   # was used to train the synthetic data
-  threshold <- quantile(distances$distance, probs = threshold_percentile)
+  threshold <- stats::quantile(distances$distance, probs = threshold_percentile)
 
   prediction <- ifelse(distances$distance[1, ] <= threshold, "training", "holdout")
 
