@@ -54,10 +54,10 @@ util_totals<- function(postsynth,
     dplyr::group_by(source, dplyr::across({{ group_by }})) %>% 
     dplyr::summarise(
       dplyr::across(
-        .cols = -.temp_weight,
+        .cols = -".temp_weight",
         .fns = list(
-          count = ~ sum((. != 0) * .temp_weight, na.rm = na.rm_toggle),
-          total = ~ sum(. * .temp_weight, na.rm = na.rm_toggle)
+          count = ~ sum((. != 0) * .data$.temp_weight, na.rm = na.rm_toggle),
+          total = ~ sum(. * .data$.temp_weight, na.rm = na.rm_toggle)
         )
       )
     ) %>%
@@ -85,8 +85,8 @@ util_totals<- function(postsynth,
   
   totals <- totals %>%
     dplyr::mutate(
-      variable = factor(variable, levels = variable_order),
-      statistic = factor(statistic, levels = statistics_order)
+      variable = factor(.data$variable, levels = variable_order),
+      statistic = factor(.data$statistic, levels = statistics_order)
     ) %>%
     dplyr::arrange(.data$variable, .data$statistic)
     
