@@ -17,7 +17,7 @@ rownames(diff_matrix) <- c("a", "c", "b")
 colnames(diff_matrix) <- c("a", "c", "b")
 
 # test with postsynth
-test_that("cor_fit is correct with postsynth ", {
+test_that("util_corr_fit is correct with postsynth ", {
   
   syn <- list(synthetic_data = data.frame(a = c(1, 2, 3),
                                           c = c(3, 2, 1),
@@ -25,7 +25,7 @@ test_that("cor_fit is correct with postsynth ", {
                                           RECID = c("a", "b", "c"))) %>%
     structure(class = "postsynth")
   
-  corr <- cor_fit(postsynth = syn, data = df)
+  corr <- util_corr_fit(postsynth = syn, data = df)
   
   expect_equal(corr$correlation_difference, diff_matrix)
   expect_equal(corr$correlation_fit, sqrt(sum(c(0, -2, -2) ^ 2)) / 3)
@@ -34,14 +34,14 @@ test_that("cor_fit is correct with postsynth ", {
 })
 
 # test with data
-test_that("cor_fit is correct with postsynth ", {
+test_that("util_corr_fit is correct with postsynth ", {
   
   syn <- data.frame(a = c(1, 2, 3),
                     c = c(3, 2, 1),
                     b = c(1, 2, 3),
                     RECID = c("a", "b", "c"))
   
-  corr <- cor_fit(postsynth = syn, data = df)
+  corr <- util_corr_fit(postsynth = syn, data = df)
 
   expect_equal(corr$correlation_difference, diff_matrix)
   expect_equal(corr$correlation_fit, sqrt(sum(c(0, -2, -2) ^ 2)) / 3)
