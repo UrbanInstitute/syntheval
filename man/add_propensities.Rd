@@ -4,18 +4,20 @@
 \alias{add_propensities}
 \title{Title}
 \usage{
-add_propensities(postsynth, data, object, save_fit = TRUE)
+add_propensities(
+  discrimination,
+  recipe = NULL,
+  formula = NULL,
+  spec,
+  save_fit = TRUE
+)
 }
 \arguments{
-\item{postsynth}{}
-
-\item{data}{}
+\item{save_fit}{is required for the pMSE ratio}
 
 \item{object}{A parsnip model specification or a
 \href{http://127.0.0.1:30225/help/library/workflows/help/workflow}{workflows::workflow()}.
 No tuning parameters are allowed.}
-
-\item{save_fit}{is required for the pMSE ratio}
 }
 \description{
 Title

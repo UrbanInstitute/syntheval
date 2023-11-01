@@ -1,8 +1,5 @@
-
 #' Title
 #'
-#' @param postsynth 
-#' @param data 
 #' @param object A parsnip model specification or a 
 #' [workflows::workflow()](http://127.0.0.1:30225/help/library/workflows/help/workflow). 
 #' No tuning parameters are allowed.
@@ -13,44 +10,55 @@
 #' @export
 #'
 add_propensities <- function(
-    postsynth,
-    data,
-    recipe,
+    discrimination,
+    recipe = NULL,
+    formula = NULL,
     spec,
     save_fit = TRUE
 ) {
   
-  if (is_postsynth(postsynth)) {
+  if (!is_discrimination(discrimination)) {
     
-    synthetic_data <- postsynth$synthetic_data
-    
-    variable_order <- 
-      levels(postsynth$jth_synthesis_time$variable)
-    
-  } else {
-    
-    synthetic_data <- postsynth
+    stop("Error: discrimination must be of class discrimination. Use discrimination() before add_propensities()")
     
   }
   
-  ## combine original and synthetic data and add group indicator
-  comb_data <- dplyr::bind_rows(
-    original = data,
-    synthetic = dplyr::select(synthetic_data, colnames(data)),
-    .id = "id"
-  ) %>%
-    dplyr::mutate(id = factor(.data$id))
+  if (!is.null(recipe) & !is.null(formula)) {
+    
+    stop("Error: recipe and formula can't both be null")
+    
+  }
   
-  updated_recipe <- recipe %>%
-    update_role(id, new_role = "outcome")
+  if (is.null(recipe)) {
+    
+    if (is.null(formula)) {
+    
+      recipe <- recipes::recipe(.source_label ~ ., data = discrimination$combined_data)
+    
+    } else if (!is.null(formula)) {
+      
+      recipe <- recipes::recipe(formula, data = discrimination$combined_data)
+      
+    }
+    
+  }
   
   # fit model
-  wf <- workflow() %>%
-    add_model(spec = spec) %>%
-    add_recipe(recipe = recipe) 
+  wf <- workflows::workflow() %>%
+    workflows::add_model(spec = spec) %>%
+    workflows::add_recipe(recipe = recipe) 
   
-  wf %>%
-    fit(data = comb_data)
+  fitted_model <- wf %>%
+    parsnip::fit(data = discrimination$combined_data)
+
+  propensities_df <- dplyr::bind_cols(
+     stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
+     discrimination$combined_data
+  )
+   
+  discrimination$propensities <- propensities_df
+  
+  return(discrimination)
   
 }
 
