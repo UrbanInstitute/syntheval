@@ -39,17 +39,17 @@ util_ci_overlap <- function(postsynth, data, formula) {
     suffix = c("_original", "_synthetic")
   )
   
-  ci_overlap <- diff_table |>
+  ci_overlap <- diff_table %>%
     # calculate max bounds for formula
     dplyr::mutate(
       overlap_lower = pmax(.data$conf.low_original, .data$conf.low_synthetic),
       overlap_upper = pmin(.data$conf.high_original, .data$conf.high_synthetic)
-    ) |>
+    ) %>%
     # calculate confidence interval overlap
     dplyr::mutate(
       overlap = 0.5 * (((.data$overlap_upper - .data$overlap_lower) / (.data$conf.high_original - .data$conf.low_original)) +
                          ((.data$overlap_upper - .data$overlap_lower) / (.data$conf.high_synthetic - .data$conf.low_synthetic)))
-    ) |>
+    ) %>%
     # calculate other regression metrics
     dplyr::mutate(
       coef_diff = .data$estimate_synthetic - .data$estimate_original,
@@ -60,7 +60,7 @@ util_ci_overlap <- function(postsynth, data, formula) {
         (.data$p.value_original > 0.05 & .data$p.value_synthetic > 0.05),
       ss_match = .data$sign_match & .data$significance_match,
       sso_match = .data$sign_match & .data$overlap > 0
-    ) |>
+    ) %>%
     dplyr::select(
       "term", "overlap", "coef_diff", "std_coef_diff", "sign_match", 
       "significance_match", "ss_match", "sso_match"
