@@ -7,7 +7,10 @@
 add_specks(discrimination)
 }
 \arguments{
-\item{discrimination}{}
+\item{discrimination}{A discrimination with added propensities}
+}
+\value{
+A discrimination with SPECKS
 }
 \description{
 Add SPECKS to discrimination object

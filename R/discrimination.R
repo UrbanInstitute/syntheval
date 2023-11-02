@@ -48,6 +48,7 @@ discrimination <- function(postsynth, data) {
     propensities = NULL,
     discriminator = NULL,
     discriminator_auc = NULL,
+    pmse = NULL,
     specks = NULL
   )
   

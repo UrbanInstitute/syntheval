@@ -2,6 +2,7 @@
 
 export("%>%")
 export(add_discriminator_auc)
+export(add_pmse)
 export(add_propensities)
 export(add_specks)
 export(discrimination)

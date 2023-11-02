@@ -7,7 +7,7 @@
 add_discriminator_auc(discrimination)
 }
 \arguments{
-\item{discrimination}{}
+\item{discrimination}{A discrimination with added propensities}
 }
 \value{
 A discrimination with discriminator AUC
