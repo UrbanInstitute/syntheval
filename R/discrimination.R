@@ -47,8 +47,8 @@ discrimination <- function(postsynth, data) {
     combined_data = combined_data,
     propensities = NULL,
     discriminator = NULL,
-    discriminator = NULL,
-    discriminator_auc = NULL
+    discriminator_auc = NULL,
+    specks = NULL
   )
   
   attr(discrimination, "class") <- "discrimination"

@@ -1,6 +1,6 @@
 #' Add discriminator AUC to discrimination object
 #'
-#' @param discrimination 
+#' @param discrimination A discrimination with added propensities
 #'
 #' @return A discrimination with discriminator AUC
 #' 

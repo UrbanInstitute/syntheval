@@ -3,6 +3,7 @@
 export("%>%")
 export(add_discriminator_auc)
 export(add_propensities)
+export(add_specks)
 export(discrimination)
 export(null_pmse)
 export(pmse)
