@@ -2,13 +2,16 @@
 % Please edit documentation in R/add_discriminator_auc.R
 \name{add_discriminator_auc}
 \alias{add_discriminator_auc}
-\title{Title}
+\title{Add discriminator AUC to discrimination object}
 \usage{
 add_discriminator_auc(discrimination)
 }
 \arguments{
 \item{discrimination}{}
 }
+\value{
+A discrimination with discriminator AUC
+}
 \description{
-Title
+Add discriminator AUC to discrimination object
 }

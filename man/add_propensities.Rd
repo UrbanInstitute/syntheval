@@ -2,7 +2,7 @@
 % Please edit documentation in R/add_propensities.R
 \name{add_propensities}
 \alias{add_propensities}
-\title{Title}
+\title{Add propensities for if an observation belongs to the synthetic data}
 \usage{
 add_propensities(
   discrimination,
@@ -19,6 +19,10 @@ add_propensities(
 \href{http://127.0.0.1:30225/help/library/workflows/help/workflow}{workflows::workflow()}.
 No tuning parameters are allowed.}
 }
+\value{
+A discrimination object with propensities and a fitted model for
+generating propensities
+}
 \description{
-Title
+Add propensities for if an observation belongs to the synthetic data
 }

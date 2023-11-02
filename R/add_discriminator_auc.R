@@ -1,8 +1,8 @@
-#' Title
+#' Add discriminator AUC to discrimination object
 #'
 #' @param discrimination 
 #'
-#' @return
+#' @return A discrimination with discriminator AUC
 #' 
 #' @export
 #'

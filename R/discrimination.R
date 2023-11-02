@@ -3,7 +3,7 @@
 #' @param postsynth A postsynth object from tidysynthesis or a tibble
 #' @param data an original (observed) data set.
 #'
-#' @return
+#' @return A list of class discrimination
 #' 
 #' @export
 #'
@@ -45,6 +45,8 @@ discrimination <- function(postsynth, data) {
   
   discrimination <- list(
     combined_data = combined_data,
+    propensities = NULL,
+    discriminator = NULL,
     discriminator = NULL,
     discriminator_auc = NULL
   )

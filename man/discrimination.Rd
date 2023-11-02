@@ -11,6 +11,9 @@ discrimination(postsynth, data)
 
 \item{data}{an original (observed) data set.}
 }
+\value{
+A list of class discrimination
+}
 \description{
 Combine synthetic data and data for a discriminant based metric
 }

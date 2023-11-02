@@ -1,11 +1,12 @@
-#' Title
+#' Add propensities for if an observation belongs to the synthetic data
 #'
 #' @param object A parsnip model specification or a 
 #' [workflows::workflow()](http://127.0.0.1:30225/help/library/workflows/help/workflow). 
 #' No tuning parameters are allowed.
 #' @param save_fit is required for the pMSE ratio
 #'
-#' @return
+#' @return A discrimination object with propensities and a fitted model for
+#' generating propensities
 #' 
 #' @export
 #'
@@ -56,6 +57,7 @@ add_propensities <- function(
      discrimination$combined_data
   )
    
+  discrimination$discriminator <- fitted_model
   discrimination$propensities <- propensities_df
   
   return(discrimination)
