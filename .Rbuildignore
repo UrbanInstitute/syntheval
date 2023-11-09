@@ -4,3 +4,4 @@
 ^README\.Rmd$
 ^data-raw$
 ^test.R
+disriminators.qmd
