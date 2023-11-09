@@ -89,7 +89,7 @@ util_percentiles <- function(postsynth,
 
     summary_stats <- combined_data %>%
       dplyr::group_by(source, dplyr::across({{ group_by }})) %>%
-      dplyr::summarise(
+      dplyr::reframe(
         dplyr::across(
           .cols = dplyr::everything(),
           .fns = ~ Hmisc::wtd.quantile(
