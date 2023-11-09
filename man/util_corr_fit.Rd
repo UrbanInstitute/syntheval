@@ -28,6 +28,7 @@ Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
 Other utility functions: 
+\code{\link{util_co_occurrence}()},
 \code{\link{util_moments}()},
 \code{\link{util_percentiles}()},
 \code{\link{util_tails}()},
