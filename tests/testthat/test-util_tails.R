@@ -1,79 +1,65 @@
-# test df (8 /8 combinations)
 df <- data.frame(
-  a = c(1000, 1000, 1000),
-  b = c(-1200, -800, 1000),
-  c = c("1", "1", "2"),
-  d = c(0, 0, 10), 
-  weight = c(100, 100, 100)
+  a = c(1, 2, 3, 4),
+  b = c(1, 2, 3, 4),
+  c = c("a", "a", "b", "b")
 )
 
-# test synth (4 of 8 combinations)
-syn <- list(
-  synthetic_data = data.frame(
-    a = c(1400, 0, 1000),
-    b = c(1000, 1000, 1000),
-    c = c("1", "1", "2"),
-    d = c(20, 10, 0), 
-    weight = c(100, 100, 100)
-  ),
-  jth_synthesis_time = data.frame(
-    variable = factor(c("a", "b", "d", "weight"))
-  )
-) %>%
-  structure(class = "postsynth")
+test_that("KS is 0 ", {
 
-test_that("unweighted tails make sense ", {
+  syn <- list(
+    synthetic_data = data.frame(
+      a = c(1, 2, 3, 4),
+      b = c(1, 2, 3, 4),
+      c = c("a", "a", "b", "b")
+    ),
+    jth_synthesis_time = data.frame(
+      variable = factor(c("a", "b"))
+    )
+  ) %>%
+    structure(class = "postsynth")
   
-  test1 <- util_tails(postsynth = syn, data = df, n = 2)
+  D <- util_d(postsynth = syn, data = df)
   
-  # does the dimension make sense?
-  expect_equal(
-    dim(test1),
-    c(16, 7)
-  )
-  
-  # do the ranks make sense
-  expect_equal(
-    test1$.rank,
-    c(1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2)
-  )
-  
-  # are the weighted values equal to the unweighted values (weight = 1)
-  expect_equal(
-    test1$.value,
-    test1$.weighted_value
-  )
+  expect_equal(D$D, rep(0, 8))
   
 })
 
+test_that("KS distance if 0.5 ", {
 
-test_that("weighted tails make sense ", {
+  syn <- list(
+    synthetic_data = data.frame(
+      a = c(3, 4, 5, 6),
+      b = c(3, 4, 5, 6),
+      c = c("a", "a", "b", "b")
+    ),
+    jth_synthesis_time = data.frame(
+      variable = factor(c("a", "b"))
+    )
+  ) %>%
+    structure(class = "postsynth")
   
-  test2 <- util_tails(syn, df, weight_var = weight, n = 2)
+  D <- util_d(postsynth = syn, data = df)
   
-  expect_equal(
-    test2$.value * 100,
-    test2$.weighted_value
-  )
+  expect_equal(D$D, rep(0.5, 4))
   
-  test2_subset <- dplyr::filter(test2, variable == "d")
-  
-  # check the weighted value column
-  expect_equal(
-    test2_subset$.weighted_value,
-    c(1000, 0, 2000, 1000)
-  )
-  
-  # check the weighted proportion column
-  expect_equal(
-    test2_subset$.weighted_prop,
-    c(1, 0, 2 / 3, 1 / 3)
-  )
-  
-  # check the cumulative proportion column
-  expect_equal(
-    test2_subset$.cumulative_prop,
-    c(1, 1, 2 / 3, 1)
-  )
+})
 
+test_that("KS distance is 1 ", {
+  
+  syn <- list(
+    synthetic_data = data.frame(
+      a = c(60, 70, 80, 90),
+      b = c(60, 70, 80, 90),
+      c = c("a", "a", "b", "b")
+    ),
+    jth_synthesis_time = data.frame(
+      variable = factor(c("a", "b"))
+    )
+  ) %>%
+    structure(class = "postsynth")
+  
+  D <- util_d(postsynth = syn, data = df)
+  
+  expect_equal(D$D, c(1, 1))
+  
 })
