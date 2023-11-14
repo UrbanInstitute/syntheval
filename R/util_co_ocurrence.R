@@ -10,6 +10,10 @@
 #'  `co_occurrence_original`.
 #'  `co_occurrence_synthetic` and `co_occurrence_original`, divided by the number of
 #'  cells in the co-occurrence matrix.
+#'  - `co_occurrence_difference_mae`: Mean absolute error between 
+#'  `co_occurrence_original` and `co_occurrence_synthetic`
+#'  - `co_occurrence_difference_rmse`: Root mean squared error between 
+#'  `co_occurrence_original` and `co_occurrence_synthetic`
 #'  
 #' @family utility functions
 #'

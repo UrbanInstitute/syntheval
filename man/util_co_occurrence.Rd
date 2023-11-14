@@ -20,6 +20,10 @@ A \code{list} of fit metrics:
 \code{co_occurrence_original}.
 \code{co_occurrence_synthetic} and \code{co_occurrence_original}, divided by the number of
 cells in the co-occurrence matrix.
+\item \code{co_occurrence_difference_mae}: Mean absolute error between
+\code{co_occurrence_original} and \code{co_occurrence_synthetic}
+\item \code{co_occurrence_difference_rmse}: Root mean squared error between
+\code{co_occurrence_original} and \code{co_occurrence_synthetic}
 }
 }
 \description{
