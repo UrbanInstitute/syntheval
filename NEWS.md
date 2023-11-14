@@ -1,3 +1,14 @@
+# syntheval 0.0.2
+
+## New Features
+
+* Add `util_co_occurrence()` for comparing co-occurrence matrices from the original and synthetic data.
+* Add `util_ks_distance()` for calculating the KS distance (D) for each numeric variable in the original and synthetic data.
+
+## Improvements
+
+* Use `reframe()` in `util_percentiles()` instead of `summarize()` to minimize warnings.
+
 # syntheval 0.0.1
 
 ## New Features
