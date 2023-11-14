@@ -25,6 +25,7 @@ Explore the tails of numeric variables
 }
 \seealso{
 Other utility functions: 
+\code{\link{util_co_occurrence}()},
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
 \code{\link{util_percentiles}()},

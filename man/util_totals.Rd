@@ -23,6 +23,7 @@ Calculate totals for original and synthetic data.
 }
 \seealso{
 Other utility functions: 
+\code{\link{util_co_occurrence}()},
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
 \code{\link{util_percentiles}()},

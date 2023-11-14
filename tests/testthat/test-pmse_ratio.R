@@ -1,5 +1,3 @@
-library(dplyr)
-
 postsynth <- penguins_syn
 
 test_that("Is the pMSE ratio 0 for identical data?", {
