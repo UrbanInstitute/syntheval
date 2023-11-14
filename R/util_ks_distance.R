@@ -1,5 +1,5 @@
-#' Calculate the KS distance (D) for each numeric variable in the synthetic and 
-#' confidential data
+#' Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in 
+#' the synthetic and confidential data
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data

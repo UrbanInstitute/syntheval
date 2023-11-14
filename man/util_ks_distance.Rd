@@ -2,8 +2,8 @@
 % Please edit documentation in R/util_ks_distance.R
 \name{util_ks_distance}
 \alias{util_ks_distance}
-\title{Calculate the KS distance (D) for each numeric variable in the synthetic and
-confidential data}
+\title{Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in
+the synthetic and confidential data}
 \usage{
 util_ks_distance(postsynth, data)
 }
@@ -17,6 +17,6 @@ A tibble with the D and location of the largest distance for each
 numeric variable
 }
 \description{
-Calculate the KS distance (D) for each numeric variable in the synthetic and
-confidential data
+Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in
+the synthetic and confidential data
 }
