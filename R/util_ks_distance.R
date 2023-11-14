@@ -1,4 +1,5 @@
-#' Calculate the KS distance (D) for numeric variables
+#' Calculate the KS distance (D) for each numeric variable in the synthetic and 
+#' confidential data
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
@@ -8,7 +9,7 @@
 #' 
 #' @export
 #'
-util_d <- function(postsynth, data) {
+util_ks_distance <- function(postsynth, data) {
   
   if ("postsynth" %in% class(postsynth)) {
     
@@ -29,6 +30,22 @@ util_d <- function(postsynth, data) {
   
   # find common variables
   variables <- intersect(names(synthetic_data), names(data))
+  
+  var_not_in_synthetic <- setdiff(names(data), names(synthetic_data))
+  if (length(var_not_in_synthetic) > 0) {
+    
+    warning("The following variables are in the confidential data but not the synthetic data: ", 
+            paste(var_not_in_synthetic, collapse = ", "))
+    
+  }
+    
+  var_not_in_conf <- setdiff(names(synthetic_data), names(data))
+  if (length(var_not_in_conf) > 0) {
+    
+    warning("The following variables are in the synthetic data but not the confidential data: ", 
+            paste(var_not_in_conf, sep = ", "))
+    
+  }
   
   # find common minimum and common maximum
   # create grid

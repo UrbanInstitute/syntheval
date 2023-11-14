@@ -18,7 +18,7 @@ test_that("KS is 0 ", {
   ) %>%
     structure(class = "postsynth")
   
-  D <- util_d(postsynth = syn, data = df)
+  D <- util_ks_distance(postsynth = syn, data = df)
   
   expect_equal(D$D, rep(0, 8))
   
@@ -38,7 +38,7 @@ test_that("KS distance if 0.5 ", {
   ) %>%
     structure(class = "postsynth")
   
-  D <- util_d(postsynth = syn, data = df)
+  D <- util_ks_distance(postsynth = syn, data = df)
   
   expect_equal(D$D, rep(0.5, 4))
   
@@ -58,7 +58,7 @@ test_that("KS distance is 1 ", {
   ) %>%
     structure(class = "postsynth")
   
-  D <- util_d(postsynth = syn, data = df)
+  D <- util_ks_distance(postsynth = syn, data = df)
   
   expect_equal(D$D, c(1, 1))
   
