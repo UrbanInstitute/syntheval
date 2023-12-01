@@ -5,6 +5,8 @@
 #'
 #' @return A list of class discrimination
 #' 
+#' @family Utility metrics
+#' 
 #' @export
 #'
 discrimination <- function(postsynth, data) {

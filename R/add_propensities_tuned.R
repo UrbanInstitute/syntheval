@@ -7,9 +7,10 @@
 #' @param grid a tibble with hyperparameters for tuning
 #' @param save_fit A logical for if the final model should be saved
 #'
-#'
 #' @return A discrimination object with propensities and a fitted model for
 #' generating propensities
+#' 
+#' @family Utility metrics
 #' 
 #' @export
 #'

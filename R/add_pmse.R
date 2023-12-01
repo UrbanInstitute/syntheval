@@ -6,7 +6,10 @@
 #'
 #' @return A discrimination with pMSE
 #' 
+#' @family Utility metrics
+#' 
 #' @export
+#' 
 add_pmse <- function(discrimination, split = TRUE) {
   
   calc_pmse <- function(propensities) {

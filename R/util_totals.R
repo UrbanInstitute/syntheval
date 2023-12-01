@@ -7,7 +7,7 @@
 #'
 #' @return A `tibble` of totals.
 #'
-#' @family utility functions
+#' @family utility metrics
 #'
 #' @export
 #'

@@ -4,6 +4,8 @@
 #' @param split A logical for if the metric should be calculated separately for 
 #' the training/testing split. Defaults to TRUE.
 #'
+#' @family Utility metrics
+#'
 #' @return A discrimination with SPECKS
 #' 
 #' @export

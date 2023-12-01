@@ -12,6 +12,8 @@
 #'
 #' @return A list with precision, recall, the confusion matrix, and ROC AUC
 #' 
+#' @family Disclosure risk metrics
+#' 
 #' @export
 #'
 disc_mit <- function(postsynth, data, holdout_data, threshold_percentile = NULL) {

@@ -8,7 +8,7 @@
 #'
 #' @return A `tibble` of summary statistics.
 #'
-#' @family utility functions
+#' @family utility metrics
 #'
 #' @export
 #'

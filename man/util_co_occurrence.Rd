@@ -30,11 +30,11 @@ cells in the co-occurrence matrix.
 Calculate the co-occurrence fit metric of a confidential data set.
 }
 \seealso{
-Other utility functions: 
+Other utility metrics: 
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
 \code{\link{util_percentiles}()},
 \code{\link{util_tails}()},
 \code{\link{util_totals}()}
 }
-\concept{utility functions}
+\concept{utility metrics}

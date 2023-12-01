@@ -7,6 +7,8 @@
 #'
 #' @return A discrimination with pMSE
 #' 
+#' @family Utility metrics
+#' 
 #' @export
 add_pmse_ratio <- function(discrimination, split = TRUE, times) {
   

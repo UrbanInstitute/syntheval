@@ -12,7 +12,7 @@
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
 #'  cells in the correlation matrix.
 #'  
-#' @family utility functions
+#' @family utility metrics
 #'
 #' @export
 

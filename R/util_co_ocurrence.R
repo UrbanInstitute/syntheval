@@ -15,7 +15,7 @@
 #'  - `co_occurrence_difference_rmse`: Root mean squared error between 
 #'  `co_occurrence_original` and `co_occurrence_synthetic`
 #'  
-#' @family utility functions
+#' @family utility metrics
 #'
 #' @export
 #' 

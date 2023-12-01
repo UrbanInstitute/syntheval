@@ -7,6 +7,8 @@
 #'
 #' @return A tibble with variables, classes, and relative frequencies
 #' 
+#' @family Utility metrics
+#' 
 #' @export
 #'
 util_proportions <- function(postsynth, data, weight_var = 1, 
