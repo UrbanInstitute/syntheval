@@ -13,11 +13,15 @@ add_propensities(
 )
 }
 \arguments{
-\item{save_fit}{is required for the pMSE ratio}
+\item{discrimination}{A discrimination object created by discrimination()}
 
-\item{object}{A parsnip model specification or a
-\href{http://127.0.0.1:30225/help/library/workflows/help/workflow}{workflows::workflow()}.
-No tuning parameters are allowed.}
+\item{recipe}{A recipe object from library(recipes)}
+
+\item{formula}{A formula for the discriminator model}
+
+\item{spec}{A model object from library(parsnip)}
+
+\item{save_fit}{A logical for if the final model should be saved}
 }
 \value{
 A discrimination object with propensities and a fitted model for

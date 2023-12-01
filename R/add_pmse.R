@@ -14,11 +14,11 @@ add_pmse <- function(discrimination, split = TRUE) {
     # calculate the expected propensity
     p_hat <- propensities %>%
       dplyr::summarize(
-        n_synthetic = sum(.source_label == "synthetic"),
+        n_synthetic = sum(.data$.source_label == "synthetic"),
         n_total = dplyr::n()
       ) %>%
-      dplyr::mutate(p_hat = n_synthetic / n_total) %>%
-      dplyr::pull(p_hat)
+      dplyr::mutate(p_hat = .data$n_synthetic / .data$n_total) %>%
+      dplyr::pull("p_hat")
     
     propensities_vec <- propensities %>%
       dplyr::pull(".pred_synthetic")
@@ -33,11 +33,11 @@ add_pmse <- function(discrimination, split = TRUE) {
   if (split) {
     
     pmse_training <- discrimination$propensities %>%
-      dplyr::filter(.sample == "training") %>%
+      dplyr::filter(.data$.sample == "training") %>%
       calc_pmse()
     
     pmse_testing <- discrimination$propensities %>%
-      dplyr::filter(.sample == "testing") %>%
+      dplyr::filter(.data$.sample == "testing") %>%
       calc_pmse()
     
     pmse <- tibble::tibble(

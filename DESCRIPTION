@@ -26,11 +26,16 @@ Imports:
     gower,
     Hmisc,
     magrittr,
+    parsnip,
+    recipes,
     rlang,
     rpart,
+    rsample,
     tibble,
     tidyr,
     tidyselect,
+    tune,
+    workflows,
     yardstick
 Depends: 
     R (>= 3.0)

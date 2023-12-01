@@ -1,9 +1,10 @@
 #' Add propensities for if an observation belongs to the synthetic data
 #'
-#' @param object A parsnip model specification or a 
-#' [workflows::workflow()](http://127.0.0.1:30225/help/library/workflows/help/workflow). 
-#' No tuning parameters are allowed.
-#' @param save_fit is required for the pMSE ratio
+#' @param discrimination A discrimination object created by discrimination()
+#' @param recipe A recipe object from library(recipes)
+#' @param formula A formula for the discriminator model
+#' @param spec A model object from library(parsnip)
+#' @param save_fit A logical for if the final model should be saved
 #'
 #' @return A discrimination object with propensities and a fitted model for
 #' generating propensities
@@ -50,7 +51,10 @@ add_propensities <- function(
     workflows::add_recipe(recipe = recipe) 
   
   # make training/testing split
-  data_split <- rsample::initial_split(discrimination$combined_data)
+  data_split <- rsample::initial_split(
+    data = discrimination$combined_data,
+    strata = ".source_label"
+  )
   
   # fit the model
   fitted_model <- wf %>%
@@ -67,7 +71,10 @@ add_propensities <- function(
         false = "testing"
       )
     ) %>%
-    dplyr::select(.pred_synthetic, .source_label, .sample, dplyr::everything())
+    dplyr::select(
+      dplyr::all_of(c(".pred_synthetic", ".source_label", ".sample")), 
+      dplyr::everything()
+    )
   
   discrimination$discriminator <- fitted_model
   discrimination$propensities <- propensities_df

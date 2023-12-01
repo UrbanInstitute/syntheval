@@ -1,10 +1,12 @@
 #' Add propensities for if an observation belongs to the synthetic data
 #'
-#' @param object A parsnip model specification or a 
-#' [workflows::workflow()](https://workflows.tidymodels.org/). 
-#' No tuning parameters are allowed.
-#' @param save_fit is required for the pMSE ratio
+#' @param discrimination A discrimination object created by discrimination()
+#' @param recipe A recipe object from library(recipes)
+#' @param formula A formula for the discriminator model
+#' @param spec A model object from library(parsnip)
 #' @param grid a tibble with hyperparameters for tuning
+#' @param save_fit A logical for if the final model should be saved
+#'
 #'
 #' @return A discrimination object with propensities and a fitted model for
 #' generating propensities
@@ -52,7 +54,10 @@ add_propensities_tuned <- function(
     workflows::add_recipe(recipe = recipe) 
   
   # make training/testing split
-  data_split <- rsample::initial_split(discrimination$combined_data)
+  data_split <- rsample::initial_split(
+    data = discrimination$combined_data,
+    strata = ".source_label"
+  )
 
   # create resamples for hyperparameter tuning
   folds <- rsample::vfold_cv(
@@ -78,7 +83,7 @@ add_propensities_tuned <- function(
     tune::last_fit(split = data_split) 
   
   # finalize the workflow for predictions
-  final_wf <- extract_workflow(x = final_fit)
+  final_wf <- tune::extract_workflow(x = final_fit)
   
   # calculate the propensities
   propensities_df <- dplyr::bind_cols(
@@ -92,7 +97,10 @@ add_propensities_tuned <- function(
         false = "testing"
       )
     ) %>%
-    dplyr::select(.pred_synthetic, .source_label, .sample, dplyr::everything())
+    dplyr::select(
+      dplyr::all_of(c(".pred_synthetic", ".source_label", ".sample")), 
+      dplyr::everything()
+    )
    
   discrimination$discriminator <- final_wf
   discrimination$propensities <- propensities_df

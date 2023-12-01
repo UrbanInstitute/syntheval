@@ -36,11 +36,11 @@ add_specks <- function(discrimination, split = TRUE) {
   if (split) {
     
     specks_training <- discrimination$propensities %>%
-      dplyr::filter(.sample == "training") %>%
+      dplyr::filter(.data$.sample == "training") %>%
       calc_specks()
     
     specks_testing <- discrimination$propensities %>%
-      dplyr::filter(.sample == "testing") %>%
+      dplyr::filter(.data$.sample == "testing") %>%
       calc_specks()
     
     specks <- tibble::tibble(

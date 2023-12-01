@@ -13,15 +13,15 @@ add_discriminator_auc <- function(discrimination, split = TRUE) {
   if (split) {
   
   discriminator_auc <- discrimination$propensities %>%
-    dplyr::group_by(.sample) %>%
-    yardstick::roc_auc(.source_label, .pred_synthetic) %>%
-    dplyr::mutate(.sample = factor(.sample, levels = c("training", "testing"))) %>%
-    dplyr::arrange(.sample)
+    dplyr::group_by(.data$.sample) %>%
+    yardstick::roc_auc(".source_label", ".pred_synthetic") %>%
+    dplyr::mutate(.sample = factor(.data$.sample, levels = c("training", "testing"))) %>%
+    dplyr::arrange(.data$.sample)
   
   } else {
     
     discriminator_auc <- discrimination$propensities %>%
-      yardstick::roc_auc(.source_label, .pred_synthetic) %>%
+      yardstick::roc_auc(".source_label", ".pred_synthetic") %>%
       dplyr::mutate(.sample = factor("overall", levels = "overall"))
     
   }
