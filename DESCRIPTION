@@ -29,7 +29,6 @@ Imports:
     parsnip,
     recipes,
     rlang,
-    rpart,
     rsample,
     tibble,
     tidyr,
@@ -37,6 +36,8 @@ Imports:
     tune,
     workflows,
     yardstick
+Suggestions:
+    rpart
 Depends: 
     R (>= 3.0)
 LazyData: true
