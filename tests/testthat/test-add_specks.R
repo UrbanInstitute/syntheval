@@ -23,11 +23,11 @@ test_that("add_specks returns perfect value for identical data (no split) " , {
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
   
-  disc <- discrimination(postsynth, data) |>
+  disc <- discrimination(postsynth, data) %>%
     add_propensities(
       recipe = rec,
       spec = logistic_mod
-    ) |>
+    ) %>%
     add_specks(split = FALSE)
   
   expect_equal(disc$specks$.specks, 0)
@@ -60,11 +60,11 @@ test_that("add_specks returns perfect value for identical data (split) " , {
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) |>
+    discrimination(postsynth, data) %>%
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) |>
+      ) %>%
       add_specks()
   )
     

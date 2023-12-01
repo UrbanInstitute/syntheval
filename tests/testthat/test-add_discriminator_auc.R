@@ -23,11 +23,11 @@ test_that("add_discriminator_auc returns perfect value for identical data (no sp
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
   
-  disc <- discrimination(postsynth, data) |>
+  disc <- discrimination(postsynth, data) %>%
     add_propensities(
       recipe = rec,
       spec = logistic_mod
-    ) |>
+    ) %>%
     add_discriminator_auc(split = FALSE)
   
   expect_equal(disc$discriminator_auc$.estimate, 0.5)
@@ -60,11 +60,11 @@ test_that("add_discriminator_auc returns perfect value for identical data (split
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) |>
+    discrimination(postsynth, data) %>%
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) |>
+      ) %>%
       add_discriminator_auc()
   )
   

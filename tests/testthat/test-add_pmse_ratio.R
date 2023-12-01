@@ -24,13 +24,18 @@ test_that("add_pmse returns perfect value for identical data (no split)" , {
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) |>
+    discrimination(postsynth, data) %>%
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) |>
-      add_pmse(split = FALSE)
+      ) 
   )
+  
+  expect_error(add_pmse_ratio(disc))
+  
+  disc <- disc %>%
+    add_pmse(split = FALSE) %>%
+    add_pmse_ratio(times = 25)
   
   expect_equal(round(disc$pmse$.pmse, digit = 3), 0)
   
@@ -62,14 +67,17 @@ test_that("add_pmse returns perfect value for identical data (split) " , {
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) |>
+    discrimination(postsynth, data) %>%
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) |>
-      add_pmse()
+      ) %>%
+      add_pmse() %>%
+      add_pmse_ratio(times = 25)
   )
   
-  expect_equal(round(disc$pmse$.pmse, digit = 3), c(0, 0))
+  expect_equal(disc$pmse$.pmse, c(0, 0))
+  expect_equal(disc$pmse$.null_pmse, c(0, 0))
+  expect_equal(disc$pmse$.pmse_ratio, c(NaN, NaN))
   
 })
