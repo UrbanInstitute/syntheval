@@ -1,11 +1,19 @@
 Package: syntheval
 Title: A set of tools for evaluating synthetic data utility and disclosure risk
-Version: 0.0.1
-Authors@R: 
-    person("Aaron", "Williams", , "awilliams@urban.org", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-5564-1938"))
-Description: What the package does (one paragraph).
+Version: 0.0.2
+Authors@R: c(
+    person(given = "Aaron R.", family = "Williams", 
+           email = "awilliams@urban.org", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-5564-1938")),
+    person("Gabe", "Morrison", , "gmorrison@urban.org", role = "ctb"),
+    person("Elyse", "McFalls", , "emcfalls@urban.org", role = "ctb")
+  )
+Maintainer: Aaron R. Williams <awilliams@urban.org>           
+Description: A set of tools for evaluating the utility and disclosure risks of 
+    synthetic data. The package works well with `library(tidysynthesis)` and on 
+    its own in other data privacy applications.
 License: AGPL (>= 3)
+BugReports: https://github.com/UI-Research/syntheval/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
@@ -13,17 +21,17 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
+    broom,
     dplyr,
+    gower,
+    Hmisc,
     magrittr,
     rlang,
     rpart,
-    ranger,
-    Hmisc,
-    broom,
+    tibble,
     tidyr,
     tidyselect,
-    yardstick,
-    tibble
+    yardstick
 Depends: 
-    R (>= 2.10)
+    R (>= 3.0)
 LazyData: true

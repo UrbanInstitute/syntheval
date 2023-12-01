@@ -1,7 +1,7 @@
 #' Add propensities for if an observation belongs to the synthetic data
 #'
 #' @param object A parsnip model specification or a 
-#' [workflows::workflow()](http://127.0.0.1:30225/help/library/workflows/help/workflow). 
+#' [workflows::workflow()](https://workflows.tidymodels.org/). 
 #' No tuning parameters are allowed.
 #' @param save_fit is required for the pMSE ratio
 #' @param grid a tibble with hyperparameters for tuning
@@ -70,21 +70,29 @@ add_propensities_tuned <- function(
   # add the tuned hyperparameters to the workflow
   tuned_wf <- 
     wf %>% 
-    tune::finalize_workflow(tune::select_best(vfold_results, metric = "roc_auc"))
+    tune::finalize_workflow(tune::select_best(x = vfold_results, metric = "roc_auc"))
   
   # fit the model with the best hyperparameters on all of the training data
   final_fit <- 
     tuned_wf %>%
-    tune::last_fit(data_split) 
+    tune::last_fit(split = data_split) 
   
   # finalize the workflow for predictions
-  final_wf <- extract_workflow(final_fit)
+  final_wf <- extract_workflow(x = final_fit)
   
   # calculate the propensities
   propensities_df <- dplyr::bind_cols(
      stats::predict(final_wf, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
      discrimination$combined_data
-  )
+  ) %>%
+    dplyr::mutate(
+      .sample = dplyr::if_else(
+        dplyr::row_number() %in% data_split$in_id, 
+        true = "training", 
+        false = "testing"
+      )
+    ) %>%
+    dplyr::select(.pred_synthetic, .source_label, .sample, dplyr::everything())
    
   discrimination$discriminator <- final_wf
   discrimination$propensities <- propensities_df

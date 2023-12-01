@@ -2,7 +2,7 @@
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
-#' @param probs A numeric vector of probabilities with values in [0,1]. The 
+#' @param probs A numeric vector of probabilities with values in \[0,1\]. The 
 #' percentiles are interpolated using an empirical CDF. It's possible that the
 #' percentiles are an approximation; especially when weights are used.
 #' @param group_by An unquoted name of a (or multiple) grouping variable(s)
@@ -68,7 +68,7 @@ util_percentiles <- function(postsynth,
     summary_stats <- combined_data %>%
       dplyr::group_by(source, dplyr::across({{ group_by }})) %>%
       dplyr::summarise(
-        across(
+        dplyr::across(
           .cols = dplyr::everything(),
           .fns = ~ stats::quantile(
             x = .x, 
@@ -78,18 +78,18 @@ util_percentiles <- function(postsynth,
         ),
         p = probs
       ) %>%
-      dplyr::select(p, dplyr::everything()) %>%
+      dplyr::select("p", dplyr::everything()) %>%
       dplyr::ungroup() %>%
-      tidyr::gather(key = "variable", value = "value", -source, -p, 
+      tidyr::gather(key = "variable", value = "value", -"source", -"p", 
                     -{{ group_by }}) %>%
-      tidyr::spread(key = source, value = value) %>%
-      dplyr::arrange(variable)
+      tidyr::spread(key = source, value = .data$value) %>%
+      dplyr::arrange(.data$variable)
 
   } else {
 
     summary_stats <- combined_data %>%
       dplyr::group_by(source, dplyr::across({{ group_by }})) %>%
-      dplyr::summarise(
+      dplyr::reframe(
         dplyr::across(
           .cols = dplyr::everything(),
           .fns = ~ Hmisc::wtd.quantile(
@@ -101,12 +101,12 @@ util_percentiles <- function(postsynth,
         ),
         p = probs
       ) %>%
-      dplyr::select(p, dplyr::everything()) %>%
+      dplyr::select("p", dplyr::everything()) %>%
       dplyr::ungroup() %>%
-      tidyr::gather(key = "variable", value = "value", -source, -p, 
+      tidyr::gather(key = "variable", value = "value", -"source", -"p", 
                     -{{ group_by }}) %>%
-      tidyr::spread(key = source, value = value) %>%
-      dplyr::arrange(variable)
+      tidyr::spread(key = source, value = .data$value) %>%
+      dplyr::arrange(.data$variable)
     
   }
     
@@ -125,7 +125,7 @@ util_percentiles <- function(postsynth,
   
   summary_stats <- summary_stats %>%
     dplyr::mutate(
-      variable = factor(variable, levels = variable_order),
+      variable = factor(.data$variable, levels = variable_order),
     ) %>%
     dplyr::arrange(.data$variable, .data$p)
     

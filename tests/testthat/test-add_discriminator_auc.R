@@ -1,4 +1,4 @@
-test_that("add_discriminator_auc returns perfect value for identical data " , {
+test_that("add_discriminator_auc returns perfect value for identical data (no split) " , {
   
   set.seed(1)
   
@@ -28,8 +28,46 @@ test_that("add_discriminator_auc returns perfect value for identical data " , {
       recipe = rec,
       spec = logistic_mod
     ) |>
-    add_discriminator_auc()
+    add_discriminator_auc(split = FALSE)
   
-  expect_equal(disc$discriminator_auc, 0.5)
+  expect_equal(disc$discriminator_auc$.estimate, 0.5)
+  
+})
+
+test_that("add_discriminator_auc returns perfect value for identical data (split) " , {
+  
+  set.seed(1)
+  
+  data <-
+    data.frame(
+      x = rep(1, 1000),
+      y = rep(1, 1000)
+    )
+  
+  postsynth <-
+    list(
+      synthetic_data = data,
+      jth_synthesis_time = data.frame(
+        variable = factor(c("x", "y"))
+      )
+    ) %>%
+    structure(class = "postsynth")
+  
+  logistic_mod <- parsnip::logistic_reg() %>%
+    parsnip::set_mode(mode = "classification") %>%
+    parsnip::set_engine(engine = "glm")
+  
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
+  
+  disc <- suppressWarnings(
+    discrimination(postsynth, data) |>
+      add_propensities(
+        recipe = rec,
+        spec = logistic_mod
+      ) |>
+      add_discriminator_auc()
+  )
+  
+  expect_equal(disc$discriminator_auc$.estimate, c(0.5, 0.5))
   
 })

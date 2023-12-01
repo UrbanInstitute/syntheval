@@ -10,12 +10,12 @@ test_that("overlap is zero for identical data ", {
   expect_equal(overlap1$ci_overlap$ss_match, c(TRUE, TRUE))
   expect_equal(overlap1$ci_overlap$sso_match, c(TRUE, TRUE))
   
-  original1 <- overlap1$coefficient |>
-    dplyr::filter(source == "original") |>
+  original1 <- overlap1$coefficient %>%
+    dplyr::filter(source == "original") %>%
     dplyr::select(-source)
   
-  synthetic1 <- overlap1$coefficient |>
-    dplyr::filter(source == "synthetic") |>
+  synthetic1 <- overlap1$coefficient %>%
+    dplyr::filter(source == "synthetic") %>%
     dplyr::select(-source)
   
   expect_equal(original1, synthetic1)
@@ -27,8 +27,8 @@ test_that("overlap is 1 for adjacent data ", {
   
   # shift the outcome variable by twice the standard error for the intercept
   # this should create an adjacent confidence interval
-  std_error <- broom::tidy(lm(dist ~ speed, data = cars)) |>
-    dplyr::filter(term == "(Intercept)") |>
+  std_error <- broom::tidy(lm(dist ~ speed, data = cars)) %>%
+    dplyr::filter(term == "(Intercept)") %>%
     dplyr::pull(std.error)
   
   offset <- std_error * qt(p = 0.975, df = 48) * 2

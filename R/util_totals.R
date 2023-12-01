@@ -1,26 +1,24 @@
-#' Calculate summary statistics for original and synthetic data.
+#' Calculate totals for original and synthetic data.
 #'
 #' @param postsynth A postsynth object or tibble with synthetic data
 #' @param data A data frame with the original data
 #' @param weight_var An unquoted name of a weight variable
 #' @param group_by The unquoted name of a (or multiple) grouping variable(s)
-#' @param drop_zeros A Boolean for if zeros should be dropped
 #'
-#' @return A `tibble` of summary statistics.
+#' @return A `tibble` of totals.
 #'
 #' @family utility functions
 #'
 #' @export
 #'
-util_moments <- function(postsynth,
-                         data,
-                         weight_var = 1,
-                         group_by = NULL,
-                         drop_zeros = FALSE) {
+util_totals<- function(postsynth,
+                       data,
+                       weight_var = 1,
+                       group_by = NULL) {
   
   # catch binding error
   . <- NULL
-
+  
   if (is_postsynth(postsynth)) {
     
     synthetic_data <- postsynth$synthetic_data
@@ -49,15 +47,9 @@ util_moments <- function(postsynth,
   )
     
   na.rm_toggle <- FALSE
-  if (drop_zeros) {
-    
-    combined_data[combined_data == 0] <- NA
-    na.rm_toggle <- TRUE
-    
-  }
   
   # calculate summary statistics
-  summary_stats <- combined_data %>%
+  totals <- combined_data %>%
     dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
     dplyr::group_by(source, dplyr::across({{ group_by }})) %>% 
     dplyr::summarise(
@@ -65,10 +57,7 @@ util_moments <- function(postsynth,
         .cols = -".temp_weight",
         .fns = list(
           count = ~ sum((. != 0) * .data$.temp_weight, na.rm = na.rm_toggle),
-          mean = ~ stats::weighted.mean(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
-          sd = ~ weighted_sd(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
-          skewness = ~ weighted_skewness(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
-          kurtosis = ~ weighted_kurtosis(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle)
+          total = ~ sum(. * .data$.temp_weight, na.rm = na.rm_toggle)
         )
       )
     ) %>%
@@ -79,14 +68,14 @@ util_moments <- function(postsynth,
     tidyr::spread(key = source, value = .data$value) %>%
     dplyr::ungroup() 
   
-  summary_stats <- summary_stats  %>%
+  totals <- totals  %>%
     dplyr::mutate(
       difference = .data$synthetic - .data$original,
       proportion_difference = .data$difference / .data$original
     )
     
   statistics_order <- 
-    c("count", "mean", "sd", "skewness", "kurtosis")  
+    c("count", "total")  
   
   if (!is_postsynth(postsynth)) {
     
@@ -94,13 +83,13 @@ util_moments <- function(postsynth,
     
   }
   
-  summary_stats <- summary_stats %>%
+  totals <- totals %>%
     dplyr::mutate(
       variable = factor(.data$variable, levels = variable_order),
       statistic = factor(.data$statistic, levels = statistics_order)
     ) %>%
     dplyr::arrange(.data$variable, .data$statistic)
     
-  return(summary_stats)
+  return(totals)
   
 }

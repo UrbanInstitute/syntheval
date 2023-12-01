@@ -18,7 +18,7 @@ test_that("discrimination() returns the correct object when sysnthesizing a subs
   expect_message(discrimination(postsynth_narrow, penguins_conf))
   
   # create discrimination to test dimensions
-  discrimination <- discrimination(postsynth_narrow, penguins_conf)
+  discrimination <- suppressMessages(discrimination(postsynth_narrow, penguins_conf))
   
   expect_equal(nrow(discrimination$combined_data), nrow(postsynth_narrow$synthetic_data) + nrow(penguins_conf))
   

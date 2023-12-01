@@ -55,36 +55,36 @@ util_tails <- function(postsynth,
   
   # multiple values by weight
   long_data <- long_data %>%
-    dplyr::mutate(.weighted_value = .value * {{ weight_var }})
+    dplyr::mutate(.weighted_value = .data$.value * {{ weight_var }})
     
   # calculate proportion of total contained in each observation
   long_data <- long_data %>%
-    dplyr::group_by(source, variable) %>%
-    dplyr::mutate(.weighted_prop = .weighted_value / sum(.weighted_value))
+    dplyr::group_by(source, .data$variable) %>%
+    dplyr::mutate(.weighted_prop = .data$.weighted_value / sum(.data$.weighted_value))
   
   # keep top n
   if (end == "max") {
     
     long_data <- long_data %>%
-      dplyr::group_by(source, variable) %>%
-      dplyr::slice_max(.weighted_value, n = n, with_ties = FALSE) %>%
+      dplyr::group_by(source, .data$variable) %>%
+      dplyr::slice_max(.data$.weighted_value, n = n, with_ties = FALSE) %>%
       dplyr::ungroup()
     
   } else if (end == "min") {
     
     long_data <- long_data %>%
-      dplyr::group_by(source, variable) %>%
-      dplyr::slice_min(.weighted_value, n = n, with_ties = FALSE) %>%
+      dplyr::group_by(source, .data$variable) %>%
+      dplyr::slice_min(.data$.weighted_value, n = n, with_ties = FALSE) %>%
       dplyr::ungroup()
     
   }
   
   # add rank and cumulative proportion variable
   long_data <- long_data %>%
-    dplyr::group_by(source, variable) %>%
+    dplyr::group_by(source, .data$variable) %>%
     dplyr::mutate(
       .rank = dplyr::row_number(),
-      .cumulative_prop = cumsum(.weighted_prop)
+      .cumulative_prop = cumsum(.data$.weighted_prop)
     ) %>%
     dplyr::ungroup()
   

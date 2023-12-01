@@ -18,7 +18,7 @@ util_percentiles(
 
 \item{data}{A data frame with the original data}
 
-\item{probs}{A numeric vector of probabilities with values in \link{0,1}. The
+\item{probs}{A numeric vector of probabilities with values in [0,1]. The
 percentiles are interpolated using an empirical CDF. It's possible that the
 percentiles are an approximation; especially when weights are used.}
 
@@ -36,8 +36,10 @@ Calculate summary statistics for original and synthetic data.
 }
 \seealso{
 Other utility functions: 
+\code{\link{util_co_occurrence}()},
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
-\code{\link{util_tails}()}
+\code{\link{util_tails}()},
+\code{\link{util_totals}()}
 }
 \concept{utility functions}

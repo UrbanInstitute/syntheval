@@ -44,19 +44,31 @@ add_propensities <- function(
     
   }
   
-  # fit model
+  # create a workflow to organize the recipe and model
   wf <- workflows::workflow() %>%
     workflows::add_model(spec = spec) %>%
     workflows::add_recipe(recipe = recipe) 
   
+  # make training/testing split
+  data_split <- rsample::initial_split(discrimination$combined_data)
+  
+  # fit the model
   fitted_model <- wf %>%
-    parsnip::fit(data = discrimination$combined_data)
+    parsnip::fit(data = rsample::training(data_split))
 
   propensities_df <- dplyr::bind_cols(
-     stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
-     discrimination$combined_data
-  )
-   
+    stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
+    discrimination$combined_data
+  ) %>%
+    dplyr::mutate(
+      .sample = dplyr::if_else(
+        dplyr::row_number() %in% data_split$in_id, 
+        true = "training", 
+        false = "testing"
+      )
+    ) %>%
+    dplyr::select(.pred_synthetic, .source_label, .sample, dplyr::everything())
+  
   discrimination$discriminator <- fitted_model
   discrimination$propensities <- propensities_df
   

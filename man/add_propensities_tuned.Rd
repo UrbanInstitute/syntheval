@@ -19,7 +19,7 @@ add_propensities_tuned(
 \item{save_fit}{is required for the pMSE ratio}
 
 \item{object}{A parsnip model specification or a
-\href{http://127.0.0.1:30225/help/library/workflows/help/workflow}{workflows::workflow()}.
+\href{https://workflows.tidymodels.org/}{workflows::workflow()}.
 No tuning parameters are allowed.}
 }
 \value{

@@ -4,10 +4,13 @@
 \alias{add_pmse}
 \title{Add pMSE to discrimination object}
 \usage{
-add_pmse(discrimination)
+add_pmse(discrimination, split = TRUE)
 }
 \arguments{
 \item{discrimination}{A discrimination with added propensities}
+
+\item{split}{A logical for if the metric should be calculated separately for
+the training/testing split. Defaults to TRUE.}
 }
 \value{
 A discrimination with pMSE

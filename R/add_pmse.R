@@ -1,26 +1,61 @@
 #' Add pMSE to discrimination object
 #'
 #' @param discrimination A discrimination with added propensities
+#' @param split A logical for if the metric should be calculated separately for 
+#' the training/testing split. Defaults to TRUE.
 #'
 #' @return A discrimination with pMSE
 #' 
 #' @export
-add_pmse <- function(discrimination) {
+add_pmse <- function(discrimination, split = TRUE) {
   
-  # calculate the expected propensity
-  p_hat <- discrimination$propensities %>%
-    dplyr::summarize(
-      n_synthetic = sum(.source_label == "synthetic"),
-      n_total = dplyr::n()
-    ) %>%
-    dplyr::mutate(p_hat = n_synthetic / n_total) %>%
-    dplyr::pull(p_hat)
+  calc_pmse <- function(propensities) {
+    
+    # calculate the expected propensity
+    p_hat <- propensities %>%
+      dplyr::summarize(
+        n_synthetic = sum(.source_label == "synthetic"),
+        n_total = dplyr::n()
+      ) %>%
+      dplyr::mutate(p_hat = n_synthetic / n_total) %>%
+      dplyr::pull(p_hat)
+    
+    propensities_vec <- propensities %>%
+      dplyr::pull(".pred_synthetic")
+    
+    # calculate the observed pMSE
+    pmse <- mean((propensities_vec - p_hat) ^ 2)
+    
+    return(pmse)
+    
+  }
   
-  propensities <- discrimination$propensities %>%
-    dplyr::pull(".pred_synthetic")
-  
-  # calculate the observed pMSE
-  pmse <- mean((propensities - p_hat) ^ 2)
+  if (split) {
+    
+    pmse_training <- discrimination$propensities %>%
+      dplyr::filter(.sample == "training") %>%
+      calc_pmse()
+    
+    pmse_testing <- discrimination$propensities %>%
+      dplyr::filter(.sample == "testing") %>%
+      calc_pmse()
+    
+    pmse <- tibble::tibble(
+      .source = factor(c("training", "testing"), levels = c("training", "testing")),
+      .pmse = c(pmse_training, pmse_testing)
+    )
+    
+  } else {
+    
+    pmse_overall <- discrimination$propensities %>%
+      calc_pmse()
+    
+    pmse <- tibble::tibble(
+      .source = factor("overall", levels = "overall"),
+      .pmse = pmse_overall
+    )
+    
+  }
   
   discrimination$pmse <- pmse
   
