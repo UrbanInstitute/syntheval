@@ -1,23 +1,25 @@
 #' Add discriminator AUC to discrimination object
 #'
-#' @param discrimination A discrimination with added propensities
+#' @param discrimination A discrimination object with propensities (likely 
+#' added using add_propensities())
 #' @param split A logical for if the metric should be calculated separately for 
 #' the training/testing split. Defaults to TRUE.
 #'
-#' @return A discrimination with discriminator AUC
+#' @return A discrimination object with propensities (likely added using 
+#' add_propensities()) with discriminator AUC
 #' 
 #' @export
 #'
 add_discriminator_auc <- function(discrimination, split = TRUE) {
   
   if (split) {
-  
-  discriminator_auc <- discrimination$propensities %>%
-    dplyr::group_by(.data$.sample) %>%
-    yardstick::roc_auc(".source_label", ".pred_synthetic") %>%
-    dplyr::mutate(.sample = factor(.data$.sample, levels = c("training", "testing"))) %>%
-    dplyr::arrange(.data$.sample)
-  
+    
+    discriminator_auc <- discrimination$propensities %>%
+      dplyr::group_by(.data$.sample) %>%
+      yardstick::roc_auc(".source_label", ".pred_synthetic") %>%
+      dplyr::mutate(.sample = factor(.data$.sample, levels = c("training", "testing"))) %>%
+      dplyr::arrange(.data$.sample)
+    
   } else {
     
     discriminator_auc <- discrimination$propensities %>%

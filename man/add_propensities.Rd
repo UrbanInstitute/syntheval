@@ -15,11 +15,14 @@ add_propensities(
 \arguments{
 \item{discrimination}{A discrimination object created by discrimination()}
 
-\item{recipe}{A recipe object from library(recipes)}
+\item{recipe}{A recipe object from library(recipes). A recipe can't be used
+if a formula is provided.}
 
-\item{formula}{A formula for the discriminator model}
+\item{formula}{A formula for the discriminator model. A formula can't be used
+if a recipe is provided.}
 
-\item{spec}{A model object from library(parsnip)}
+\item{spec}{A model object from library(parsnip). If no recipe or formula is
+specified, then all variables are used as predictors.}
 
 \item{save_fit}{A logical for if the final model should be saved}
 }

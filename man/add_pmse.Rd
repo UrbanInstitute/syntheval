@@ -7,13 +7,15 @@
 add_pmse(discrimination, split = TRUE)
 }
 \arguments{
-\item{discrimination}{A discrimination with added propensities}
+\item{discrimination}{A discrimination object with propensities (likely
+added using add_propensities())}
 
 \item{split}{A logical for if the metric should be calculated separately for
 the training/testing split. Defaults to TRUE.}
 }
 \value{
-A discrimination with pMSE
+A discrimination object with propensities (likely added using
+add_propensities()) with a pMSE
 }
 \description{
 Add pMSE to discrimination object

@@ -1,9 +1,12 @@
 #' Add propensities for if an observation belongs to the synthetic data
 #'
 #' @param discrimination A discrimination object created by discrimination()
-#' @param recipe A recipe object from library(recipes)
-#' @param formula A formula for the discriminator model
-#' @param spec A model object from library(parsnip)
+#' @param recipe A recipe object from library(recipes). A recipe can't be used
+#' if a formula is provided.
+#' @param formula A formula for the discriminator model. A formula can't be used
+#' if a recipe is provided.
+#' @param spec A model object from library(parsnip). If no recipe or formula is 
+#' specified, then all variables are used as predictors.
 #' @param save_fit A logical for if the final model should be saved
 #'
 #' @return A discrimination object with propensities and a fitted model for
@@ -27,7 +30,7 @@ add_propensities <- function(
   
   if (!is.null(recipe) & !is.null(formula)) {
     
-    stop("Error: recipe and formula can't both be null")
+    stop("Error: Cannot have both recipe and formula")
     
   }
   

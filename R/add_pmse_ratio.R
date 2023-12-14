@@ -19,19 +19,19 @@ add_pmse_ratio <- function(discrimination, split = TRUE, times) {
   calc_pmse <- function(propensities) {
     
     # calculate the expected propensity
-    p_hat <- propensities %>%
+    prop_synthetic <- propensities %>%
       dplyr::summarize(
         n_synthetic = sum(.data$.source_label == "synthetic"),
         n_total = dplyr::n()
       ) %>%
-      dplyr::mutate(p_hat = .data$n_synthetic / .data$n_total) %>%
-      dplyr::pull("p_hat")
+      dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) %>%
+      dplyr::pull("prop_synthetic")
     
     propensities_vec <- propensities %>%
       dplyr::pull(".pred_synthetic")
     
     # calculate the observed pMSE
-    pmse <- mean((propensities_vec - p_hat) ^ 2)
+    pmse <- mean((propensities_vec - prop_synthetic) ^ 2)
     
     return(pmse)
     
