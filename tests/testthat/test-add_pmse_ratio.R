@@ -38,6 +38,7 @@ test_that("add_pmse returns perfect value for identical data (no split)" , {
     add_pmse_ratio(times = 25)
   
   expect_equal(round(disc$pmse$.pmse, digit = 3), 0)
+  expect_equal(round(disc$pmse$.pmse_ratio, 5), 0.06446)
   
 })
 

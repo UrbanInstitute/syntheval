@@ -74,7 +74,7 @@ add_propensities <- function(
         false = "testing"
       )
     ) %>%
-    dplyr::select(
+    dplyr::relocate(
       dplyr::all_of(c(".pred_synthetic", ".source_label", ".sample")), 
       dplyr::everything()
     )
