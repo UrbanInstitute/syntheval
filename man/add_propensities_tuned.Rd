@@ -10,6 +10,8 @@ add_propensities_tuned(
   formula = NULL,
   spec,
   grid,
+  prop = 3/4,
+  v = 10,
   save_fit = TRUE
 )
 }
@@ -26,6 +28,12 @@ if a recipe is provided.}
 specified, then all variables are used as predictors.}
 
 \item{grid}{a tibble with hyperparameters for tuning}
+
+\item{prop}{The proportion of data to be retained for modeling/analysis in
+the training/testing split. The sampling is stratified by the original and
+synthetic data.}
+
+\item{v}{The number of partitions of the data set for cross validation.}
 
 \item{save_fit}{A logical for if the final model should be saved}
 }

@@ -3,12 +3,15 @@
 #' @param discrimination A discrimination with added propensities
 #' @param split A logical for if the metric should be calculated separately for 
 #' the training/testing split. Defaults to TRUE.
+#' @param prop The proportion of data to be retained for modeling/analysis in 
+#' the training/testing split. The sampling is stratified by the original and
+#' synthetic data.
 #' @param times The number of bootstrap samples.
 #'
 #' @return A discrimination with pMSE
 #' 
 #' @export
-add_pmse_ratio <- function(discrimination, split = TRUE, times) {
+add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
   
   if (is.null(discrimination$pmse)) {
     
@@ -55,46 +58,70 @@ add_pmse_ratio <- function(discrimination, split = TRUE, times) {
         dplyr::select(".source_label")
     )
 
-    # make training/testing split
-    data_split <- rsample::initial_split(
-      data = bootstrap_sample,
-      strata = ".source_label"
-    )
-    
-    # fit the model from the pMSE on the bootstrap sample
-    fitted_model <- parsnip::fit(
-      discrimination$discriminator, 
-      data = rsample::training(data_split)
-    )
-    
-    # calculate the propensities
-    propensities_df <- dplyr::bind_cols(
-      stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
-      discrimination$combined_data
-    ) %>%
-      dplyr::mutate(
-        .sample = dplyr::if_else(
-          dplyr::row_number() %in% data_split$in_id, 
-          true = "training", 
-          false = "testing"
-        )
+    if (split) {
+      
+      # make training/testing split
+      data_split <- rsample::initial_split(
+        data = bootstrap_sample,
+        prop = prop,
+        strata = ".source_label"
       )
-  
-    # calculate the pmse for each bootstrap
-    pmse_null_overall[a] <- calc_pmse(propensities_df)
-    pmse_null_training[a] <- propensities_df %>%
-      dplyr::filter(.data$.sample == "training") %>%
-      calc_pmse()
-    pmse_null_testing[a] <- propensities_df %>%
-      dplyr::filter(.data$.sample == "testing") %>%
-      calc_pmse()
+      
+      # fit the model from the pMSE on the bootstrap sample
+      fitted_model <- parsnip::fit(
+        discrimination$discriminator, 
+        data = rsample::training(data_split)
+      )
+      
+      # calculate the propensities
+      propensities_df <- dplyr::bind_cols(
+        stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
+        discrimination$combined_data
+      ) %>%
+        dplyr::mutate(
+          .sample = dplyr::if_else(
+            dplyr::row_number() %in% data_split$in_id, 
+            true = "training", 
+            false = "testing"
+          )
+        )
+      
+      # calculate the pmse for each bootstrap
+      pmse_null_overall[a] <- calc_pmse(propensities_df)
+      pmse_null_training[a] <- propensities_df %>%
+        dplyr::filter(.data$.sample == "training") %>%
+        calc_pmse()
+      pmse_null_testing[a] <- propensities_df %>%
+        dplyr::filter(.data$.sample == "testing") %>%
+        calc_pmse()
+      
+      # find the mean of the bootstrapped pMSEs
+      mean_null_pmse_training <- mean(pmse_null_training)
+      mean_null_pmse_testing <- mean(pmse_null_testing)
+      
+    } else {
+      
+      # fit the model from the pMSE on the bootstrap sample
+      fitted_model <- parsnip::fit(
+        discrimination$discriminator, 
+        data = bootstrap_sample
+      )
+      
+      # calculate the propensities
+      propensities_df <- dplyr::bind_cols(
+        stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
+        discrimination$combined_data
+      )
+      
+      # calculate the pmse for each bootstrap
+      pmse_null_overall[a] <- calc_pmse(propensities_df)
+      
+      # find the mean of the bootstrapped pMSEs
+      mean_null_pmse_overall <- mean(pmse_null_overall)
+    
+    }
     
   }
-  
-  # find the mean of the bootstrapped pMSEs
-  mean_null_pmse_overall <- mean(pmse_null_overall)
-  mean_null_pmse_training <- mean(pmse_null_training)
-  mean_null_pmse_testing <- mean(pmse_null_testing)
   
   # calculate the ratio for the training/testing split or overall data
   if (all(c("training", "testing") %in% discrimination$pmse$.source)) {

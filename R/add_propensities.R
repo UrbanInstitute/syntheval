@@ -7,6 +7,9 @@
 #' if a recipe is provided.
 #' @param spec A model object from library(parsnip). If no recipe or formula is 
 #' specified, then all variables are used as predictors.
+#' @param prop The proportion of data to be retained for modeling/analysis in 
+#' the training/testing split. The sampling is stratified by the original and
+#' synthetic data.
 #' @param save_fit A logical for if the final model should be saved
 #'
 #' @return A discrimination object with propensities and a fitted model for
@@ -19,6 +22,7 @@ add_propensities <- function(
     recipe = NULL,
     formula = NULL,
     spec,
+    prop = 3 / 4,
     save_fit = TRUE
 ) {
   
@@ -56,6 +60,7 @@ add_propensities <- function(
   # make training/testing split
   data_split <- rsample::initial_split(
     data = discrimination$combined_data,
+    prop = prop,
     strata = ".source_label"
   )
   

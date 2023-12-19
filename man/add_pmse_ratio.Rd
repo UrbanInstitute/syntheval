@@ -4,13 +4,17 @@
 \alias{add_pmse_ratio}
 \title{Add pMSE ratio to discrimination object}
 \usage{
-add_pmse_ratio(discrimination, split = TRUE, times)
+add_pmse_ratio(discrimination, split = TRUE, prop = 3/4, times)
 }
 \arguments{
 \item{discrimination}{A discrimination with added propensities}
 
 \item{split}{A logical for if the metric should be calculated separately for
 the training/testing split. Defaults to TRUE.}
+
+\item{prop}{The proportion of data to be retained for modeling/analysis in
+the training/testing split. The sampling is stratified by the original and
+synthetic data.}
 
 \item{times}{The number of bootstrap samples.}
 }

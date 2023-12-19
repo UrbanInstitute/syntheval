@@ -9,6 +9,7 @@ add_propensities(
   recipe = NULL,
   formula = NULL,
   spec,
+  prop = 3/4,
   save_fit = TRUE
 )
 }
@@ -23,6 +24,10 @@ if a recipe is provided.}
 
 \item{spec}{A model object from library(parsnip). If no recipe or formula is
 specified, then all variables are used as predictors.}
+
+\item{prop}{The proportion of data to be retained for modeling/analysis in
+the training/testing split. The sampling is stratified by the original and
+synthetic data.}
 
 \item{save_fit}{A logical for if the final model should be saved}
 }
