@@ -1,4 +1,4 @@
-test_that("add_pmse returns perfect value for identical data (no split)" , {
+test_that("add_pmse returns ideal value for identical data with variation " , {
   
   set.seed(1)
   
@@ -17,9 +17,9 @@ test_that("add_pmse returns perfect value for identical data (no split)" , {
     ) %>%
     structure(class = "postsynth")
   
-  logistic_mod <- parsnip::logistic_reg() %>%
+  dt_mod <- parsnip::decision_tree() %>%
     parsnip::set_mode(mode = "classification") %>%
-    parsnip::set_engine(engine = "glm")
+    parsnip::set_engine(engine = "rpart")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
   
@@ -27,7 +27,7 @@ test_that("add_pmse returns perfect value for identical data (no split)" , {
     discrimination(postsynth, data) %>%
       add_propensities(
         recipe = rec,
-        spec = logistic_mod
+        spec = dt_mod
       ) 
   )
   
@@ -37,12 +37,21 @@ test_that("add_pmse returns perfect value for identical data (no split)" , {
     add_pmse(split = FALSE) %>%
     add_pmse_ratio(split = FALSE, times = 25)
   
-  expect_equal(round(disc$pmse$.pmse, digit = 3), 0)
-  expect_equal(round(disc$pmse$.pmse_ratio, 5), 0.09027)
+  expect_equal(round(disc$pmse$.pmse, digit = 1), 0)
+  # this is a bad test but will at least tell us when the code logic changes
+  expect_equal(round(disc$pmse$.pmse_ratio, 5), 0.56812)
+  
+  disc <- disc %>%
+    add_pmse() %>%
+    add_pmse_ratio(times = 25)
+  
+  expect_equal(round(disc$pmse$.pmse, digit = 2), c(0, 0))
+  # this is a bad test but will at least tell us when the code logic changes
+  expect_equal(round(disc$pmse$.pmse_ratio, 5), c(0.27469, 0.67145))
   
 })
 
-test_that("add_pmse returns perfect value for identical data (split) " , {
+test_that("add_pmse returns perfect value for identical data without variation " , {
   
   set.seed(1)
   

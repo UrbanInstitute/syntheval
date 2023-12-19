@@ -95,10 +95,6 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
         dplyr::filter(.data$.sample == "testing") %>%
         calc_pmse()
       
-      # find the mean of the bootstrapped pMSEs
-      mean_null_pmse_training <- mean(pmse_null_training)
-      mean_null_pmse_testing <- mean(pmse_null_testing)
-      
     } else {
       
       # fit the model from the pMSE on the bootstrap sample
@@ -115,13 +111,15 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
       
       # calculate the pmse for each bootstrap
       pmse_null_overall[a] <- calc_pmse(propensities_df)
-      
-      # find the mean of the bootstrapped pMSEs
-      mean_null_pmse_overall <- mean(pmse_null_overall)
     
     }
     
   }
+  
+  # find the mean of the bootstrapped pMSEs
+  mean_null_pmse_overall <- mean(pmse_null_overall)
+  mean_null_pmse_training <- mean(pmse_null_training)
+  mean_null_pmse_testing <- mean(pmse_null_testing)
   
   # calculate the ratio for the training/testing split or overall data
   if (all(c("training", "testing") %in% discrimination$pmse$.source)) {
