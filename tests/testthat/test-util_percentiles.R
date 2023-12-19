@@ -169,3 +169,102 @@ test_that("unweighted percentiles grouped by multiple variables ", {
   )
   
 })
+
+
+
+
+
+
+
+
+test_that("util_percentiles() variables selection returns correct dimensions ", {
+  
+  storms_sub <- dplyr::select(dplyr::storms, -name, -pressure) %>%
+    dplyr::filter(complete.cases(.))
+  
+  syn <- list(
+    synthetic_data = dplyr::slice_sample(
+      dplyr::storms %>%
+        dplyr::filter(complete.cases(.)),
+      n = 1000
+    ),
+    jth_synthesis_time = data.frame(
+      variable = factor(c("month", "day", "year"))
+    )
+  ) %>%
+    structure(class = "postsynth")
+  
+  # are variable names missing ever?
+  expect_false(
+    util_percentiles(
+      postsynth = syn, 
+      data = storms_sub, 
+      common_vars = TRUE, 
+      synth_vars = FALSE
+    )$variable %>%
+      is.na() %>%
+      all()
+  )
+  
+  # are statistics names missing ever?
+  expect_false(
+    util_percentiles(
+      postsynth = syn, 
+      data = storms_sub, 
+      common_vars = TRUE, 
+      synth_vars = FALSE
+    )$p %>%
+      is.na() %>%
+      all()
+  )
+  
+  # error: quantile doesn't work with missing values
+  expect_error(
+    util_percentiles(
+      postsynth = syn, 
+      data = storms_sub, 
+      common_vars = FALSE, 
+      synth_vars = FALSE
+    )
+  )
+  
+  # 30 rows = 10 common variables times 3 statistics
+  expect_equal(
+    dim(
+      util_percentiles(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = TRUE, 
+        synth_vars = FALSE
+      )
+    ),
+    c(30, 6)
+  )
+  
+  # 9 rows = 3 synthesized numeric variables times 3 statistics
+  expect_equal(
+    dim(
+      util_percentiles(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = FALSE, 
+        synth_vars = TRUE
+      )
+    ),
+    c(9, 6)
+  )
+  
+  # 9 rows = 3 synthesized numeric variables times 3 statistics
+  expect_equal(
+    dim(
+      util_percentiles(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = TRUE, 
+        synth_vars = TRUE
+      )
+    ),
+    c(9, 6)
+  )
+  
+})
