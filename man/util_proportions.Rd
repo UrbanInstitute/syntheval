@@ -4,7 +4,14 @@
 \alias{util_proportions}
 \title{Calculate relative frequency tables for categorical variables}
 \usage{
-util_proportions(postsynth, data, weight_var = 1, group_by = NULL)
+util_proportions(
+  postsynth,
+  data,
+  weight_var = NULL,
+  group_by = NULL,
+  common_vars = TRUE,
+  synth_vars = TRUE
+)
 }
 \arguments{
 \item{postsynth}{A postsynth object or tibble with synthetic data}
@@ -14,6 +21,10 @@ util_proportions(postsynth, data, weight_var = 1, group_by = NULL)
 \item{weight_var}{An unquoted name of a weight variable}
 
 \item{group_by}{An unquoted name of a (or multiple) grouping variable(s)}
+
+\item{common_vars}{A logical for if only common variables should be kept}
+
+\item{synth_vars}{A logical for if only synthesized variables should be kept}
 }
 \value{
 A tibble with variables, classes, and relative frequencies
