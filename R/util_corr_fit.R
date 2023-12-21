@@ -32,7 +32,6 @@ util_corr_fit <- function(postsynth,
     synthetic_data <- postsynth
   }
   
-   
   synthetic_data <- dplyr::select(synthetic_data, where(is.numeric), {{ group_var }})
   data <- dplyr::select(data, where(is.numeric), {{ group_var }})
 
@@ -40,8 +39,11 @@ util_corr_fit <- function(postsynth,
   data <- dplyr::select(data, names(synthetic_data))
   
   # issue: if group_var = NULL is passed into the function, this runs 
-  if(!missing(group_var)){
 
+  if(!missing(group_var) & !is.null(group_var)){
+    
+    group_var <- as.name(group_var)
+    
     levels <- data %>% dplyr::distinct({{ group_var }}) %>% pull()
     
     correlation_data <- data.frame()
@@ -56,6 +58,8 @@ util_corr_fit <- function(postsynth,
     
     return(correlation_data)
   }
+  
+  print("group_var does not exist")
   
   # helper function to find a correlation matrix with the upper tri set to zeros
   lower_triangle <- function(x) {
