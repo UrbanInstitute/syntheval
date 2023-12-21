@@ -2,6 +2,7 @@
 #'
 #' @param postsynth A postsynth object from tidysynthesis or a tibble
 #' @param data an original (observed) data set.
+#' @param group_by 
 #'
 #' @return A `list` of fit metrics:
 #'  - `correlation_original`: correlation matrix of the original data.
@@ -16,7 +17,7 @@
 #'
 #' @export
 
-util_corr_fit <- function(postsynth, data) {
+util_corr_fit <- function(postsynth, data, group_by = NULL) {
   
   if (is_postsynth(postsynth)) {
   
@@ -28,12 +29,19 @@ util_corr_fit <- function(postsynth, data) {
     
   }
   
-  synthetic_data <- dplyr::select_if(synthetic_data, is.numeric)
-  data <- dplyr::select_if(data, is.numeric)
+  synthetic_data <- dplyr::select_if(synthetic_data, is.numeric, {{ group_by }})
+  data <- dplyr::select_if(data, is.numeric, {{ group_by }})
 
   # reorder data names (this appears to check if the variables are the same)
   data <- dplyr::select(data, names(synthetic_data))
   
+ if (!is.null({{ group_by }})){
+   for(level in levels(data %>% select({{ group_by }}))){
+     data_sub <- data %>% filter(group_by == level)
+     view(data_sub)
+   }
+   #df <- util_corr_fit(postsynth, data, group_by == NULL)
+ }
   
   # helper function to find a correlation matrix with the upper tri set to zeros
   lower_triangle <- function(x) {
