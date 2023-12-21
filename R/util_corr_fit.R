@@ -2,7 +2,8 @@
 #'
 #' @param postsynth A postsynth object from tidysynthesis or a tibble
 #' @param data an original (observed) data set.
-#' @param group_by 
+#' @param group_var 
+#' @param level
 #'
 #' @return A `list` of fit metrics:
 #'  - `correlation_original`: correlation matrix of the original data.
@@ -17,7 +18,10 @@
 #'
 #' @export
 
-util_corr_fit <- function(postsynth, data, group_by = NULL) {
+util_corr_fit <- function(postsynth,
+                          data, 
+                          group_var = NULL,
+                          level = NULL) {
   
   if (is_postsynth(postsynth)) {
   
@@ -26,22 +30,32 @@ util_corr_fit <- function(postsynth, data, group_by = NULL) {
   } else {
     
     synthetic_data <- postsynth
-    
   }
   
-  synthetic_data <- dplyr::select_if(synthetic_data, is.numeric, {{ group_by }})
-  data <- dplyr::select_if(data, is.numeric, {{ group_by }})
+   
+  synthetic_data <- dplyr::select(synthetic_data, where(is.numeric), {{ group_var }})
+  data <- dplyr::select(data, where(is.numeric), {{ group_var }})
 
   # reorder data names (this appears to check if the variables are the same)
   data <- dplyr::select(data, names(synthetic_data))
   
- if (!is.null({{ group_by }})){
-   for(level in levels(data %>% select({{ group_by }}))){
-     data_sub <- data %>% filter(group_by == level)
-     view(data_sub)
+  # issue: if group_var = NULL is passed into the function, this runs 
+  if(!missing(group_var)){
+
+    levels <- data %>% dplyr::distinct({{ group_var }}) %>% pull()
+    
+    correlation_data <- data.frame()
+ 
+   for(level in levels) {
+       data_sub <- data %>% dplyr::filter({{ group_var }} == level)
+       
+       df <- util_corr_fit(postsynth = synthetic_data, data = data_sub, level = level)$correlation_data
+       
+       correlation_data <- dplyr::bind_rows(correlation_data, df)
    }
-   #df <- util_corr_fit(postsynth, data, group_by == NULL)
- }
+    
+    return(correlation_data)
+  }
   
   # helper function to find a correlation matrix with the upper tri set to zeros
   lower_triangle <- function(x) {
@@ -89,6 +103,11 @@ util_corr_fit <- function(postsynth, data, group_by = NULL) {
     left_join(synthetic_lt, by = c("var1","var2")) %>%
     mutate(difference = original - synthetic,
            proportion_difference = .data$difference / .data$original)
+  
+  # add level (if level is not null)
+  if(!is.null(level)){
+    correlation_data <- cbind(level, correlation_data)
+  }
   
   # find the length of the nonzero values in the matrices
   n <- choose(ncol(correlation_data), 2)
