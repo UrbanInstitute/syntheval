@@ -37,8 +37,7 @@ util_corr_fit <- function(postsynth,
   # reorder data names (this appears to check if the variables are the same)
   data <- dplyr::select(data, names(synthetic_data))
   
-  # issue: if group_by = NULL is passed into the function, this runs 
-  if(!missing(group_by)){
+  if(!rlang::quo_is_null(enquo(group_by))){
     
     levels <- data %>% dplyr::distinct({{ group_by }}) %>% dplyr::pull()
     
