@@ -4,14 +4,16 @@
 \alias{util_corr_fit}
 \title{Calculate the correlation fit metric of a confidential data set.}
 \usage{
-util_corr_fit(postsynth, data, group_by = NULL)
+util_corr_fit(postsynth, data, group_var = NULL, level = NULL)
 }
 \arguments{
 \item{postsynth}{A postsynth object from tidysynthesis or a tibble}
 
 \item{data}{an original (observed) data set.}
 
-\item{group_by}{}
+\item{group_var}{}
+
+\item{level}{}
 }
 \value{
 A \code{list} of fit metrics:
