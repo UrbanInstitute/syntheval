@@ -11,7 +11,7 @@ disclosure risk of synthetic data. The package works with
 ## Installation
 
 You can install the development version of syntheval by cloning this
-respository and building the package in RStudio.
+repository and building the package in RStudio.
 
 ## Utility Metrics
 
@@ -315,7 +315,7 @@ ci_overlap <- util_ci_overlap(
 
 `$ci_overlap()` summarizes each coefficient including how much the
 confidence intervals overlap, if the signs match, and if the statistical
-significances matche.
+significance matches.
 
 ``` r
 ci_overlap$ci_overlap 
@@ -368,8 +368,9 @@ discriminate, between original observations and synthetic observations.
 - Any classification model that generates probabilities from
   `library(tidymodels)` can be used to generate propensities (the
   estimated probability than observation is synthetic).
-- By default, the code creates a training/testing split. This can be
-  turned off with `split = FALSE`.
+- By default, the code creates a training/testing split and returns
+  separate metrics for each split. This can be turned off with
+  `split = FALSE`.
 - The code can handle hyperparameter tuning.
 - After calculating propensities, the code can calculate ROC AUC,
   SPECKS, pMSE, and pMSE ratio.
@@ -384,7 +385,7 @@ disc1 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
 ```
 
 Next, we use `library(tidymodels)` to specify a model. We recommend the
-[tidymodels tutorial](https://www.tidymodels.org/start/) to leanr more.
+[tidymodels tutorial](https://www.tidymodels.org/start/) to learn more.
 
 ``` r
 library(tidymodels)
@@ -412,9 +413,9 @@ disc1 <- disc1 %>%
 At this point, we can use
 
 - `add_discriminator_auc()` to add the ROC AUC for the predicted
-  probabilites
+  probabilities
 - `add_specks()` to add SPECKS for the predicted probabilities
-- `add_pmse()` to add pMSE for the predicted probabilitieis
+- `add_pmse()` to add pMSE for the predicted probabilities
 - `add_pmse_ratio(times = 25)` to add the pMSE ratio using the pMSE
   model and 25 bootstrap samples
 
@@ -447,16 +448,16 @@ disc1 %>%
     # A tibble: 666 × 10
        .pred_synthetic .source_label .sample  species island    sex   bill_length_mm
                  <dbl> <fct>         <chr>    <fct>   <fct>     <fct>          <dbl>
-     1           0.765 original      testing  Adelie  Torgersen male            39.1
-     2           0.411 original      training Adelie  Torgersen fema…           39.5
-     3           0.590 original      training Adelie  Torgersen fema…           40.3
-     4           0.679 original      training Adelie  Torgersen fema…           36.7
-     5           0.411 original      testing  Adelie  Torgersen male            39.3
-     6           0.765 original      testing  Adelie  Torgersen fema…           38.9
-     7           0.292 original      training Adelie  Torgersen male            39.2
-     8           0.411 original      testing  Adelie  Torgersen fema…           41.1
-     9           0.411 original      training Adelie  Torgersen male            38.6
-    10           0.35  original      training Adelie  Torgersen male            34.6
+     1           0.294 original      training Adelie  Torgersen male            39.1
+     2           0.294 original      testing  Adelie  Torgersen fema…           39.5
+     3           0.294 original      testing  Adelie  Torgersen fema…           40.3
+     4           0.6   original      training Adelie  Torgersen fema…           36.7
+     5           0.294 original      testing  Adelie  Torgersen male            39.3
+     6           0.294 original      training Adelie  Torgersen fema…           38.9
+     7           0.294 original      training Adelie  Torgersen male            39.2
+     8           0.294 original      training Adelie  Torgersen fema…           41.1
+     9           0.294 original      training Adelie  Torgersen male            38.6
+    10           0.6   original      testing  Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -475,62 +476,54 @@ disc1 %>%
     node), split, n, loss, yval, (yprob)
           * denotes terminal node
 
-        1) root 498 249 synthetic (0.5000000 0.5000000)  
-          2) bill_length_mm< 52.35 482 237 synthetic (0.5082988 0.4917012)  
-            4) body_mass_g< 4962.5 398 188 synthetic (0.5276382 0.4723618)  
-              8) body_mass_g>=2912.5 390 182 synthetic (0.5333333 0.4666667)  
-               16) bill_length_mm< 34.55 13   3 synthetic (0.7692308 0.2307692) *
-               17) bill_length_mm>=34.55 377 179 synthetic (0.5251989 0.4748011)  
-                 34) body_mass_g< 3062.5 10   2 synthetic (0.8000000 0.2000000) *
-                 35) body_mass_g>=3062.5 367 177 synthetic (0.5177112 0.4822888)  
-                   70) flipper_length_mm>=179 359 171 synthetic (0.5236769 0.4763231)  
-                    140) flipper_length_mm< 181.5 17   4 synthetic (0.7647059 0.2352941) *
-                    141) flipper_length_mm>=181.5 342 167 synthetic (0.5116959 0.4883041)  
-                      282) bill_length_mm>=36.1 322 154 synthetic (0.5217391 0.4782609)  
-                        564) bill_length_mm< 37.4 28   9 synthetic (0.6785714 0.3214286) *
-                        565) bill_length_mm>=37.4 294 145 synthetic (0.5068027 0.4931973)  
-                         1130) bill_length_mm>=42.65 175  79 synthetic (0.5485714 0.4514286)  
-                           2260) body_mass_g>=3712.5 133  55 synthetic (0.5864662 0.4135338) *
-                           2261) body_mass_g< 3712.5 42  18 original (0.4285714 0.5714286)  
-                             4522) bill_length_mm< 49.2 33  16 synthetic (0.5151515 0.4848485)  
-                               9044) bill_length_mm< 45.35 8   2 synthetic (0.7500000 0.2500000) *
-                               9045) bill_length_mm>=45.35 25  11 original (0.4400000 0.5600000)  
-                                18090) flipper_length_mm>=195.5 8   2 synthetic (0.7500000 0.2500000) *
-                                18091) flipper_length_mm< 195.5 17   5 original (0.2941176 0.7058824) *
-                             4523) bill_length_mm>=49.2 9   1 original (0.1111111 0.8888889) *
-                         1131) bill_length_mm< 42.65 119  53 original (0.4453782 0.5546218)  
-                           2262) body_mass_g< 4262.5 95  46 original (0.4842105 0.5157895)  
-                             4524) flipper_length_mm>=191.5 39  16 synthetic (0.5897436 0.4102564) *
-                             4525) flipper_length_mm< 191.5 56  23 original (0.4107143 0.5892857) *
-                           2263) body_mass_g>=4262.5 24   7 original (0.2916667 0.7083333) *
-                      283) bill_length_mm< 36.1 20   7 original (0.3500000 0.6500000) *
-                   71) flipper_length_mm< 179 8   2 original (0.2500000 0.7500000) *
-              9) body_mass_g< 2912.5 8   2 original (0.2500000 0.7500000) *
-            5) body_mass_g>=4962.5 84  35 original (0.4166667 0.5833333)  
-             10) bill_length_mm>=51.2 11   2 synthetic (0.8181818 0.1818182) *
-             11) bill_length_mm< 51.2 73  26 original (0.3561644 0.6438356) *
-          3) bill_length_mm>=52.35 16   4 original (0.2500000 0.7500000) *
+      1) root 498 249 synthetic (0.5000000 0.5000000)  
+        2) bill_length_mm< 38.25 110  44 synthetic (0.6000000 0.4000000) *
+        3) bill_length_mm>=38.25 388 183 original (0.4716495 0.5283505)  
+          6) island=Biscoe,Dream 354 173 original (0.4887006 0.5112994)  
+           12) body_mass_g< 3187.5 8   1 synthetic (0.8750000 0.1250000) *
+           13) body_mass_g>=3187.5 346 166 original (0.4797688 0.5202312)  
+             26) flipper_length_mm< 199.5 145  68 synthetic (0.5310345 0.4689655)  
+               52) bill_length_mm>=42.75 80  32 synthetic (0.6000000 0.4000000)  
+                104) body_mass_g>=3875 28   5 synthetic (0.8214286 0.1785714) *
+                105) body_mass_g< 3875 52  25 original (0.4807692 0.5192308)  
+                  210) bill_length_mm< 45.35 8   1 synthetic (0.8750000 0.1250000) *
+                  211) bill_length_mm>=45.35 44  18 original (0.4090909 0.5909091) *
+               53) bill_length_mm< 42.75 65  29 original (0.4461538 0.5538462)  
+                106) bill_depth_mm>=19.05 23   8 synthetic (0.6521739 0.3478261) *
+                107) bill_depth_mm< 19.05 42  14 original (0.3333333 0.6666667) *
+             27) flipper_length_mm>=199.5 201  89 original (0.4427861 0.5572139)  
+               54) bill_depth_mm< 19.45 192  88 original (0.4583333 0.5416667)  
+                108) bill_length_mm>=51.45 19   7 synthetic (0.6315789 0.3684211) *
+                109) bill_length_mm< 51.45 173  76 original (0.4393064 0.5606936)  
+                  218) flipper_length_mm>=229.5 11   3 synthetic (0.7272727 0.2727273) *
+                  219) flipper_length_mm< 229.5 162  68 original (0.4197531 0.5802469)  
+                    438) body_mass_g< 5025 108  52 original (0.4814815 0.5185185)  
+                      876) body_mass_g>=4937.5 17   6 synthetic (0.6470588 0.3529412) *
+                      877) body_mass_g< 4937.5 91  41 original (0.4505495 0.5494505) *
+                    439) body_mass_g>=5025 54  16 original (0.2962963 0.7037037) *
+               55) bill_depth_mm>=19.45 9   1 original (0.1111111 0.8888889) *
+          7) island=Torgersen 34  10 original (0.2941176 0.7058824) *
 
     $discriminator_auc
     # A tibble: 2 × 4
       .sample  .metric .estimator .estimate
       <fct>    <chr>   <chr>          <dbl>
     1 training roc_auc binary         0.693
-    2 testing  roc_auc binary         0.471
+    2 testing  roc_auc binary         0.582
 
     $pmse
     # A tibble: 2 × 4
       .source   .pmse .null_pmse .pmse_ratio
       <fct>     <dbl>      <dbl>       <dbl>
-    1 training 0.0299     0.0341       0.876
-    2 testing  0.0304     0.0342       0.890
+    1 training 0.0298     0.0306       0.973
+    2 testing  0.0388     0.0317       1.22 
 
     $specks
     # A tibble: 2 × 2
       .source  .specks
       <fct>      <dbl>
-    1 training  0.309 
-    2 testing   0.0952
+    1 training   0.297
+    2 testing    0.143
 
     attr(,"class")
     [1] "discrimination"
@@ -541,7 +534,11 @@ our discriminator.
 ``` r
 library(vip)
 library(rpart.plot)
+```
 
+    Warning: package 'rpart' was built under R version 4.2.3
+
+``` r
 disc1$discriminator %>% 
   extract_fit_parsnip() %>% 
   vip()
@@ -598,7 +595,11 @@ disc2 <- disc2 %>%
     spec = lasso_mod,
     grid = lasso_grid
   ) 
+```
 
+    Warning: package 'Matrix' was built under R version 4.2.3
+
+``` r
 # calculate metrics
 disc2 %>%
   add_discriminator_auc() %>%
@@ -632,12 +633,12 @@ disc2 %>%
      2             0.5 original      training Adelie  Torgersen fema…           39.5
      3             0.5 original      training Adelie  Torgersen fema…           40.3
      4             0.5 original      testing  Adelie  Torgersen fema…           36.7
-     5             0.5 original      training Adelie  Torgersen male            39.3
-     6             0.5 original      testing  Adelie  Torgersen fema…           38.9
+     5             0.5 original      testing  Adelie  Torgersen male            39.3
+     6             0.5 original      training Adelie  Torgersen fema…           38.9
      7             0.5 original      training Adelie  Torgersen male            39.2
      8             0.5 original      training Adelie  Torgersen fema…           41.1
      9             0.5 original      training Adelie  Torgersen male            38.6
-    10             0.5 original      training Adelie  Torgersen male            34.6
+    10             0.5 original      testing  Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -658,50 +659,56 @@ disc2 %>%
 
     Call:  glmnet::glmnet(x = maybe_matrix(x), y = y, family = "binomial",      alpha = ~1) 
 
-       Df %Dev    Lambda
-    1   0 0.00 0.0242000
-    2   1 0.03 0.0220500
-    3   2 0.06 0.0200900
-    4   4 0.09 0.0183100
-    5   5 0.15 0.0166800
-    6   5 0.20 0.0152000
-    7   5 0.25 0.0138500
-    8   5 0.29 0.0126200
-    9   5 0.32 0.0115000
-    10  6 0.35 0.0104800
-    11  7 0.52 0.0095460
-    12  7 0.66 0.0086980
-    13  7 0.79 0.0079250
-    14  7 0.89 0.0072210
-    15  8 0.99 0.0065800
-    16  8 1.08 0.0059950
-    17  8 1.15 0.0054630
-    18  8 1.21 0.0049770
-    19  8 1.26 0.0045350
-    20  8 1.30 0.0041320
-    21  8 1.34 0.0037650
-    22  9 1.37 0.0034310
-    23  9 1.39 0.0031260
-    24  9 1.41 0.0028480
-    25 10 1.43 0.0025950
-    26 10 1.45 0.0023650
-    27 10 1.46 0.0021550
-    28 10 1.47 0.0019630
-    29 10 1.48 0.0017890
-    30 10 1.49 0.0016300
-    31 10 1.49 0.0014850
-    32 10 1.50 0.0013530
-    33 11 1.50 0.0012330
-    34 11 1.50 0.0011230
-    35 11 1.51 0.0010240
-    36 12 1.51 0.0009326
-    37 12 1.51 0.0008498
-    38 12 1.51 0.0007743
-    39 12 1.52 0.0007055
-    40 13 1.52 0.0006428
-    41 13 1.52 0.0005857
-    42 13 1.52 0.0005337
-    43 13 1.52 0.0004863
+       Df %Dev   Lambda
+    1   0 0.00 0.036060
+    2   1 0.06 0.032860
+    3   1 0.12 0.029940
+    4   1 0.16 0.027280
+    5   1 0.20 0.024860
+    6   1 0.23 0.022650
+    7   1 0.25 0.020640
+    8   1 0.27 0.018800
+    9   1 0.29 0.017130
+    10  3 0.35 0.015610
+    11  3 0.40 0.014220
+    12  4 0.45 0.012960
+    13  4 0.49 0.011810
+    14  5 0.53 0.010760
+    15  5 0.58 0.009804
+    16  5 0.61 0.008933
+    17  8 0.68 0.008139
+    18  8 0.79 0.007416
+    19  8 0.87 0.006757
+    20  9 0.95 0.006157
+    21  9 1.02 0.005610
+    22  9 1.07 0.005112
+    23 11 1.12 0.004658
+    24 11 1.16 0.004244
+    25 12 1.20 0.003867
+    26 12 1.23 0.003523
+    27 12 1.26 0.003210
+    28 12 1.28 0.002925
+    29 13 1.30 0.002665
+    30 13 1.32 0.002428
+    31 13 1.33 0.002213
+    32 13 1.34 0.002016
+    33 13 1.35 0.001837
+    34 13 1.36 0.001674
+    35 13 1.36 0.001525
+    36 13 1.37 0.001390
+    37 13 1.37 0.001266
+    38 13 1.38 0.001154
+    39 13 1.38 0.001051
+    40 13 1.38 0.000958
+    41 13 1.38 0.000873
+    42 13 1.39 0.000795
+    43 13 1.39 0.000725
+    44 13 1.39 0.000660
+    45 13 1.39 0.000602
+    46 13 1.39 0.000548
+
+    ...
+    and 0 more lines.
 
     $discriminator_auc
     # A tibble: 2 × 4

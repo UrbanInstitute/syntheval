@@ -14,7 +14,7 @@ The goal of syntheval is to make it simple to evaluate the utility and disclosur
 
 ## Installation
 
-You can install the development version of syntheval by cloning this respository and building the package in RStudio. 
+You can install the development version of syntheval by cloning this repository and building the package in RStudio. 
 
 ## Utility Metrics
 
@@ -185,7 +185,7 @@ ci_overlap <- util_ci_overlap(
 
 ```
 
-`$ci_overlap()` summarizes each coefficient including how much the confidence intervals overlap, if the signs match, and if the statistical significances matche. 
+`$ci_overlap()` summarizes each coefficient including how much the confidence intervals overlap, if the signs match, and if the statistical significance matches. 
 
 ```{r}
 ci_overlap$ci_overlap 
@@ -212,7 +212,7 @@ ci_overlap$coefficient |>
 Discriminant-based metrics build models to predict if an observation is original or synthetic and then evaluate those model predictions. Ideally, it should be difficult for a model to distinguish, or discriminate, between original observations and synthetic observations. 
 
 * Any classification model that generates probabilities from `library(tidymodels)` can be used to generate propensities (the estimated probability than observation is synthetic).
-* By default, the code creates a training/testing split. This can be turned off with `split = FALSE`.
+* By default, the code creates a training/testing split and returns separate metrics for each split. This can be turned off with `split = FALSE`.
 * The code can handle hyperparameter tuning. 
 * After calculating propensities, the code can calculate ROC AUC, SPECKS, pMSE, and pMSE ratio.
 
@@ -225,7 +225,7 @@ disc1 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
 
 ```
 
-Next, we use `library(tidymodels)` to specify a model. We recommend the [tidymodels tutorial](https://www.tidymodels.org/start/) to leanr more. 
+Next, we use `library(tidymodels)` to specify a model. We recommend the [tidymodels tutorial](https://www.tidymodels.org/start/) to learn more. 
 
 ```{r}
 #| messages: false
@@ -256,9 +256,9 @@ disc1 <- disc1 %>%
 
 At this point, we can use 
 
-* `add_discriminator_auc()` to add the ROC AUC for the predicted probabilites
+* `add_discriminator_auc()` to add the ROC AUC for the predicted probabilities
 * `add_specks()` to add SPECKS for the predicted probabilities
-* `add_pmse()` to add pMSE for the predicted probabilitieis
+* `add_pmse()` to add pMSE for the predicted probabilities
 * `add_pmse_ratio(times = 25)` to add the pMSE ratio using the pMSE model and 25 bootstrap samples
 
 ```{r}
