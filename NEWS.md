@@ -1,3 +1,9 @@
+# syntheval 0.0.3
+
+* Add a README with examples.
+* Add flexible system for calculating discriminant-based metrics for utility including the pMSE, pMSE ratio, SPECKS, and discriminator AUC. The code can use most functionality from `library(tidymodels)` to generate propensities.
+* Add `common_vars` and `synth_vars` arguments to most utility functions. These control the variables included in the utility metrics. 
+
 # syntheval 0.0.2
 
 ## New Features
