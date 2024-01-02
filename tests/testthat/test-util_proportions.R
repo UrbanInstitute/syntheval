@@ -13,6 +13,9 @@ syn <- list(
     b = c("orange", "yellow", "green"),
     c = as.factor(c("1", "2", "2")),
     weight = c(150, 150, 100)
+  ),
+  jth_synthesis_time = data.frame(
+    variable = factor(c("b", "c"))
   )
 ) %>%
   structure(class = "postsynth")
@@ -210,7 +213,10 @@ test_that("test util_proportions() with multiple grouping variables", {
     var2 = c("orange", "orange", "green"),
     var3 = as.factor(c("1", "1", "2")),
     var4 = c("a", "a", "b"), 
-    weight = c(100, 100, 200)
+    weight = c(100, 100, 200),
+    jth_synthesis_time = data.frame(
+      variable = factor(c("var2", "var3", "var4"))
+    )
   )
   
   # postsynth data object
@@ -221,6 +227,9 @@ test_that("test util_proportions() with multiple grouping variables", {
       var3 = as.factor(c("1", "1", "2")),
       var4 = c("a", "a", "b"),      
       weight = c(50, 150, 200)
+    ),
+    jth_synthesis_time = data.frame(
+      variable = factor(c("var2", "var3", "var4"))
     )
   ) %>%
     structure(class = "postsynth")
@@ -249,5 +258,97 @@ test_that("test util_proportions() with multiple grouping variables", {
   
 })
 
-
+test_that("util_proportions() variables selection returns correct dimensions ", {
+  
+  storms_sub <- dplyr::select(dplyr::storms, -name, -pressure)
+  
+  set.seed(1)
+  syn <- list(
+    synthetic_data = dplyr::slice_sample(
+      dplyr::storms,
+      n = 1000
+    ),
+    jth_synthesis_time = data.frame(
+      variable = factor("status")
+    )
+  ) %>%
+    structure(class = "postsynth")
+  
+  # are variable names missing ever?
+  expect_false(
+    util_proportions(
+      postsynth = syn, 
+      data = storms_sub, 
+      common_vars = FALSE, 
+      synth_vars = FALSE
+    )$variable %>%
+      is.na() %>%
+      all()
+  )
+  
+  # are statistics names missing ever?
+  expect_false(
+    util_proportions(
+      postsynth = syn, 
+      data = storms_sub, 
+      common_vars = FALSE, 
+      synth_vars = FALSE
+    )$class %>%
+      is.na() %>%
+      all()
+  )
+  
+  # 55 rows = all 11 variables times 5 statistics
+  expect_equal(
+    dim(
+      util_proportions(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = FALSE, 
+        synth_vars = FALSE
+      )
+    ),
+    c(215, 5)
+  )
+  
+  # 50 rows = 10 common variables times 5 statistics
+  expect_equal(
+    dim(
+      util_proportions(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = TRUE, 
+        synth_vars = FALSE
+      )
+    ),
+    c(9, 5)
+  )
+  
+  # 9 rows = 9 classes
+  expect_equal(
+    dim(
+      util_proportions(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = FALSE, 
+        synth_vars = TRUE
+      )
+    ),
+    c(9, 5)
+  )
+  
+  # 9 rows = 9 classes
+  expect_equal(
+    dim(
+      util_proportions(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = TRUE, 
+        synth_vars = TRUE
+      )
+    ),
+    c(9, 5)
+  )
+  
+})
 

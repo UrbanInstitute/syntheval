@@ -1,0 +1,375 @@
+---
+format: gfm
+embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---
+
+# syntheval
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of syntheval is to make it simple to evaluate the utility and disclosure risk of synthetic data. The package works with `library(tidysynthesis)`.
+
+## Installation
+
+You can install the development version of syntheval by cloning this repository and building the package in RStudio. 
+
+## Utility Metrics
+
+```{r}
+#| warning: false
+
+library(tidyverse)
+library(syntheval)
+
+```
+
+### Setup
+
+The following examples demonstrate utility and disclosure risk metrics using synthetic data based on the [Palmer Penguins](https://allisonhorst.github.io/palmerpenguins/) dataset. `library(syntheval)` contains three built-in data sets:
+
+* `penguins_conf`: Pre-processed `penguins` data that were passed into the synthesizer.
+* `penguins_postsynth`: A `postsynth` object synthesized from `penguins` using `library(tidysynthesis)`. 
+* `penguins_syn_df`: A data frame pulled from `penguins_postsynth`. This is used to demonstrate how `library(syntheval)` works with output from a synthesizer different than `library(tidysynthesis)`.
+
+Functions like `util_proportions()` and `util_moments()` have different behaviors for `postsynth` objects and data frames. By default, they only show synthesized variables for `postsynth` objects and show all common variables for data frames. The `common_vars` and `synth_vars` arguments can change this behavior. 
+
+### Proportions
+
+`util_proportions()` compares the proportions of classes from categorical variables in the original data and synthetic data. 
+
+```{r}
+util_proportions(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf
+)
+
+```
+
+All common variables are shown when using a data frame.
+
+```{r}
+util_proportions(
+  postsynth = penguins_syn_df, 
+  data = penguins_conf
+)
+
+```
+
+### Means and Totals
+
+`util_moments()` compares the counts, means, standard deviations, skewnesses, and kurtoses of the original data and synthetic data. 
+
+```{r}
+util_moments(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf
+)
+
+```
+
+`util_totals()` is similar to `util_moments()`, but looks at counts and totals. 
+
+```{r}
+util_totals(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf
+)
+
+```
+
+### Percentiles
+
+`util_percentiles()` compares percentiles from the original data and synthetic data. The default percentiles are `c(0.1, 0.5, 0.9)` and can be easily overwritten.
+
+```{r}
+util_percentiles(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf,
+  probs = c(0.5, 0.8)
+)
+
+```
+
+The functions are designed to work well with `library(ggplot2)`. 
+
+```{r}
+util_percentiles(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf,
+  probs = seq(0.01, 0.99, 0.01)
+) |>
+  pivot_longer(
+    cols = c(original, synthetic),
+    names_to = "source",
+    values_to = "value"
+  ) |>
+  ggplot(aes(x = p, y = value, color = source)) +
+  geom_line() +
+  facet_wrap(~ variable, scales = "free")
+
+```
+
+### KS Distance
+
+`util_ks_distance()` shows the Kolmogorov-Smirnov distance between the original distribution and synthetic distribution for numeric variables. The function also returns the point(s) of the maximum distance. 
+
+```{r}
+util_ks_distance(
+  postsynth = penguins_syn_df, 
+  data = penguins_conf
+)
+
+```
+
+### Co-Occurrence
+
+`util_co_occurrence()` differences the lower triangles of co-occurrence matrices calculated on numeric variables in the original data and synthetic data. 
+
+```{r}
+co_occurrence <- util_co_occurrence(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf
+)
+
+co_occurrence$co_occurrence_difference
+
+```
+
+The function returns the MAE for co-occurrences, which provides a sense of the median error between the original and synthetic data. The function also returns the RMSE for co-occurrences, which provides a sense of the average error between the original data and synthetic data.
+
+```{r}
+co_occurrence$co_occurrence_difference_mae
+  
+co_occurrence$co_occurrence_difference_rmse
+
+```
+
+All observations have non-zero `bill_length_mm`, `bill_depth_mm`, `flipper_length_mm`, and `body_mass_g`. `util_co_occurrence()` is most useful for economic variables like income and wealth where `0` is a common value.
+
+### Correlations
+
+`util_corr_fit()` differences the lower triangles of correlation matrices calculated on numeric variables in the original data and synthetic data. 
+
+```{r}
+corr_fit <- util_corr_fit(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf
+)
+
+round(corr_fit$correlation_difference, digits = 3)
+
+```
+
+The function returns the MAE for correlation coefficients, which provides a sense of the median error between the original and synthetic data. The function also returns the RMSE for the correlation coefficients, which provides a sense of the average error between the original synthetic data.
+
+```{r}
+corr_fit$correlation_difference_mae
+
+corr_fit$correlation_difference_rmse
+
+```
+
+### Coefficient Overlap
+
+`util_ci_overlap()` compares a linear regression models estimated on the original data and synthetic data. `formula` specifies the functional form of the regression model. 
+
+```{r}
+ci_overlap <- util_ci_overlap(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf,
+  formula = body_mass_g ~ bill_length_mm  + sex
+)
+
+```
+
+`$ci_overlap()` summarizes each coefficient including how much the confidence intervals overlap, if the signs match, and if the statistical significance matches. 
+
+```{r}
+ci_overlap$ci_overlap 
+
+```
+
+`$coefficient` provides detail for each coefficient and is useful for data visualization. 
+
+```{r}
+ci_overlap$coefficient
+
+ci_overlap$coefficient |>
+  ggplot(aes(x = estimate, xmin = conf.low, xmax = conf.high, y = term, color = source)) +
+  geom_pointrange(alpha = 0.5, position = position_dodge(width = 0.5)) +
+  labs(
+    title = "The Synthesizer Recreates the Point Estimates and Confidence Intervals",
+    subtitle = "Regression Confidence Interval Overlap"
+  )
+
+```
+
+### Discriminant Metrics
+
+Discriminant-based metrics build models to predict if an observation is original or synthetic and then evaluate those model predictions. Ideally, it should be difficult for a model to distinguish, or discriminate, between original observations and synthetic observations. 
+
+* Any classification model that generates probabilities from `library(tidymodels)` can be used to generate propensities (the estimated probability than observation is synthetic).
+* By default, the code creates a training/testing split and returns separate metrics for each split. This can be turned off with `split = FALSE`.
+* The code can handle hyperparameter tuning. 
+* After calculating propensities, the code can calculate ROC AUC, SPECKS, pMSE, and pMSE ratio.
+
+#### Decision Tree
+
+Discriminant-based metrics are built a `discrimination` object created by `discrimination()`. 
+
+```{r}
+disc1 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
+
+```
+
+Next, we use `library(tidymodels)` to specify a model. We recommend the [tidymodels tutorial](https://www.tidymodels.org/start/) to learn more. 
+
+```{r}
+#| messages: false
+#| warning: false
+
+library(tidymodels)
+
+rpart_rec <- recipe(
+  .source_label ~ ., 
+  data = disc1$combined_data
+)
+
+rpart_mod <- decision_tree(cost_complexity = 0.01) %>%
+  set_mode(mode = "classification") %>%
+  set_engine(engine = "rpart")
+
+```
+
+Next, we fit the model to the data to generate predicted probabilities. 
+
+```{r}
+disc1 <- disc1 %>%
+  add_propensities(
+    recipe = rpart_rec,
+    spec = rpart_mod
+  ) 
+```
+
+At this point, we can use 
+
+* `add_discriminator_auc()` to add the ROC AUC for the predicted probabilities
+* `add_specks()` to add SPECKS for the predicted probabilities
+* `add_pmse()` to add pMSE for the predicted probabilities
+* `add_pmse_ratio(times = 25)` to add the pMSE ratio using the pMSE model and 25 bootstrap samples
+
+```{r}
+disc1 %>%
+  add_discriminator_auc() %>%
+  add_specks() %>%
+  add_pmse() %>%
+  add_pmse_ratio(times = 25)
+
+```
+
+Finally, we can look at variable importance and the decision tree from our discriminator. 
+
+```{r}
+#| message: false
+
+library(vip)
+library(rpart.plot)
+
+disc1$discriminator %>% 
+  extract_fit_parsnip() %>% 
+  vip()
+
+disc1$discriminator$fit$fit$fit %>%
+  prp()
+
+```
+
+#### Regularized Regression
+
+Let's repeat the workflow from above with LASSO logistic regression and hyperparameter tuning. 
+
+```{r}
+# create discrimination
+disc2 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
+
+# create a recipe that includes 2nd-degree polynomials, dummy variables, and
+# standardization
+lasso_rec <- recipe(
+  .source_label ~ ., 
+  data = disc2$combined_data
+) %>%
+  step_poly(all_numeric_predictors(), degree = 2) %>%
+  step_dummy(all_nominal_predictors()) %>%
+  step_normalize(all_predictors())
+
+# create the model
+lasso_mod <- logistic_reg(
+  penalty = tune(), 
+  mixture = 1
+) %>%
+  set_engine(engine = "glmnet") %>%
+  set_mode(mode = "classification")
+
+# create a tuning grid
+lasso_grid <- grid_regular(penalty(), levels = 10)
+
+# add the propensities
+disc2 <- disc2 %>%
+  add_propensities_tuned(
+    recipe = lasso_rec,
+    spec = lasso_mod,
+    grid = lasso_grid
+  ) 
+
+# calculate metrics
+disc2 %>%
+  add_discriminator_auc() %>%
+  add_specks() %>%
+  add_pmse() %>%
+  add_pmse_ratio(times = 25)
+
+# look at variable importance
+library(vip)
+
+disc2$discriminator %>% 
+  extract_fit_parsnip() %>% 
+  vip()
+
+```
+
+## Additional Functionality
+
+### Grouping
+
+Many utility metrics include a `group_by` argument to group the metrics by group during calculation. For example, this code calculates moments by species.
+
+```{r}
+util_moments(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf,
+  group_by = species
+)
+
+```
+
+### Weighting
+
+Many utility metrics include a `weight_var` argument to use weighted statistics during calculation. For example, this code weights the moments by the body weight of the penguins.
+
+```{r}
+util_moments(
+  postsynth = penguins_postsynth, 
+  data = penguins_conf,
+  weight_var = body_mass_g
+)
+
+```
+
+Most commonly, `weight_var` is used when synthesizing data from surveys.
+
+## Getting Help
+
+Contact [Aaron R. Williams](awilliams@urban.org) with feedback or questions. 

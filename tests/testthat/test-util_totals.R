@@ -225,3 +225,100 @@ test_that("moments grouping by multiple variables", {
   )
   
 })
+
+
+
+
+
+test_that("util_totals() variables selection returns correct dimensions ", {
+  
+  storms_sub <- dplyr::select(dplyr::storms, -name, -pressure)
+  
+  syn <- list(
+    synthetic_data = dplyr::slice_sample(
+      dplyr::storms,
+      n = 1000
+    ),
+    jth_synthesis_time = data.frame(
+      variable = factor(c("month", "day", "year"))
+    )
+  ) %>%
+    structure(class = "postsynth")
+  
+  # are variable names missing ever?
+  expect_false(
+    util_totals(
+      postsynth = syn, 
+      data = storms_sub, 
+      common_vars = FALSE, 
+      synth_vars = FALSE
+    )$variable %>%
+      is.na() %>%
+      all()
+  )
+  
+  # are statistics names missing ever?
+  expect_false(
+    util_totals(
+      postsynth = syn, 
+      data = storms_sub, 
+      common_vars = FALSE, 
+      synth_vars = FALSE
+    )$statistic %>%
+      is.na() %>%
+      all()
+  )
+  
+  # 22 rows = all 11 variables times 2 statistics
+  expect_equal(
+    dim(
+      util_totals(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = FALSE, 
+        synth_vars = FALSE
+      )
+    ),
+    c(22, 6)
+  )
+  
+  # 20 rows = 10 common variables times 2 statistics
+  expect_equal(
+    dim(
+      util_totals(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = TRUE, 
+        synth_vars = FALSE
+      )
+    ),
+    c(20, 6)
+  )
+  
+  # 6 rows = 3 synthesized numeric variables times 2 statistics
+  expect_equal(
+    dim(
+      util_totals(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = FALSE, 
+        synth_vars = TRUE
+      )
+    ),
+    c(6, 6)
+  )
+  
+  # 6 rows = 3 synthesized numeric variables times 2 statistics
+  expect_equal(
+    dim(
+      util_totals(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = TRUE, 
+        synth_vars = TRUE
+      )
+    ),
+    c(6, 6)
+  )
+  
+})
