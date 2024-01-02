@@ -37,7 +37,7 @@ util_corr_fit <- function(postsynth,
   # reorder data names (this appears to check if the variables are the same)
   data <- dplyr::select(data, names(synthetic_data))
   
-  if(!rlang::quo_is_null(enquo(group_by))){
+  if(!rlang::quo_is_null(rlang::enquo(group_by))){
     
     levels <- data %>% dplyr::distinct({{ group_by }}) %>% dplyr::pull()
     
@@ -115,7 +115,7 @@ util_corr_fit <- function(postsynth,
     dplyr::arrange(var1) %>%
     dplyr::select(var1, var2, synthetic)
   
-  # find the difference between the original correlations and the synthetic 
+  # combining the data and finding the difference between the original and synthetic correlations 
   correlation_data <- original_lt %>%
     dplyr::left_join(synthetic_lt, by = c("var1","var2")) %>%
     dplyr::mutate(difference = original - synthetic,
