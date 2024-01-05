@@ -36,33 +36,55 @@ util_corr_fit <- function(postsynth,
 
   # reorder data names (this appears to check if the variables are the same)
   data <- dplyr::select(data, names(synthetic_data))
-  
-  if(!rlang::quo_is_null(rlang::enquo(group_by))){
+
+  # check if a group_by variable was passed
+  if (!rlang::quo_is_null(rlang::enquo(group_by))) {
     
-    levels <- data %>% dplyr::distinct({{ group_by }}) %>% dplyr::pull()
+    # get all of the level combinations from each group by variable
+    levels <- data %>% 
+      dplyr::select({{ group_by }}) %>%
+      expand.grid() %>%
+      unique()
     
+    # initialize return values
     correlation_data <- data.frame()
     correlation_fit = c()
     correlation_difference_mae = c()
     correlation_difference_rmse = c()
- 
-   for(level in levels) {
-       data_sub <- data %>% dplyr::filter({{ group_by }} == level)
-       
-       # get the results for the subgroup/level
-       result <- util_corr_fit(postsynth = synthetic_data, data = data_sub)
-       
-       df <- result$correlation_data
-       fit <- result$correlation_fit
-       mae <- result$correlation_difference_mae
-       rmse <- result$correlation_difference_rmse
-       
-       # add the results to a growing list of results for each subgroup/level 
-       correlation_data <- dplyr::bind_rows(correlation_data, cbind(level, df))
-       correlation_fit = c(correlation_fit, fit)
-       correlation_difference_mae = c(correlation_difference_mae, mae)
-       correlation_difference_rmse = c(correlation_difference_rmse, rmse)
-   }
+    
+    # get a subset of the data 
+    for (level in 1:nrow(levels)) {
+      
+      data_sub <- data
+      
+      for (i in 1:length(colnames(levels))){
+        col <- colnames(levels)[i]
+        value <- levels[level,i]
+        
+        data_sub <- data_sub %>% filter(!!rlang::sym(col) == value)
+      }
+
+      
+      # get the results for the subgroup/level
+      result <- util_corr_fit(postsynth = synthetic_data, data = data_sub)
+      
+      df <- result$correlation_data
+      fit <- result$correlation_fit
+      mae <- result$correlation_difference_mae
+      rmse <- result$correlation_difference_rmse
+      
+      #view(data_sub)
+      
+      # add the results to a growing list of results for each subgroup/level 
+      correlation_data <- dplyr::bind_rows(correlation_data, cbind("level_add_later", df))
+      correlation_fit = c(correlation_fit, fit)
+      correlation_difference_mae = c(correlation_difference_mae, mae)
+      correlation_difference_rmse = c(correlation_difference_rmse, rmse)
+      
+      #view(correlation_data)
+      
+      stop()
+    }
     
     return(
       list(
@@ -70,8 +92,43 @@ util_corr_fit <- function(postsynth,
         correlation_fit = correlation_fit,
         correlation_difference_mae = correlation_difference_mae,
         correlation_difference_rmse = correlation_difference_rmse
-        )
+      )
     )
+  
+    
+    #levels <- data %>% dplyr::distinct({{ group_by }}) %>% dplyr::pull()
+    
+   #  correlation_data <- data.frame()
+   #  correlation_fit = c()
+   #  correlation_difference_mae = c()
+   #  correlation_difference_rmse = c()
+   # 
+   # for(level in levels) {
+   #     data_sub <- data %>% dplyr::filter({{ group_by }} == level)
+   #     
+   #     # get the results for the subgroup/level
+   #     result <- util_corr_fit(postsynth = synthetic_data, data = data_sub)
+   #     
+   #     df <- result$correlation_data
+   #     fit <- result$correlation_fit
+   #     mae <- result$correlation_difference_mae
+   #     rmse <- result$correlation_difference_rmse
+   #     
+   #     # add the results to a growing list of results for each subgroup/level 
+   #     correlation_data <- dplyr::bind_rows(correlation_data, cbind(level, df))
+   #     correlation_fit = c(correlation_fit, fit)
+   #     correlation_difference_mae = c(correlation_difference_mae, mae)
+   #     correlation_difference_rmse = c(correlation_difference_rmse, rmse)
+   # }
+   #  
+   #  return(
+   #    list(
+   #      correlation_data = correlation_data,
+   #      correlation_fit = correlation_fit,
+   #      correlation_difference_mae = correlation_difference_mae,
+   #      correlation_difference_rmse = correlation_difference_rmse
+   #      )
+   #  )
   }
   
   # helper function to find a correlation matrix with the upper tri set to zeros
@@ -86,8 +143,12 @@ util_corr_fit <- function(postsynth,
     # set the values in the upper triangle to zero to avoid double counting
     correlation_matrix[upper.tri(correlation_matrix, diag = TRUE)] <- NA
     
+    # view(correlation_matrix)
+    
     return(correlation_matrix)
   }
+  
+  # view(lower_triangle(data))
   
   # find the lower triangle of the original data linear correlation matrix and return a df
   original_lt <- data.frame(lower_triangle(data))
