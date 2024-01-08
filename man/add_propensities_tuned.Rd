@@ -44,3 +44,15 @@ generating propensities
 \description{
 Add propensities for if an observation belongs to the synthetic data
 }
+\seealso{
+Other Utility metrics: 
+\code{\link{add_pmse_ratio}()},
+\code{\link{add_pmse}()},
+\code{\link{add_propensities}()},
+\code{\link{add_specks}()},
+\code{\link{discrimination}()},
+\code{\link{util_ci_overlap}()},
+\code{\link{util_ks_distance}()},
+\code{\link{util_proportions}()}
+}
+\concept{Utility metrics}

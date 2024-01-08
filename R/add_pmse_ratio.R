@@ -10,6 +10,8 @@
 #'
 #' @return A discrimination with pMSE
 #' 
+#' @family Utility metrics
+#' 
 #' @export
 add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
   

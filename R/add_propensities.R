@@ -15,6 +15,8 @@
 #' @return A discrimination object with propensities and a fitted model for
 #' generating propensities
 #' 
+#' @family Utility metrics
+#' 
 #' @export
 #'
 add_propensities <- function(

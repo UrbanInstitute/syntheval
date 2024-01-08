@@ -33,11 +33,11 @@ A \code{tibble} of totals.
 Calculate totals for original and synthetic data.
 }
 \seealso{
-Other utility functions: 
+Other utility metrics: 
 \code{\link{util_co_occurrence}()},
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
 \code{\link{util_percentiles}()},
 \code{\link{util_tails}()}
 }
-\concept{utility functions}
+\concept{utility metrics}

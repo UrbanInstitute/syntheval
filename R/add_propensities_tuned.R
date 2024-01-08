@@ -14,9 +14,10 @@
 #' @param v The number of partitions of the data set for cross validation.
 #' @param save_fit A logical for if the final model should be saved
 #'
-#'
 #' @return A discrimination object with propensities and a fitted model for
 #' generating propensities
+#' 
+#' @family Utility metrics
 #' 
 #' @export
 #'

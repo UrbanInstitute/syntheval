@@ -8,7 +8,10 @@
 #' @return A discrimination object with propensities (likely added using 
 #' add_propensities()) with a pMSE
 #' 
+#' @family Utility metrics
+#' 
 #' @export
+#' 
 add_pmse <- function(discrimination, split = TRUE) {
   
   calc_pmse <- function(propensities) {

@@ -7,6 +7,8 @@
 #' @return A list with the regression confidence interval overlap and estimated 
 #' coefficients
 #' 
+#' @family Utility metrics
+#' 
 #' @export
 util_ci_overlap <- function(postsynth, data, formula) {
   
