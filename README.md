@@ -118,7 +118,7 @@ util_moments(
     19 body_mass_g     skewness   4.70e-1    0.655      0.185                0.394  
     20 body_mass_g     kurtosis  -7.40e-1   -0.388      0.353               -0.477  
 
-`util_totals()` is similar to `util_moments()`, but looks at counts and
+`util_totals()` is similar to `util_moments()` but looks at counts and
 totals.
 
 ``` r
@@ -358,7 +358,7 @@ ci_overlap$coefficient |>
 
 ![](README_files/figure-commonmark/unnamed-chunk-15-1.png)
 
-### Discriminant Metrics
+### Discriminant-Based Metrics
 
 Discriminant-based metrics build models to predict if an observation is
 original or synthetic and then evaluate those model predictions.
@@ -375,7 +375,7 @@ discriminate, between original observations and synthetic observations.
 - After calculating propensities, the code can calculate ROC AUC,
   SPECKS, pMSE, and pMSE ratio.
 
-#### Decision Tree
+#### Example Using Decision Trees
 
 Discriminant-based metrics are built a `discrimination` object created
 by `discrimination()`.
@@ -448,16 +448,16 @@ disc1 %>%
     # A tibble: 666 × 10
        .pred_synthetic .source_label .sample  species island    sex   bill_length_mm
                  <dbl> <fct>         <chr>    <fct>   <fct>     <fct>          <dbl>
-     1           0.294 original      training Adelie  Torgersen male            39.1
-     2           0.294 original      testing  Adelie  Torgersen fema…           39.5
-     3           0.294 original      testing  Adelie  Torgersen fema…           40.3
-     4           0.6   original      training Adelie  Torgersen fema…           36.7
-     5           0.294 original      testing  Adelie  Torgersen male            39.3
-     6           0.294 original      training Adelie  Torgersen fema…           38.9
-     7           0.294 original      training Adelie  Torgersen male            39.2
-     8           0.294 original      training Adelie  Torgersen fema…           41.1
-     9           0.294 original      training Adelie  Torgersen male            38.6
-    10           0.6   original      testing  Adelie  Torgersen male            34.6
+     1           0.598 original      training Adelie  Torgersen male            39.1
+     2           0.598 original      testing  Adelie  Torgersen fema…           39.5
+     3           0.190 original      training Adelie  Torgersen fema…           40.3
+     4           0.598 original      testing  Adelie  Torgersen fema…           36.7
+     5           0.598 original      training Adelie  Torgersen male            39.3
+     6           0.598 original      training Adelie  Torgersen fema…           38.9
+     7           0.190 original      training Adelie  Torgersen male            39.2
+     8           0.325 original      training Adelie  Torgersen fema…           41.1
+     9           0.598 original      training Adelie  Torgersen male            38.6
+    10           0.190 original      training Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -477,53 +477,49 @@ disc1 %>%
           * denotes terminal node
 
       1) root 498 249 synthetic (0.5000000 0.5000000)  
-        2) bill_length_mm< 38.25 110  44 synthetic (0.6000000 0.4000000) *
-        3) bill_length_mm>=38.25 388 183 original (0.4716495 0.5283505)  
-          6) island=Biscoe,Dream 354 173 original (0.4887006 0.5112994)  
-           12) body_mass_g< 3187.5 8   1 synthetic (0.8750000 0.1250000) *
-           13) body_mass_g>=3187.5 346 166 original (0.4797688 0.5202312)  
-             26) flipper_length_mm< 199.5 145  68 synthetic (0.5310345 0.4689655)  
-               52) bill_length_mm>=42.75 80  32 synthetic (0.6000000 0.4000000)  
-                104) body_mass_g>=3875 28   5 synthetic (0.8214286 0.1785714) *
-                105) body_mass_g< 3875 52  25 original (0.4807692 0.5192308)  
-                  210) bill_length_mm< 45.35 8   1 synthetic (0.8750000 0.1250000) *
-                  211) bill_length_mm>=45.35 44  18 original (0.4090909 0.5909091) *
-               53) bill_length_mm< 42.75 65  29 original (0.4461538 0.5538462)  
-                106) bill_depth_mm>=19.05 23   8 synthetic (0.6521739 0.3478261) *
-                107) bill_depth_mm< 19.05 42  14 original (0.3333333 0.6666667) *
-             27) flipper_length_mm>=199.5 201  89 original (0.4427861 0.5572139)  
-               54) bill_depth_mm< 19.45 192  88 original (0.4583333 0.5416667)  
-                108) bill_length_mm>=51.45 19   7 synthetic (0.6315789 0.3684211) *
-                109) bill_length_mm< 51.45 173  76 original (0.4393064 0.5606936)  
-                  218) flipper_length_mm>=229.5 11   3 synthetic (0.7272727 0.2727273) *
-                  219) flipper_length_mm< 229.5 162  68 original (0.4197531 0.5802469)  
-                    438) body_mass_g< 5025 108  52 original (0.4814815 0.5185185)  
-                      876) body_mass_g>=4937.5 17   6 synthetic (0.6470588 0.3529412) *
-                      877) body_mass_g< 4937.5 91  41 original (0.4505495 0.5494505) *
-                    439) body_mass_g>=5025 54  16 original (0.2962963 0.7037037) *
-               55) bill_depth_mm>=19.45 9   1 original (0.1111111 0.8888889) *
-          7) island=Torgersen 34  10 original (0.2941176 0.7058824) *
+        2) flipper_length_mm< 194.5 214  97 synthetic (0.5467290 0.4532710)  
+          4) body_mass_g>=3312.5 174  70 synthetic (0.5977011 0.4022989) *
+          5) body_mass_g< 3312.5 40  13 original (0.3250000 0.6750000) *
+        3) flipper_length_mm>=194.5 284 132 original (0.4647887 0.5352113)  
+          6) body_mass_g< 3225 7   0 synthetic (1.0000000 0.0000000) *
+          7) body_mass_g>=3225 277 125 original (0.4512635 0.5487365)  
+           14) island=Biscoe,Dream 256 121 original (0.4726562 0.5273438)  
+             28) bill_length_mm>=50.55 59  24 synthetic (0.5932203 0.4067797)  
+               56) bill_depth_mm< 18.75 44  14 synthetic (0.6818182 0.3181818) *
+               57) bill_depth_mm>=18.75 15   5 original (0.3333333 0.6666667) *
+             29) bill_length_mm< 50.55 197  86 original (0.4365482 0.5634518)  
+               58) flipper_length_mm>=229.5 8   2 synthetic (0.7500000 0.2500000) *
+               59) flipper_length_mm< 229.5 189  80 original (0.4232804 0.5767196)  
+                118) body_mass_g< 4712.5 102  49 original (0.4803922 0.5196078)  
+                  236) flipper_length_mm>=211.5 20   6 synthetic (0.7000000 0.3000000) *
+                  237) flipper_length_mm< 211.5 82  35 original (0.4268293 0.5731707)  
+                    474) bill_depth_mm>=18.55 32  13 synthetic (0.5937500 0.4062500)  
+                      948) bill_length_mm< 48.7 20   5 synthetic (0.7500000 0.2500000) *
+                      949) bill_length_mm>=48.7 12   4 original (0.3333333 0.6666667) *
+                    475) bill_depth_mm< 18.55 50  16 original (0.3200000 0.6800000) *
+                119) body_mass_g>=4712.5 87  31 original (0.3563218 0.6436782) *
+           15) island=Torgersen 21   4 original (0.1904762 0.8095238) *
 
     $discriminator_auc
     # A tibble: 2 × 4
       .sample  .metric .estimator .estimate
       <fct>    <chr>   <chr>          <dbl>
-    1 training roc_auc binary         0.693
-    2 testing  roc_auc binary         0.582
+    1 training roc_auc binary         0.687
+    2 testing  roc_auc binary         0.493
 
     $pmse
     # A tibble: 2 × 4
       .source   .pmse .null_pmse .pmse_ratio
       <fct>     <dbl>      <dbl>       <dbl>
-    1 training 0.0298     0.0306       0.973
-    2 testing  0.0388     0.0317       1.22 
+    1 training 0.0298     0.0341       0.873
+    2 testing  0.0272     0.0351       0.775
 
     $specks
     # A tibble: 2 × 2
       .source  .specks
       <fct>      <dbl>
-    1 training   0.297
-    2 testing    0.143
+    1 training  0.317 
+    2 testing   0.0595
 
     attr(,"class")
     [1] "discrimination"
@@ -558,7 +554,7 @@ disc1$discriminator$fit$fit$fit %>%
 
 ![](README_files/figure-commonmark/unnamed-chunk-20-2.png)
 
-#### Regularized Regression
+#### Example Using Regularized Regression
 
 Let’s repeat the workflow from above with LASSO logistic regression and
 hyperparameter tuning.
@@ -632,13 +628,13 @@ disc2 %>%
      1             0.5 original      training Adelie  Torgersen male            39.1
      2             0.5 original      training Adelie  Torgersen fema…           39.5
      3             0.5 original      training Adelie  Torgersen fema…           40.3
-     4             0.5 original      testing  Adelie  Torgersen fema…           36.7
-     5             0.5 original      testing  Adelie  Torgersen male            39.3
+     4             0.5 original      training Adelie  Torgersen fema…           36.7
+     5             0.5 original      training Adelie  Torgersen male            39.3
      6             0.5 original      training Adelie  Torgersen fema…           38.9
      7             0.5 original      training Adelie  Torgersen male            39.2
      8             0.5 original      training Adelie  Torgersen fema…           41.1
      9             0.5 original      training Adelie  Torgersen male            38.6
-    10             0.5 original      testing  Adelie  Torgersen male            34.6
+    10             0.5 original      training Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -659,56 +655,51 @@ disc2 %>%
 
     Call:  glmnet::glmnet(x = maybe_matrix(x), y = y, family = "binomial",      alpha = ~1) 
 
-       Df %Dev   Lambda
-    1   0 0.00 0.036060
-    2   1 0.06 0.032860
-    3   1 0.12 0.029940
-    4   1 0.16 0.027280
-    5   1 0.20 0.024860
-    6   1 0.23 0.022650
-    7   1 0.25 0.020640
-    8   1 0.27 0.018800
-    9   1 0.29 0.017130
-    10  3 0.35 0.015610
-    11  3 0.40 0.014220
-    12  4 0.45 0.012960
-    13  4 0.49 0.011810
-    14  5 0.53 0.010760
-    15  5 0.58 0.009804
-    16  5 0.61 0.008933
-    17  8 0.68 0.008139
-    18  8 0.79 0.007416
-    19  8 0.87 0.006757
-    20  9 0.95 0.006157
-    21  9 1.02 0.005610
-    22  9 1.07 0.005112
-    23 11 1.12 0.004658
-    24 11 1.16 0.004244
-    25 12 1.20 0.003867
-    26 12 1.23 0.003523
-    27 12 1.26 0.003210
-    28 12 1.28 0.002925
-    29 13 1.30 0.002665
-    30 13 1.32 0.002428
-    31 13 1.33 0.002213
-    32 13 1.34 0.002016
-    33 13 1.35 0.001837
-    34 13 1.36 0.001674
-    35 13 1.36 0.001525
-    36 13 1.37 0.001390
-    37 13 1.37 0.001266
-    38 13 1.38 0.001154
-    39 13 1.38 0.001051
-    40 13 1.38 0.000958
-    41 13 1.38 0.000873
-    42 13 1.39 0.000795
-    43 13 1.39 0.000725
-    44 13 1.39 0.000660
-    45 13 1.39 0.000602
-    46 13 1.39 0.000548
-
-    ...
-    and 0 more lines.
+       Df %Dev    Lambda
+    1   0 0.00 0.0219500
+    2   1 0.02 0.0200000
+    3   1 0.04 0.0182200
+    4   1 0.06 0.0166000
+    5   2 0.09 0.0151300
+    6   2 0.11 0.0137900
+    7   6 0.16 0.0125600
+    8   6 0.22 0.0114400
+    9   6 0.27 0.0104300
+    10  6 0.31 0.0095020
+    11  6 0.35 0.0086580
+    12  6 0.38 0.0078890
+    13  7 0.46 0.0071880
+    14  9 0.55 0.0065490
+    15 10 0.65 0.0059670
+    16 10 0.74 0.0054370
+    17 10 0.82 0.0049540
+    18 10 0.88 0.0045140
+    19 11 0.94 0.0041130
+    20 11 0.98 0.0037480
+    21 11 1.02 0.0034150
+    22 11 1.05 0.0031110
+    23 11 1.08 0.0028350
+    24 11 1.10 0.0025830
+    25 11 1.12 0.0023540
+    26 11 1.13 0.0021450
+    27 11 1.14 0.0019540
+    28 11 1.15 0.0017800
+    29 12 1.16 0.0016220
+    30 12 1.17 0.0014780
+    31 12 1.18 0.0013470
+    32 12 1.18 0.0012270
+    33 13 1.19 0.0011180
+    34 13 1.20 0.0010190
+    35 13 1.20 0.0009283
+    36 13 1.21 0.0008459
+    37 13 1.21 0.0007707
+    38 13 1.21 0.0007022
+    39 13 1.22 0.0006399
+    40 13 1.22 0.0005830
+    41 13 1.22 0.0005312
+    42 13 1.22 0.0004840
+    43 13 1.22 0.0004410
+    44 13 1.22 0.0004019
 
     $discriminator_auc
     # A tibble: 2 × 4
@@ -819,5 +810,5 @@ Most commonly, `weight_var` is used when synthesizing data from surveys.
 
 ## Getting Help
 
-Contact [Aaron R. Williams](awilliams@urban.org) with feedback or
-questions.
+Contact <a href="mailto:awilliams@urban.org">Aaron R. Williams</a> with
+feedback or questions.
