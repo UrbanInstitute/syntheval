@@ -26,3 +26,4 @@ A list with precision, recall, the confusion matrix, and ROC AUC
 \description{
 Run a membership inference test
 }
+\concept{Disclosure risk metrics}

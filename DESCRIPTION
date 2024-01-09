@@ -1,6 +1,6 @@
 Package: syntheval
 Title: A set of tools for evaluating synthetic data utility and disclosure risk
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: c(
     person(given = "Aaron R.", family = "Williams", 
            email = "awilliams@urban.org", role = c("aut", "cre"),
@@ -26,12 +26,18 @@ Imports:
     gower,
     Hmisc,
     magrittr,
+    parsnip,
+    recipes,
     rlang,
-    rpart,
+    rsample,
     tibble,
     tidyr,
     tidyselect,
+    tune,
+    workflows,
     yardstick
+Suggestions:
+    rpart
 Depends: 
     R (>= 3.0)
 LazyData: true

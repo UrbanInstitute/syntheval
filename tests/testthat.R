@@ -8,5 +8,6 @@
 
 library(testthat)
 library(syntheval)
+library(magrittr)
 
 test_check("syntheval")

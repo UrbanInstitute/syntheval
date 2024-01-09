@@ -20,3 +20,15 @@ numeric variable
 Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in
 the synthetic and confidential data
 }
+\seealso{
+Other Utility metrics: 
+\code{\link{add_pmse_ratio}()},
+\code{\link{add_pmse}()},
+\code{\link{add_propensities_tuned}()},
+\code{\link{add_propensities}()},
+\code{\link{add_specks}()},
+\code{\link{discrimination}()},
+\code{\link{util_ci_overlap}()},
+\code{\link{util_proportions}()}
+}
+\concept{Utility metrics}

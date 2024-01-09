@@ -4,7 +4,14 @@
 \alias{util_proportions}
 \title{Calculate relative frequency tables for categorical variables}
 \usage{
-util_proportions(postsynth, data, weight_var = 1, group_by = NULL)
+util_proportions(
+  postsynth,
+  data,
+  weight_var = NULL,
+  group_by = NULL,
+  common_vars = TRUE,
+  synth_vars = TRUE
+)
 }
 \arguments{
 \item{postsynth}{A postsynth object or tibble with synthetic data}
@@ -14,6 +21,10 @@ util_proportions(postsynth, data, weight_var = 1, group_by = NULL)
 \item{weight_var}{An unquoted name of a weight variable}
 
 \item{group_by}{An unquoted name of a (or multiple) grouping variable(s)}
+
+\item{common_vars}{A logical for if only common variables should be kept}
+
+\item{synth_vars}{A logical for if only synthesized variables should be kept}
 }
 \value{
 A tibble with variables, classes, and relative frequencies
@@ -21,3 +32,15 @@ A tibble with variables, classes, and relative frequencies
 \description{
 Calculate relative frequency tables for categorical variables
 }
+\seealso{
+Other Utility metrics: 
+\code{\link{add_pmse_ratio}()},
+\code{\link{add_pmse}()},
+\code{\link{add_propensities_tuned}()},
+\code{\link{add_propensities}()},
+\code{\link{add_specks}()},
+\code{\link{discrimination}()},
+\code{\link{util_ci_overlap}()},
+\code{\link{util_ks_distance}()}
+}
+\concept{Utility metrics}

@@ -10,7 +10,9 @@ util_percentiles(
   probs = c(0.1, 0.5, 0.9),
   weight_var = NULL,
   group_by = NULL,
-  drop_zeros = FALSE
+  drop_zeros = FALSE,
+  common_vars = TRUE,
+  synth_vars = TRUE
 )
 }
 \arguments{
@@ -27,6 +29,12 @@ percentiles are an approximation; especially when weights are used.}
 \item{group_by}{An unquoted name of a (or multiple) grouping variable(s)}
 
 \item{drop_zeros}{A Boolean for if zeros should be dropped}
+
+\item{common_vars}{A logical for if only common variables should be kept.
+This option will frequently result in an error because quantile() is strict
+about missing values.}
+
+\item{synth_vars}{A logical for if only synthesized variables should be kept}
 }
 \value{
 A \code{tibble} of summary statistics.
@@ -35,11 +43,11 @@ A \code{tibble} of summary statistics.
 Calculate summary statistics for original and synthetic data.
 }
 \seealso{
-Other utility functions: 
+Other utility metrics: 
 \code{\link{util_co_occurrence}()},
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
 \code{\link{util_tails}()},
 \code{\link{util_totals}()}
 }
-\concept{utility functions}
+\concept{utility metrics}

@@ -8,10 +8,14 @@
 #' @param group_by An unquoted name of a (or multiple) grouping variable(s)
 #' @param weight_var An unquoted name of a weight variable
 #' @param drop_zeros A Boolean for if zeros should be dropped
+#' @param common_vars A logical for if only common variables should be kept. 
+#' This option will frequently result in an error because quantile() is strict 
+#' about missing values.
+#' @param synth_vars A logical for if only synthesized variables should be kept
 #'
 #' @return A `tibble` of summary statistics.
 #'
-#' @family utility functions
+#' @family utility metrics
 #'
 #' @export
 #'
@@ -20,7 +24,9 @@ util_percentiles <- function(postsynth,
                         probs = c(0.1, 0.5, 0.9),
                         weight_var = NULL, 
                         group_by = NULL,
-                        drop_zeros = FALSE) {
+                        drop_zeros = FALSE,
+                        common_vars = TRUE,
+                        synth_vars = TRUE) {
   
   # catch binding error
   . <- NULL
@@ -32,10 +38,36 @@ util_percentiles <- function(postsynth,
     variable_order <- 
       levels(postsynth$jth_synthesis_time$variable)
     
+    # filter to only synthesized variables
+    # keep group_by variables
+    if (synth_vars) {
+      
+      synthetic_data <- synthetic_data %>%
+        dplyr::select(dplyr::all_of(variable_order), {{ group_by }})
+      
+      data <- data %>%
+        dplyr::select(dplyr::all_of(variable_order), {{ group_by }})
+      
+    }
+    
   } else {
     
     synthetic_data <- postsynth
   
+  }
+  
+  # only keep variables in both data sets
+  # keep group_by variables
+  if (common_vars) {
+    
+    common_vars <- intersect(names(data), names(synthetic_data))
+    
+    data <- data %>%
+      dplyr::select(dplyr::all_of(common_vars), {{ group_by }})
+    
+    synthetic_data <- synthetic_data %>%
+      dplyr::select(dplyr::all_of(common_vars), {{ group_by }})
+    
   }
   
   # drop non-numeric variables except grouping variables
@@ -67,7 +99,7 @@ util_percentiles <- function(postsynth,
 
     summary_stats <- combined_data %>%
       dplyr::group_by(source, dplyr::across({{ group_by }})) %>%
-      dplyr::summarise(
+      dplyr::reframe(
         dplyr::across(
           .cols = dplyr::everything(),
           .fns = ~ stats::quantile(
@@ -117,9 +149,19 @@ util_percentiles <- function(postsynth,
       proportion_difference = .data$difference / .data$original
     )
   
+  # sort table by synthesis order and keep factor levels for variables that 
+  # weren't synthesized
   if (!is_postsynth(postsynth)) {
     
     variable_order <- names(dplyr::select(combined_data, -source))
+    
+  } else {
+    
+    all_vars <- names(dplyr::select(combined_data, -source))
+    
+    other_vars <- setdiff(all_vars, variable_order)
+    
+    variable_order <- c(variable_order, other_vars)
     
   }
   

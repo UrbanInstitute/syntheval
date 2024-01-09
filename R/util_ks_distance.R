@@ -7,6 +7,8 @@
 #' @return A tibble with the D and location of the largest distance for each 
 #' numeric variable
 #' 
+#' @family Utility metrics
+#' 
 #' @export
 #'
 util_ks_distance <- function(postsynth, data) {
