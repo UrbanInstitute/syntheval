@@ -70,7 +70,7 @@ util_moments(
 
 ```
 
-`util_totals()` is similar to `util_moments()`, but looks at counts and totals. 
+`util_totals()` is similar to `util_moments()` but looks at counts and totals. 
 
 ```{r}
 util_totals(
@@ -207,7 +207,7 @@ ci_overlap$coefficient |>
 
 ```
 
-### Discriminant Metrics
+### Discriminant-Based Metrics
 
 Discriminant-based metrics build models to predict if an observation is original or synthetic and then evaluate those model predictions. Ideally, it should be difficult for a model to distinguish, or discriminate, between original observations and synthetic observations. 
 
@@ -216,7 +216,7 @@ Discriminant-based metrics build models to predict if an observation is original
 * The code can handle hyperparameter tuning. 
 * After calculating propensities, the code can calculate ROC AUC, SPECKS, pMSE, and pMSE ratio.
 
-#### Decision Tree
+#### Example Using Decision Trees
 
 Discriminant-based metrics are built a `discrimination` object created by `discrimination()`. 
 
@@ -287,7 +287,7 @@ disc1$discriminator$fit$fit$fit %>%
 
 ```
 
-#### Regularized Regression
+#### Example Using Regularized Regression
 
 Let's repeat the workflow from above with LASSO logistic regression and hyperparameter tuning. 
 
@@ -372,4 +372,4 @@ Most commonly, `weight_var` is used when synthesizing data from surveys.
 
 ## Getting Help
 
-Contact [Aaron R. Williams](awilliams@urban.org) with feedback or questions. 
+Contact <a href="mailto:awilliams@urban.org">Aaron R. Williams</a> with feedback or questions. 
