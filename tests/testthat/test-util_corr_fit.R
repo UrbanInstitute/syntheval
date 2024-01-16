@@ -129,7 +129,6 @@ test_that("util_corr_fit returns NAs when only one observation is in a grouping 
 })
 
 
-
 test_that("util_corr_fit returns NAs when a grouping in the actual data is not in the synthetic data", {
   
   df <- data.frame(a = c(1, 2, 3, 4, 5),

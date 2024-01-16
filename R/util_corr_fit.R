@@ -65,8 +65,8 @@ util_corr_fit <- function(postsynth,
         col <- colnames(combined_levels)[j]
         value <- combined_levels[i,j]
 
-        data_sub <- data_sub %>% dplyr::filter(!!rlang::sym(col) == value)
-        syn_sub <- syn_sub %>% dplyr::filter(!!rlang::sym(col) == value)
+        data_sub <- dplyr::filter(data_sub, !!rlang::sym(col) == value)
+        syn_sub <- dplyr::filter(syn_sub, !!rlang::sym(col) == value)
       }
       
       # get the results for the subgroup/level
@@ -78,7 +78,9 @@ util_corr_fit <- function(postsynth,
       rmse <- result$correlation_difference_rmse
       
       # add the results to a growing list of results for each subgroup/level 
-      correlation_data <- dplyr::bind_rows(correlation_data, cbind(current_level, df, row.names = NULL))
+      correlation_data <- dplyr::bind_rows(correlation_data, 
+                                           cbind(current_level, df, 
+                                                 row.names = NULL))
       correlation_fit = c(correlation_fit, fit)
       correlation_difference_mae = c(correlation_difference_mae, mae)
       correlation_difference_rmse = c(correlation_difference_rmse, rmse)
@@ -110,41 +112,39 @@ util_corr_fit <- function(postsynth,
     return(correlation_matrix)
   }
   
-  # find the lower triangle of the original data linear correlation matrix and return a df
+  # find the lower triangle of the linear correlation matrices and add a var column 
   original_lt <- data.frame(lower_triangle(data))
-  
-  # adding variable 2 column to the original df
   original_lt$var2 <- colnames(original_lt)
   
-  # restructuring the correlation matrix so the cols are var1, var2, original
+  synthetic_lt <- data.frame(lower_triangle(synthetic_data))
+  synthetic_lt$var2 <- colnames(synthetic_lt)
+  
+  # restructure the correlation matrix so the cols are var1, var2, original/synthetic
   original_lt <- original_lt %>%
     tidyr::pivot_longer(cols = !var2, names_to = "var1", values_to = "original") %>%
     dplyr::filter(!is.na(original)) %>%
     dplyr::arrange(var1) %>%
     dplyr::select(var1, var2, original) %>%
-    dplyr::mutate(original = dplyr::case_when(original == "" ~ NA, .default = original))
+    dplyr::mutate(original = dplyr::case_when(.data$original == "" ~ NA, 
+                                              .default = .data$original))
   
-  # find the lower triangle of the synthetic data linear correlation matrix and return a df
-  synthetic_lt <- data.frame(lower_triangle(synthetic_data))
-  
-  # adding variable 2 column to the synthetic df
-  synthetic_lt$var2 <- colnames(synthetic_lt)
-  
-  # restructuring the correlation matrix so the cols are var1, var2, synthetic
   synthetic_lt <- synthetic_lt %>%
     tidyr::pivot_longer(cols = !var2, names_to = "var1", values_to = "synthetic") %>%
     dplyr::filter(!is.na(synthetic)) %>%
     dplyr::arrange(var1) %>%
     dplyr::select(var1, var2, synthetic) %>%
-    dplyr::mutate(synthetic = dplyr::case_when(synthetic == "" ~ NA, .default = synthetic))
+    dplyr::mutate(synthetic = dplyr::case_when(.data$synthetic == "" ~ NA, 
+                                               .default = .data$synthetic))
   
-  # combining the data and finding the difference between the original and synthetic correlations 
+  # combine the data and find the difference between the original and synthetic correlations 
   correlation_data <- original_lt %>%
     dplyr::left_join(synthetic_lt, by = c("var1","var2")) %>%
-    dplyr::mutate(difference = as.numeric(.data$original) - as.numeric(.data$synthetic),
-                  proportion_difference = as.numeric(.data$difference) / as.numeric(.data$original))
+    dplyr::mutate(original = as.numeric(.data$original),
+                  synthetic = as.numeric(.data$synthetic),
+                  difference = .data$original - .data$synthetic,
+                  proportion_difference = .data$difference / .data$original)
   
-  # find the length of the nonzero values in the matrices
+  # find the number of values in the lower triangle 
   n <- nrow(dplyr::filter(correlation_data, !is.na(difference)))
 
   # calculate the correlation fit and divide by n
