@@ -4,11 +4,13 @@
 \alias{add_discriminator_auc}
 \title{Add discriminator AUC to discrimination object}
 \usage{
-add_discriminator_auc(discrimination, split = TRUE)
+add_discriminator_auc(discrimination, group = c(), split = TRUE)
 }
 \arguments{
 \item{discrimination}{A discrimination object with propensities (likely
 added using add_propensities())}
+
+\item{group}{A list of variable names to group by}
 
 \item{split}{A logical for if the metric should be calculated separately for
 the training/testing split. Defaults to TRUE.}

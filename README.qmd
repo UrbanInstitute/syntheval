@@ -267,7 +267,6 @@ disc1 %>%
   add_specks() %>%
   add_pmse() %>%
   add_pmse_ratio(times = 25)
-
 ```
 
 Finally, we can look at variable importance and the decision tree from our discriminator. 
@@ -353,6 +352,15 @@ util_moments(
   group_by = species
 )
 
+```
+
+All four of discriminant-based metrics can also be evaluated by group
+```{r}
+disc1 %>%
+  add_discriminator_auc(group = c("sex", "species")) %>%
+  add_specks(group = c("sex", "species")) %>%
+  add_pmse(group = c("sex", "species")) %>%
+  add_pmse_ratio(times = 25, group = c("sex", "species"))
 ```
 
 ### Weighting
