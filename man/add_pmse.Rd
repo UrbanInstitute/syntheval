@@ -2,13 +2,16 @@
 % Please edit documentation in R/add_pmse.R
 \name{add_pmse}
 \alias{add_pmse}
-\title{Add pMSE to discrimination object}
+\title{Add pMSE to discrimination object, with option to assess separately on groups
+indicated by a grouping variable}
 \usage{
-add_pmse(discrimination, split = TRUE)
+add_pmse(discrimination, group = c(), split = TRUE)
 }
 \arguments{
 \item{discrimination}{A discrimination object with propensities (likely
 added using add_propensities())}
+
+\item{group}{A set of variables to group the pmse by}
 
 \item{split}{A logical for if the metric should be calculated separately for
 the training/testing split. Defaults to TRUE.}
@@ -18,7 +21,8 @@ A discrimination object with propensities (likely added using
 add_propensities()) with a pMSE
 }
 \description{
-Add pMSE to discrimination object
+Add pMSE to discrimination object, with option to assess separately on groups
+indicated by a grouping variable
 }
 \seealso{
 Other Utility metrics: 
