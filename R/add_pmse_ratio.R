@@ -46,29 +46,52 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, group = c
   }
   # function to sample 2x size of grouped data, by group, 
   # for the dataset with both confidential and synthetic data
+  # group_resample <- function(data){
+  #   # split by grouping variables
+  #   split_data = dplyr::group_split(data %>% dplyr::ungroup() %>% dplyr::group_by(across(all_of(group))))
+  #   bootstrap_sample = list()
+  #   for (elem in split_data){ # iterate through grouped dataset
+  #     # in each group, sample twice as much data
+  #     bootstrap_sample <- append(bootstrap_sample, list(dplyr::bind_cols(
+  #       elem %>%
+  #         dplyr::filter(.data$.source_label == "original") %>%
+  #         dplyr::group_by(across(all_of(group))) %>%
+  #         dplyr::slice_sample(n = nrow(elem), replace = TRUE) %>%
+  #         dplyr::select(-".source_label"),
+  #       elem %>%
+  #         dplyr::select(".source_label"))
+  #     ))
+  #   }
+  #   bootstrap_sample = dplyr::bind_rows(bootstrap_sample)
+  # }
+  
   group_resample <- function(data){
     # split by grouping variables
     split_data = dplyr::group_split(data %>% dplyr::ungroup() %>% dplyr::group_by(across(all_of(group))))
-    bootstrap_sample = list()
-    for (elem in split_data){ # iterate through grouped dataset
+    bootstrap_sample = vector("list", length = length(split_data))
+    for (i in 1:length(split_data)){ # iterate through grouped dataset
       # in each group, sample twice as much data
-      bootstrap_sample <- append(bootstrap_sample, list(dplyr::bind_cols(
-        elem %>%
+      bootstrap_sample[[i]] <- list(dplyr::bind_cols(
+        split_data[[i]] %>%
           dplyr::filter(.data$.source_label == "original") %>%
           dplyr::group_by(across(all_of(group))) %>%
-          dplyr::slice_sample(n = nrow(elem), replace = TRUE) %>%
+          dplyr::slice_sample(n = nrow(split_data[[i]]), replace = TRUE) %>%
           dplyr::select(-".source_label"),
-        elem %>%
+        split_data[[i]] %>%
           dplyr::select(".source_label"))
-      ))
+      )
     }
     bootstrap_sample = dplyr::bind_rows(bootstrap_sample)
   }
   
   # matrix instead of vector, where each entry is a simulation, containing a vector with groups
-  pmse_null_overall <- c()
-  pmse_null_training <- c()
-  pmse_null_testing <- c()
+  #pmse_null_overall <- c()
+  #pmse_null_training <- c()
+  #pmse_null_testing <- c()
+  
+  pmse_null_overall <- rep(NA, times)
+  pmse_null_training <- rep(NA, times)
+  pmse_null_testing <- rep(NA, times)
   
   for (a in 1:times) {
     # bootstrap sample original observations to equal the size of the combined 
@@ -105,13 +128,20 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, group = c
         )
       
       # calculate the pmse for each bootstrap
-      pmse_null_overall <- append(pmse_null_overall, calc_pmse(propensities_df))
-      pmse_null_training <- append(pmse_null_training, propensities_df %>%
+      # pmse_null_overall <- append(pmse_null_overall, calc_pmse(propensities_df))
+      # pmse_null_training <- append(pmse_null_training, propensities_df %>%
+      #                                dplyr::filter(.data$.sample == "training") %>%
+      #                                calc_pmse())
+      # pmse_null_testing <- append(pmse_null_testing, propensities_df %>%
+      #                               dplyr::filter(.data$.sample == "testing") %>%
+      #                               calc_pmse())
+      pmse_null_overall[a] <- calc_pmse(propensities_df)
+      pmse_null_training[a] <- propensities_df %>%
                                      dplyr::filter(.data$.sample == "training") %>%
-                                     calc_pmse())
-      pmse_null_testing <- append(pmse_null_testing, propensities_df %>%
+                                     calc_pmse()
+      pmse_null_testing[a] <- propensities_df %>%
                                     dplyr::filter(.data$.sample == "testing") %>%
-                                    calc_pmse())
+                                    calc_pmse()
     } else {
       
       # fit the model from the pMSE on the bootstrap sample
@@ -127,7 +157,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, group = c
       )
       
       # calculate the pmse for each bootstrap
-      pmse_null_overall <- append(pmse_null_overall, calc_pmse(propensities_df))
+      pmse_null_overall[a] <- calc_pmse(propensities_df)
       
     }
     

@@ -10,6 +10,7 @@
 #' @return A discrimination with SPECKS
 #' 
 #' @export
+
 add_specks <- function(discrimination, group = c(), split = TRUE) {
   
   calc_specks <- function(propensities) {
