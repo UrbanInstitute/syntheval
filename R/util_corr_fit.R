@@ -23,6 +23,8 @@ util_corr_fit <- function(postsynth,
                           data, 
                           group_by = NULL) {
   
+   
+  
   if (is_postsynth(postsynth)) {
   
     synthetic_data <- postsynth$synthetic_data
@@ -31,71 +33,46 @@ util_corr_fit <- function(postsynth,
     
     synthetic_data <- postsynth
   }
-   
-  synthetic_data <- dplyr::select(synthetic_data, dplyr::where(is.numeric), {{ group_by }})
-  data <- dplyr::select(data, dplyr::where(is.numeric), {{ group_by }})
-
-  # reorder data names (this appears to check if the variables are the same)
-  data <- dplyr::select(data, names(synthetic_data))
-
-  # check if a group_by variable was passed
-  if (!rlang::quo_is_null(rlang::enquo(group_by))) {
-    
-    # get all of the level combinations from each group by variable
-    combined_levels <- rbind(data, synthetic_data) %>% 
-      dplyr::select({{ group_by }}) %>% 
-      unique()
-    
-    # initialize return values
-    correlation_data <- data.frame()
-    correlation_fit = c()
-    correlation_difference_mae = c()
-    correlation_difference_rmse = c()
-    
-    # get a subset of the data 
-    for (i in 1:nrow(combined_levels)) {
-      
-      data_sub <- data
-      syn_sub <- synthetic_data
-
-      current_level <- data.frame(combined_levels[i,])
-      colnames(current_level) <- colnames(combined_levels)
-      
-      for (j in 1:length(colnames(combined_levels))){
-        col <- colnames(combined_levels)[j]
-        value <- combined_levels[i,j]
-
-        data_sub <- dplyr::filter(data_sub, !!rlang::sym(col) == value)
-        syn_sub <- dplyr::filter(syn_sub, !!rlang::sym(col) == value)
-      }
-      
-      # get the results for the subgroup/level
-      result <- util_corr_fit(postsynth = syn_sub, data = data_sub)
-      
-      df <- result$correlation_data
-      fit <- result$correlation_fit
-      mae <- result$correlation_difference_mae
-      rmse <- result$correlation_difference_rmse
-      
-      # add the results to a growing list of results for each subgroup/level 
-      correlation_data <- dplyr::bind_rows(correlation_data, 
-                                           cbind(current_level, df, 
-                                                 row.names = NULL))
-      correlation_fit = c(correlation_fit, fit)
-      correlation_difference_mae = c(correlation_difference_mae, mae)
-      correlation_difference_rmse = c(correlation_difference_rmse, rmse)
-    }
-    
-    return(
-      list(
-        correlation_data = correlation_data,
-        correlation_fit = correlation_fit,
-        correlation_difference_mae = correlation_difference_mae,
-        correlation_difference_rmse = correlation_difference_rmse
-      )
-    )
-  }
   
+  # reorder data names (this appears to check if the variables are the same)
+  # issue when the groups in the synthetic data do not match the groups in the og data, and vice versa
+  # thinking about filling in all of groupings for each dataset first then running everything else
+  data <- dplyr::select(data, names(synthetic_data))
+  
+  synthetic_data <- dplyr::select(synthetic_data, dplyr::where(is.numeric), {{ group_by }})  |>
+    dplyr::arrange(dplyr::across({{ group_by }})) |>
+    dplyr::group_split(dplyr::across({{ group_by }})) 
+  
+  data <- dplyr::select(data, dplyr::where(is.numeric), {{ group_by }}) |>
+    dplyr::arrange(dplyr::across({{ group_by }})) |>
+    dplyr::group_split(dplyr::across({{ group_by }}))
+  
+  groups <- lapply(data, function(x) dplyr::select(x, {{ group_by }}) |>
+                     slice(1))
+
+  results <- purrr::pmap(
+      .l = list(synthetic_data, data, groups),
+      .f = get_correlations
+    )
+  
+    metrics <- dplyr::bind_cols(
+      correlation_fit = map_dbl(results, "correlation_fit"),
+      correlation_difference_mae = map_dbl(results, "correlation_difference_mae"),
+      correlation_difference_rmse = map_dbl(results, "correlation_difference_rmse"),
+      bind_rows(groups)
+    )
+    
+    corr_data <- dplyr::bind_rows(map_dfr(results, "correlation_data"))
+    
+    return(list(
+      corr_data,
+      metrics
+    ))
+}
+
+get_correlations <- function(synthetic_data,
+                             data,
+                             groups) {
   # helper function to find a correlation matrix with the upper tri set to zeros
   lower_triangle <- function(x) {
     
@@ -108,9 +85,10 @@ util_corr_fit <- function(postsynth,
     # set NA values in the lower triangle to "", set the values in the upper triangle to zero to avoid double counting
     correlation_matrix[is.na(correlation_matrix[lower.tri(correlation_matrix, diag = FALSE)])] <- ""
     correlation_matrix[upper.tri(correlation_matrix, diag = TRUE)] <- NA
-
+    
     return(correlation_matrix)
   }
+  
   
   # find the lower triangle of the linear correlation matrices and add a var column 
   original_lt <- data.frame(lower_triangle(data))
@@ -144,9 +122,11 @@ util_corr_fit <- function(postsynth,
                   difference = .data$original - .data$synthetic,
                   proportion_difference = .data$difference / .data$original)
   
+  correlation_data <- bind_cols(correlation_data, groups)
+  
   # find the number of values in the lower triangle 
   n <- nrow(dplyr::filter(correlation_data, !is.na(difference)))
-
+  
   # calculate the correlation fit and divide by n
   correlation_fit <- sqrt(sum(correlation_data$difference ^ 2, na.rm = TRUE)) / n
   
@@ -156,7 +136,7 @@ util_corr_fit <- function(postsynth,
   correlation_difference_mae <- difference_vec %>%
     abs() %>%
     mean()
-
+  
   # root mean square error
   correlation_difference_rmse <- difference_vec ^ 2 %>%
     mean() %>%
@@ -173,3 +153,4 @@ util_corr_fit <- function(postsynth,
   )
   
 }
+
