@@ -7,13 +7,12 @@
 #' @return A `list` of fit metrics:
 #'  - `correlation_data`: A `tibble` of the correlations among the 
 #'  numeric variables for the actual and synthetic data
-#'  - `correlation_fit`: square root of the sum of squared differences between
-#'  the synthetic and original data, divided by the number of
-#'  cells in the correlation matrix.
-#'  - `correlation_difference_mae`: the mean of the absolute correlation 
-#'  differences between the actual and synthetic data
-#'  - `correlation_difference_rmse`: the root mean of the squared correlation 
-#'  differences between the actual and synthetic data
+#'  - `metrics`: Correlation metrics including the correlation fit, square root 
+#'  of the sum of squared differences between the synthetic and original data, 
+#'  divided by the number of cells in the correlation matrix, mean squared
+#'  error, the mean of the absolute correlation differences between the actual
+#'  and synthetic data, and the root mean squared error, the root mean of the 
+#'  squared correlation differences between the actual and synthetic data
 #'  
 #' @family utility functions
 #'
@@ -35,20 +34,23 @@ util_corr_fit <- function(postsynth,
   }
   
   # reorder data names (this appears to check if the variables are the same)
-  # issue when the groups in the synthetic data do not match the groups in the og data, and vice versa
-  # thinking about filling in all of groupings for each dataset first then running everything else
   data <- dplyr::select(data, names(synthetic_data))
   
-  synthetic_data <- dplyr::select(synthetic_data, dplyr::where(is.numeric), {{ group_by }})  |>
-    dplyr::arrange(dplyr::across({{ group_by }})) |>
+  #TODO: Need to update code so if the synthetic data and actual data do not have the same groupings, the function still runs correctly. 
+  # I think we could add all of the groupings to each dataset, the run the rest of the code. 
+  
+  synthetic_data <- dplyr::select(synthetic_data, dplyr::where(is.numeric), {{ group_by }})  %>%
+    dplyr::arrange(dplyr::across({{ group_by }})) %>%
     dplyr::group_split(dplyr::across({{ group_by }})) 
   
-  data <- dplyr::select(data, dplyr::where(is.numeric), {{ group_by }}) |>
-    dplyr::arrange(dplyr::across({{ group_by }})) |>
+  data <- dplyr::select(data, dplyr::where(is.numeric), {{ group_by }}) %>%
+    dplyr::arrange(dplyr::across({{ group_by }})) %>%
     dplyr::group_split(dplyr::across({{ group_by }}))
   
-  groups <- lapply(data, function(x) dplyr::select(x, {{ group_by }}) |>
-                     slice(1))
+  groups <- lapply(data, function(x) dplyr::select(x, {{ group_by }}) %>%
+                     dplyr::slice(1))
+  n <- lapply(data, function(x) dplyr::select(x, {{ group_by }}) %>%
+                dplyr::count())
 
   results <- purrr::pmap(
       .l = list(synthetic_data, data, groups),
@@ -56,18 +58,20 @@ util_corr_fit <- function(postsynth,
     )
   
     metrics <- dplyr::bind_cols(
-      correlation_fit = map_dbl(results, "correlation_fit"),
-      correlation_difference_mae = map_dbl(results, "correlation_difference_mae"),
-      correlation_difference_rmse = map_dbl(results, "correlation_difference_rmse"),
-      bind_rows(groups)
+      n = unlist(n),
+      correlation_fit = purrr::map_dbl(results, "correlation_fit"),
+      correlation_difference_mae = purrr::map_dbl(results, "correlation_difference_mae"),
+      correlation_difference_rmse =purrr:: map_dbl(results, "correlation_difference_rmse"),
+      dplyr::bind_rows(groups)
     )
     
-    corr_data <- dplyr::bind_rows(map_dfr(results, "correlation_data"))
+    corr_data <- dplyr::bind_rows(purrr::map_dfr(results, "correlation_data"))
     
     return(list(
-      corr_data,
-      metrics
-    ))
+      correlation_data = corr_data,
+      metrics = metrics
+    )
+  )
 }
 
 get_correlations <- function(synthetic_data,
