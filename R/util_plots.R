@@ -36,30 +36,39 @@ plot_numeric_hist_kde <- function(joint_data,
   
   plot <- ggplot2::ggplot(
     data = joint_data,
-    mapping = ggplot2::aes(x = !!rlang::sym(var_name), 
-                           y = ggplot2::after_stat(density),
-                           fill = source)
+    mapping = ggplot2::aes(
+      x = !!rlang::sym(var_name), 
+      y = ggplot2::after_stat(stats::density),
+      fill = source)
   ) +
-    ggplot2::geom_histogram(position = "identity",
-                            bins = 30,
-                            color = "black",
-                            alpha = .3) + 
-    ggplot2::geom_density(ggplot2::aes(color = source),
-                          alpha = .3) + 
+    ggplot2::geom_histogram(
+      position = "identity",
+      bins = 30,
+      color = "black",
+      alpha = 0.3
+    ) + 
+    ggplot2::geom_density(
+      ggplot2::aes(color = source),
+      alpha = 0.3
+    ) + 
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(angle = 90)
     )
   
   if (!is.null(cat1_name) & is.null(cat2_name)) {
     
-    plot <- plot + ggplot2::facet_wrap(vars(!!rlang::sym(cat1_name)))
+    plot <- plot + 
+      ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(cat1_name)))
     
   }
   
   if (!is.null(cat1_name) & !is.null(cat2_name)) {
     
-    plot <- plot + ggplot2::facet_grid(rows = vars(!!rlang::sym(cat1_name)),
-                                       cols = vars(!!rlang::sym(cat2_name)))
+    plot <- plot + 
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(!!rlang::sym(cat1_name)),
+        cols = ggplot2::vars(!!rlang::sym(cat2_name))
+      )
     
   }
   
@@ -116,14 +125,18 @@ plot_categorical_bar <- function(joint_data,
   
   if (!is.null(cat1_name) & is.null(cat2_name)) {
     
-    plot <- plot + ggplot2::facet_wrap(vars(!!rlang::sym(cat1_name)))
+    plot <- plot + 
+      ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(cat1_name)))
     
   }
   
   if (!is.null(cat1_name) & !is.null(cat2_name)) {
     
-    plot <- plot + ggplot2::facet_grid(rows = vars(!!rlang::sym(cat1_name)),
-                                       cols = vars(!!rlang::sym(cat2_name)))
+    plot <- plot + 
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(!!rlang::sym(cat1_name)),
+        cols = ggplot2::vars(!!rlang::sym(cat2_name))
+      )
     
   }
   
@@ -147,35 +160,42 @@ create_cormat_plot <- function(data, cor_method = "pearson") {
   
   # get lower triangular correlation matrix
   cmat <- stats::cor(data[num_vars], method = cor_method) %>%
-    round(2) 
+    round(digits = 2) 
   cmat[upper.tri(cmat)] <- NA 
   
   # generate plot
   cmat_df <- as.data.frame.table(cmat) %>%
-    dplyr::filter(stats::complete.cases(.))
+    tidyr::drop_na()
   
   plot <- ggplot2::ggplot(data = cmat_df, 
-                          mapping = ggplot2::aes(x = Var1,
-                                                 y = Var2, 
-                                                 fill = Freq)) + 
+                          mapping = ggplot2::aes(x = .data$Var1,
+                                                 y = .data$Var2, 
+                                                 fill = .data$Freq)) + 
     ggplot2::geom_tile(color = "white") + 
-    ggplot2::scale_fill_gradient2(low = "firebrick", 
-                                  high= "chartreuse4", 
-                                  mid = "white",
-                                  midpoint = 0, 
-                                  limit=c(-1, 1), 
-                                  space = "Lab",
-                                  name="Correlation") +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle=90, vjust = 1),
-                   axis.title.x = ggplot2::element_blank(),
-                   axis.title.y = ggplot2::element_blank(),
-                   panel.border = ggplot2::element_blank(),
-                   panel.background = ggplot2::element_blank(),
-                   panel.grid.major = ggplot2::element_blank(),
-                   axis.ticks = ggplot2::element_blank()) + 
+    ggplot2::scale_fill_gradient2(
+      low = "firebrick", 
+      high= "chartreuse4", 
+      mid = "white",
+      midpoint = 0, 
+      limit=c(-1, 1), 
+      space = "Lab",
+      name="Correlation"
+    ) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle=90, vjust = 1),
+      axis.title.x = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank(),
+      panel.background = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank()
+    ) + 
     ggplot2::coord_fixed() + 
-    ggplot2::geom_text(ggplot2::aes(label = Freq), 
-                       color = "black", size = 4)
+    ggplot2::geom_text(
+      ggplot2::aes(label = .data$Freq), 
+      color = "black", 
+      size = 4
+    )
   
   return(plot)
   
