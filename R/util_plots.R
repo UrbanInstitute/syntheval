@@ -38,7 +38,7 @@ plot_numeric_hist_kde <- function(joint_data,
     data = joint_data,
     mapping = ggplot2::aes(
       x = !!rlang::sym(var_name), 
-      y = ggplot2::after_stat(stats::density),
+      y = ggplot2::after_stat(!!rlang::sym('density')),
       fill = source)
   ) +
     ggplot2::geom_histogram(
