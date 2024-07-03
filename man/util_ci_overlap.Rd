@@ -14,18 +14,48 @@ util_ci_overlap(postsynth, data, formula)
 \item{formula}{A formula for a linear regression model}
 }
 \value{
-A list with the regression confidence interval overlap and estimated
-coefficients
+A list of two dataframes:
+\itemize{
+\item \code{ci_overlap}: one row per model parameter with utility metrics.
+\itemize{
+\item \code{overlap }: symmetric overlap metric, calculated as the average of the
+interval overlap contained in the synthetic confidence interval and the
+interval overlap contained in the confidential confidence interval.
+\item \code{coef_diff}: synthetic parameter estimate - confidential parameter estimate
+\item \code{std_coef_diff}: \code{coef_diff} divided by the standard error for the confidential data.
+\item \code{sign_match}: boolean if the synthetic and confidential parameter estimates have the same sign.
+\item \code{significance_match}: boolean if the null hypothesis test where the
+parameter is 0 has p-value less than .05 agrees in both confidential and
+synthetic data.
+\item \code{ss}: boolean if both \code{sign_match} and \code{significance_match} are true.
+\item \code{sso}: boolean if \code{sign_match} is true and \code{overlap} is positive.
+}
+\item \code{coef_diff}: one row per model parameter and data source (confidential or
+synthetic) listing parameter estimates, standard errors, test statistics,
+p-values for null hypothesis tests, and 95\% confidence interval bounds.
+}
 }
 \description{
 Regression confidence interval overlap
 }
+\examples{
+conf_data <- mtcars
+synth_data <- mtcars \%>\% 
+   dplyr::slice_sample(n = nrow(mtcars) / 2)
+
+util_ci_overlap(
+  conf_data,
+  synth_data,
+  mpg ~ disp + vs + am
+)
+
+}
 \seealso{
 Other Utility metrics: 
-\code{\link{add_pmse_ratio}()},
 \code{\link{add_pmse}()},
-\code{\link{add_propensities_tuned}()},
+\code{\link{add_pmse_ratio}()},
 \code{\link{add_propensities}()},
+\code{\link{add_propensities_tuned}()},
 \code{\link{add_specks}()},
 \code{\link{discrimination}()},
 \code{\link{util_ks_distance}()},
