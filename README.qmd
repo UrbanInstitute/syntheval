@@ -11,9 +11,23 @@ editor_options:
 
 syntheval makes it simple to evaluate the utility and disclosure risks of synthetic data. The package is designed to work with `postsynth` objects from `library(tidysynthesis)` but also works well with any data frame in R. 
 
-::: {.callout-note}
-`library(tidysynthesis)` is currently under private development but will be made public in the future. 
-:::
+**Note:** `library(tidysynthesis)` is currently under private development but will be made public in the future. 
+
+## Navigation
+
+- [Installation](#installation)
+- [Utility Metrics](#utility-metrics)
+    - [Proportions](#proportions)
+    - [Means and totals](#means-and-totals)
+    - [Percentiles](#percentiles)
+    - [KS Distance](#ks-distance)
+    - [Co-Occurrence](#co-occurrence)
+    - [Correlations](#correlations)
+    - [Coefficient overlap](#coefficient-overlap)
+    - [Discriminant-based metrics](#discriminant-based-metrics)
+- [Additional Functionality](#additional-functionality)
+    - [Grouping](#grouping)
+    - [Weighting](#weighting)
 
 ## Installation
 

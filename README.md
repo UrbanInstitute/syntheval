@@ -9,14 +9,24 @@ of synthetic data. The package is designed to work with `postsynth`
 objects from `library(tidysynthesis)` but also works well with any data
 frame in R.
 
-<div>
+**Note:** `library(tidysynthesis)` is currently under private
+development but will be made public in the future.
 
-> **Note**
->
-> `library(tidysynthesis)` is currently under private development but
-> will be made public in the future.
+## Navigation
 
-</div>
+- [Installation](#installation)
+- [Utility Metrics](#utility-metrics)
+  - [Proportions](#proportions)
+  - [Means and totals](#means-and-totals)
+  - [Percentiles](#percentiles)
+  - [KS Distance](#ks-distance)
+  - [Co-Occurrence](#co-occurrence)
+  - [Correlations](#correlations)
+  - [Coefficient overlap](#coefficient-overlap)
+  - [Discriminant-based metrics](#discriminant-based-metrics)
+- [Additional Functionality](#additional-functionality)
+  - [Grouping](#grouping)
+  - [Weighting](#weighting)
 
 ## Installation
 
@@ -31,13 +41,6 @@ remotes::install_github("UrbanInstitute/syntheval")
 library(tidyverse)
 library(syntheval)
 ```
-
-``` r
-ggplot(cars, aes(speed, dist)) +
-  geom_point()
-```
-
-![](README_files/figure-commonmark/unnamed-chunk-3-1.png)
 
 ### Setup
 
@@ -203,7 +206,7 @@ util_percentiles(
   facet_wrap(~ variable, scales = "free")
 ```
 
-![](README_files/figure-commonmark/unnamed-chunk-9-1.png)
+![](README_files/figure-commonmark/unnamed-chunk-8-1.png)
 
 ### KS Distance
 
@@ -375,7 +378,7 @@ ci_overlap$coefficient |>
   )
 ```
 
-![](README_files/figure-commonmark/unnamed-chunk-17-1.png)
+![](README_files/figure-commonmark/unnamed-chunk-16-1.png)
 
 ### Discriminant-Based Metrics
 
@@ -467,16 +470,16 @@ disc1 |>
     # A tibble: 666 × 10
        .pred_synthetic .source_label .sample  species island    sex   bill_length_mm
                  <dbl> <fct>         <chr>    <fct>   <fct>     <fct>          <dbl>
-     1           0.372 original      training Adelie  Torgersen male            39.1
-     2           0.372 original      training Adelie  Torgersen fema…           39.5
-     3           0.372 original      training Adelie  Torgersen fema…           40.3
-     4           0.4   original      training Adelie  Torgersen fema…           36.7
-     5           0.372 original      training Adelie  Torgersen male            39.3
-     6           0.372 original      training Adelie  Torgersen fema…           38.9
-     7           0.372 original      training Adelie  Torgersen male            39.2
-     8           0.372 original      training Adelie  Torgersen fema…           41.1
-     9           0.4   original      training Adelie  Torgersen male            38.6
-    10           0.692 original      training Adelie  Torgersen male            34.6
+     1           0.290 original      training Adelie  Torgersen male            39.1
+     2           0.290 original      training Adelie  Torgersen fema…           39.5
+     3           0.290 original      training Adelie  Torgersen fema…           40.3
+     4           0.656 original      training Adelie  Torgersen fema…           36.7
+     5           0.290 original      testing  Adelie  Torgersen male            39.3
+     6           0.290 original      training Adelie  Torgersen fema…           38.9
+     7           0.290 original      testing  Adelie  Torgersen male            39.2
+     8           0.290 original      training Adelie  Torgersen fema…           41.1
+     9           0.290 original      testing  Adelie  Torgersen male            38.6
+    10           0.656 original      training Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -496,55 +499,65 @@ disc1 |>
           * denotes terminal node
 
        1) root 498 249 synthetic (0.5000000 0.5000000)  
-         2) bill_length_mm< 38.75 130  53 synthetic (0.5923077 0.4076923)  
-           4) bill_depth_mm< 17.85 64  20 synthetic (0.6875000 0.3125000) *
-           5) bill_depth_mm>=17.85 66  33 synthetic (0.5000000 0.5000000)  
-            10) body_mass_g>=3925 13   4 synthetic (0.6923077 0.3076923) *
-            11) body_mass_g< 3925 53  24 original (0.4528302 0.5471698)  
-              22) flipper_length_mm>=195 8   2 synthetic (0.7500000 0.2500000) *
-              23) flipper_length_mm< 195 45  18 original (0.4000000 0.6000000) *
-         3) bill_length_mm>=38.75 368 172 original (0.4673913 0.5326087)  
-           6) bill_length_mm>=41.65 290 143 original (0.4931034 0.5068966)  
-            12) flipper_length_mm< 190.5 30   8 synthetic (0.7333333 0.2666667) *
-            13) flipper_length_mm>=190.5 260 121 original (0.4653846 0.5346154)  
-              26) bill_depth_mm< 19.05 226 111 original (0.4911504 0.5088496)  
-                52) bill_length_mm< 42.55 10   2 synthetic (0.8000000 0.2000000) *
-                53) bill_length_mm>=42.55 216 103 original (0.4768519 0.5231481)  
-                 106) bill_depth_mm>=18.55 25   9 synthetic (0.6400000 0.3600000) *
-                 107) bill_depth_mm< 18.55 191  87 original (0.4554974 0.5445026)  
-                   214) bill_length_mm>=49.7 52  23 synthetic (0.5576923 0.4423077)  
-                     428) bill_depth_mm< 15.85 26   7 synthetic (0.7307692 0.2692308) *
-                     429) bill_depth_mm>=15.85 26  10 original (0.3846154 0.6153846) *
-                   215) bill_length_mm< 49.7 139  58 original (0.4172662 0.5827338)  
-                     430) bill_depth_mm< 13.95 23  10 synthetic (0.5652174 0.4347826) *
-                     431) bill_depth_mm>=13.95 116  45 original (0.3879310 0.6120690)  
-                       862) body_mass_g< 4425 36  18 synthetic (0.5000000 0.5000000)  
-                        1724) flipper_length_mm>=196.5 14   4 synthetic (0.7142857 0.2857143) *
-                        1725) flipper_length_mm< 196.5 22   8 original (0.3636364 0.6363636) *
-                       863) body_mass_g>=4425 80  27 original (0.3375000 0.6625000) *
-              27) bill_depth_mm>=19.05 34  10 original (0.2941176 0.7058824) *
-           7) bill_length_mm< 41.65 78  29 original (0.3717949 0.6282051) *
+         2) bill_length_mm< 38.25 115  46 synthetic (0.6000000 0.4000000)  
+           4) body_mass_g>=3187.5 90  31 synthetic (0.6555556 0.3444444) *
+           5) body_mass_g< 3187.5 25  10 original (0.4000000 0.6000000)  
+            10) bill_depth_mm>=17.6 11   4 synthetic (0.6363636 0.3636364) *
+            11) bill_depth_mm< 17.6 14   3 original (0.2142857 0.7857143) *
+         3) bill_length_mm>=38.25 383 180 original (0.4699739 0.5300261)  
+           6) island=Biscoe,Dream 352 171 original (0.4857955 0.5142045)  
+            12) body_mass_g< 3375 28   9 synthetic (0.6785714 0.3214286) *
+            13) body_mass_g>=3375 324 152 original (0.4691358 0.5308642)  
+              26) bill_length_mm>=41.2 280 136 original (0.4857143 0.5142857)  
+                52) flipper_length_mm< 189.5 18   4 synthetic (0.7777778 0.2222222) *
+                53) flipper_length_mm>=189.5 262 122 original (0.4656489 0.5343511)  
+                 106) body_mass_g>=3587.5 252 120 original (0.4761905 0.5238095)  
+                   212) flipper_length_mm< 192.5 15   5 synthetic (0.6666667 0.3333333) *
+                   213) flipper_length_mm>=192.5 237 110 original (0.4641350 0.5358650)  
+                     426) body_mass_g>=4287.5 185  91 original (0.4918919 0.5081081)  
+                       852) bill_length_mm>=50.45 40  15 synthetic (0.6250000 0.3750000)  
+                        1704) bill_length_mm< 52.35 30   8 synthetic (0.7333333 0.2666667) *
+                        1705) bill_length_mm>=52.35 10   3 original (0.3000000 0.7000000) *
+                       853) bill_length_mm< 50.45 145  66 original (0.4551724 0.5448276)  
+                        1706) bill_length_mm< 47.05 80  37 synthetic (0.5375000 0.4625000)  
+                          3412) bill_length_mm>=46.65 8   1 synthetic (0.8750000 0.1250000) *
+                          3413) bill_length_mm< 46.65 72  36 synthetic (0.5000000 0.5000000)  
+                            6826) body_mass_g< 5025 58  26 synthetic (0.5517241 0.4482759) *
+                            6827) body_mass_g>=5025 14   4 original (0.2857143 0.7142857) *
+                        1707) bill_length_mm>=47.05 65  23 original (0.3538462 0.6461538)  
+                          3414) bill_depth_mm>=15.65 28  14 synthetic (0.5000000 0.5000000)  
+                            6828) body_mass_g< 5525 12   3 synthetic (0.7500000 0.2500000) *
+                            6829) body_mass_g>=5525 16   5 original (0.3125000 0.6875000) *
+                          3415) bill_depth_mm< 15.65 37   9 original (0.2432432 0.7567568) *
+                     427) body_mass_g< 4287.5 52  19 original (0.3653846 0.6346154)  
+                       854) bill_depth_mm>=19.65 12   4 synthetic (0.6666667 0.3333333) *
+                       855) bill_depth_mm< 19.65 40  11 original (0.2750000 0.7250000) *
+                 107) body_mass_g< 3587.5 10   2 original (0.2000000 0.8000000) *
+              27) bill_length_mm< 41.2 44  16 original (0.3636364 0.6363636)  
+                54) bill_depth_mm>=18.95 17   7 synthetic (0.5882353 0.4117647) *
+                55) bill_depth_mm< 18.95 27   6 original (0.2222222 0.7777778) *
+           7) island=Torgersen 31   9 original (0.2903226 0.7096774) *
 
     $discriminator_auc
     # A tibble: 2 × 4
       .sample  .metric .estimator .estimate
       <fct>    <chr>   <chr>          <dbl>
-    1 training roc_auc binary         0.685
-    2 testing  roc_auc binary         0.476
+    1 training roc_auc binary         0.726
+    2 testing  roc_auc binary         0.449
 
     $pmse
     # A tibble: 2 × 4
       .source   .pmse .null_pmse .pmse_ratio
       <fct>     <dbl>      <dbl>       <dbl>
-    1 training 0.0290     0.0325       0.891
-    2 testing  0.0296     0.0332       0.892
+    1 training 0.0417     0.0374        1.12
+    2 testing  0.0450     0.0361        1.25
 
     $specks
     # A tibble: 2 × 2
       .source  .specks
       <fct>      <dbl>
-    1 training  0.325 
-    2 testing   0.0833
+    1 training   0.382
+    2 testing    0.107
 
     attr(,"class")
     [1] "discrimination"
@@ -561,7 +574,7 @@ disc1$discriminator |>
   vip()
 ```
 
-![](README_files/figure-commonmark/unnamed-chunk-22-1.png)
+![](README_files/figure-commonmark/unnamed-chunk-21-1.png)
 
 ``` r
 disc1$discriminator$fit$fit$fit |>
@@ -573,7 +586,7 @@ disc1$discriminator$fit$fit$fit |>
         Call prp with roundint=FALSE,
         or rebuild the rpart model with model=TRUE.
 
-![](README_files/figure-commonmark/unnamed-chunk-22-2.png)
+![](README_files/figure-commonmark/unnamed-chunk-21-2.png)
 
 #### Example Using Regularized Regression
 
@@ -642,16 +655,16 @@ disc2 |>
     # A tibble: 666 × 10
        .pred_synthetic .source_label .sample  species island    sex   bill_length_mm
                  <dbl> <fct>         <chr>    <fct>   <fct>     <fct>          <dbl>
-     1           0.521 original      training Adelie  Torgersen male            39.1
-     2           0.552 original      training Adelie  Torgersen fema…           39.5
-     3           0.497 original      testing  Adelie  Torgersen fema…           40.3
-     4           0.513 original      training Adelie  Torgersen fema…           36.7
-     5           0.480 original      training Adelie  Torgersen male            39.3
-     6           0.568 original      training Adelie  Torgersen fema…           38.9
-     7           0.502 original      training Adelie  Torgersen male            39.2
-     8           0.541 original      training Adelie  Torgersen fema…           41.1
-     9           0.484 original      training Adelie  Torgersen male            38.6
-    10           0.491 original      testing  Adelie  Torgersen male            34.6
+     1           0.439 original      testing  Adelie  Torgersen male            39.1
+     2           0.483 original      testing  Adelie  Torgersen fema…           39.5
+     3           0.461 original      training Adelie  Torgersen fema…           40.3
+     4           0.499 original      training Adelie  Torgersen fema…           36.7
+     5           0.443 original      training Adelie  Torgersen male            39.3
+     6           0.511 original      training Adelie  Torgersen fema…           38.9
+     7           0.416 original      testing  Adelie  Torgersen male            39.2
+     8           0.492 original      training Adelie  Torgersen fema…           41.1
+     9           0.456 original      training Adelie  Torgersen male            38.6
+    10           0.447 original      training Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -673,52 +686,52 @@ disc2 |>
     Call:  glmnet::glmnet(x = maybe_matrix(x), y = y, family = "binomial",      alpha = ~1) 
 
        Df %Dev   Lambda
-    1   0 0.00 0.043000
-    2   1 0.09 0.039180
-    3   1 0.17 0.035700
-    4   1 0.23 0.032530
-    5   2 0.30 0.029640
-    6   2 0.36 0.027010
-    7   2 0.42 0.024610
-    8   3 0.46 0.022420
-    9   3 0.50 0.020430
-    10  5 0.56 0.018610
-    11  5 0.64 0.016960
-    12  5 0.70 0.015450
-    13  4 0.75 0.014080
-    14  4 0.80 0.012830
-    15  4 0.83 0.011690
-    16  4 0.86 0.010650
-    17  5 0.90 0.009705
-    18  5 0.93 0.008843
-    19  5 0.96 0.008058
-    20  6 1.04 0.007342
-    21  6 1.13 0.006690
-    22  7 1.21 0.006095
-    23  8 1.29 0.005554
-    24  8 1.36 0.005060
-    25  9 1.43 0.004611
-    26 10 1.49 0.004201
-    27 10 1.54 0.003828
-    28 10 1.58 0.003488
-    29 10 1.62 0.003178
-    30 10 1.65 0.002896
-    31 10 1.67 0.002639
-    32 10 1.69 0.002404
-    33 10 1.71 0.002191
-    34 10 1.72 0.001996
-    35 10 1.74 0.001819
-    36 10 1.75 0.001657
-    37 10 1.75 0.001510
-    38 10 1.76 0.001376
-    39 10 1.77 0.001254
-    40 10 1.77 0.001142
-    41 10 1.78 0.001041
-    42 10 1.78 0.000948
-    43 11 1.78 0.000864
-    44 12 1.78 0.000787
-    45 12 1.79 0.000717
-    46 12 1.79 0.000654
+    1   0 0.00 0.047070
+    2   1 0.11 0.042890
+    3   1 0.20 0.039080
+    4   1 0.27 0.035600
+    5   2 0.37 0.032440
+    6   2 0.48 0.029560
+    7   3 0.57 0.026930
+    8   3 0.65 0.024540
+    9   4 0.74 0.022360
+    10  5 0.85 0.020370
+    11  6 0.97 0.018560
+    12  6 1.09 0.016920
+    13  6 1.20 0.015410
+    14  6 1.29 0.014040
+    15  6 1.36 0.012800
+    16  6 1.42 0.011660
+    17  6 1.48 0.010620
+    18  6 1.52 0.009679
+    19  7 1.56 0.008820
+    20  8 1.60 0.008036
+    21  8 1.64 0.007322
+    22  8 1.67 0.006672
+    23  8 1.69 0.006079
+    24  9 1.73 0.005539
+    25  9 1.79 0.005047
+    26  9 1.84 0.004599
+    27 10 1.88 0.004190
+    28 10 1.91 0.003818
+    29 11 1.94 0.003479
+    30 11 1.96 0.003170
+    31 11 1.98 0.002888
+    32 11 2.00 0.002631
+    33 11 2.01 0.002398
+    34 12 2.03 0.002185
+    35 12 2.04 0.001991
+    36 12 2.05 0.001814
+    37 12 2.06 0.001653
+    38 12 2.06 0.001506
+    39 13 2.07 0.001372
+    40 13 2.08 0.001250
+    41 13 2.08 0.001139
+    42 13 2.09 0.001038
+    43 13 2.09 0.000946
+    44 13 2.09 0.000862
+    45 13 2.10 0.000785
+    46 13 2.10 0.000715
 
     ...
     and 5 more lines.
@@ -727,22 +740,22 @@ disc2 |>
     # A tibble: 2 × 4
       .sample  .metric .estimator .estimate
       <fct>    <chr>   <chr>          <dbl>
-    1 training roc_auc binary         0.578
-    2 testing  roc_auc binary         0.474
+    1 training roc_auc binary         0.589
+    2 testing  roc_auc binary         0.428
 
     $pmse
     # A tibble: 2 × 4
       .source    .pmse .null_pmse .pmse_ratio
       <fct>      <dbl>      <dbl>       <dbl>
-    1 training 0.00239    0.00334       0.715
-    2 testing  0.00233    0.00328       0.711
+    1 training 0.00385    0.00272        1.41
+    2 testing  0.00413    0.00280        1.47
 
     $specks
     # A tibble: 2 × 2
       .source  .specks
       <fct>      <dbl>
-    1 training  0.124 
-    2 testing   0.0952
+    1 training   0.137
+    2 testing    0.131
 
     attr(,"class")
     [1] "discrimination"
@@ -756,7 +769,7 @@ disc2$discriminator |>
   vip()
 ```
 
-![](README_files/figure-commonmark/unnamed-chunk-23-1.png)
+![](README_files/figure-commonmark/unnamed-chunk-22-1.png)
 
 ## Additional Functionality
 
