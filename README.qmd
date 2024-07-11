@@ -1,6 +1,5 @@
 ---
 format: gfm
-embed-resources: true
 editor_options: 
   chunk_output_type: console
 ---
@@ -10,11 +9,34 @@ editor_options:
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of syntheval is to make it simple to evaluate the utility and disclosure risk of synthetic data. The package works with `library(tidysynthesis)`.
+syntheval makes it simple to evaluate the utility and disclosure risks of synthetic data. The package is designed to work with `postsynth` objects from `library(tidysynthesis)` but also works well with any data frame in R. 
+
+**Note:** `library(tidysynthesis)` is currently under private development but will be made public in the future. 
+
+## Navigation
+
+- [Installation](#installation)
+- [Utility Metrics](#utility-metrics)
+    - [Proportions](#proportions)
+    - [Means and totals](#means-and-totals)
+    - [Percentiles](#percentiles)
+    - [KS Distance](#ks-distance)
+    - [Co-Occurrence](#co-occurrence)
+    - [Correlations](#correlations)
+    - [Coefficient overlap](#coefficient-overlap)
+    - [Discriminant-based metrics](#discriminant-based-metrics)
+- [Additional Functionality](#additional-functionality)
+    - [Grouping](#grouping)
+    - [Weighting](#weighting)
 
 ## Installation
 
-You can install the development version of syntheval by cloning this repository and building the package in RStudio. 
+```{r}
+#| eval: false
+
+install.packages("remotes")
+remotes::install_github("UrbanInstitute/syntheval")
+```
 
 ## Utility Metrics
 
@@ -238,8 +260,8 @@ rpart_rec <- recipe(
   data = disc1$combined_data
 )
 
-rpart_mod <- decision_tree(cost_complexity = 0.01) %>%
-  set_mode(mode = "classification") %>%
+rpart_mod <- decision_tree(cost_complexity = 0.01) |>
+  set_mode(mode = "classification") |>
   set_engine(engine = "rpart")
 
 ```
@@ -247,7 +269,7 @@ rpart_mod <- decision_tree(cost_complexity = 0.01) %>%
 Next, we fit the model to the data to generate predicted probabilities. 
 
 ```{r}
-disc1 <- disc1 %>%
+disc1 <- disc1 |>
   add_propensities(
     recipe = rpart_rec,
     spec = rpart_mod
@@ -262,10 +284,10 @@ At this point, we can use
 * `add_pmse_ratio(times = 25)` to add the pMSE ratio using the pMSE model and 25 bootstrap samples
 
 ```{r}
-disc1 %>%
-  add_discriminator_auc() %>%
-  add_specks() %>%
-  add_pmse() %>%
+disc1 |>
+  add_discriminator_auc() |>
+  add_specks() |>
+  add_pmse() |>
   add_pmse_ratio(times = 25)
 
 ```
@@ -278,11 +300,11 @@ Finally, we can look at variable importance and the decision tree from our discr
 library(vip)
 library(rpart.plot)
 
-disc1$discriminator %>% 
-  extract_fit_parsnip() %>% 
+disc1$discriminator |> 
+  extract_fit_parsnip() |> 
   vip()
 
-disc1$discriminator$fit$fit$fit %>%
+disc1$discriminator$fit$fit$fit |>
   prp()
 
 ```
@@ -300,24 +322,24 @@ disc2 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
 lasso_rec <- recipe(
   .source_label ~ ., 
   data = disc2$combined_data
-) %>%
-  step_poly(all_numeric_predictors(), degree = 2) %>%
-  step_dummy(all_nominal_predictors()) %>%
+) |>
+  step_poly(all_numeric_predictors(), degree = 2) |>
+  step_dummy(all_nominal_predictors()) |>
   step_normalize(all_predictors())
 
 # create the model
 lasso_mod <- logistic_reg(
   penalty = tune(), 
   mixture = 1
-) %>%
-  set_engine(engine = "glmnet") %>%
+) |>
+  set_engine(engine = "glmnet") |>
   set_mode(mode = "classification")
 
 # create a tuning grid
 lasso_grid <- grid_regular(penalty(), levels = 10)
 
 # add the propensities
-disc2 <- disc2 %>%
+disc2 <- disc2 |>
   add_propensities_tuned(
     recipe = lasso_rec,
     spec = lasso_mod,
@@ -325,17 +347,17 @@ disc2 <- disc2 %>%
   ) 
 
 # calculate metrics
-disc2 %>%
-  add_discriminator_auc() %>%
-  add_specks() %>%
-  add_pmse() %>%
+disc2 |>
+  add_discriminator_auc() |>
+  add_specks() |>
+  add_pmse() |>
   add_pmse_ratio(times = 25)
 
 # look at variable importance
 library(vip)
 
-disc2$discriminator %>% 
-  extract_fit_parsnip() %>% 
+disc2$discriminator |> 
+  extract_fit_parsnip() |> 
   vip()
 
 ```
