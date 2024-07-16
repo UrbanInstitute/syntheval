@@ -110,10 +110,14 @@ test_that("Disaggregation returns tibble", {
     summary = FALSE
   )
   
-  expect_s3_class(test4, "tbl")
-  expect_identical(names(test4),
+  expect_s3_class(test4$results, "tbl")
+  expect_identical(names(test4$results),
                    c("source","a", "b", "distance", 
                      "pseudo_probability", "prediction"))
+  
+  expect_s3_class(test4$roc, "tbl")
+  expect_identical(names(test4$roc),
+                   c(".threshold", "specificity", "sensitivity"))
   
 })
 

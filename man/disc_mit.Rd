@@ -27,7 +27,7 @@ threshold_percentile is not provided, the function calculates it with the
 following formula: \code{nrow(data)/(nrow(data) + nrow(holdout_data))}}
 
 \item{summary}{Boolean if TRUE, returns summary statistics, if FALSE, returns
-disaggregated dataframe of individual distances, pseudo-probabilities, etc.}
+two disaggregated dataframes of individual distances and ROC curve points.}
 }
 \value{
 A list with precision, recall, the confusion matrix, and ROC AUC

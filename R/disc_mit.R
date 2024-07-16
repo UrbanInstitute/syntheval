@@ -10,7 +10,7 @@
 #' threshold_percentile is not provided, the function calculates it with the 
 #' following formula: `nrow(data)/(nrow(data) + nrow(holdout_data))`
 #' @param summary Boolean if TRUE, returns summary statistics, if FALSE, returns 
-#' disaggregated dataframe of individual distances, pseudo-probabilities, etc.
+#' two disaggregated dataframes of individual distances and ROC curve points.
 #'
 #' @return A list with precision, recall, the confusion matrix, and ROC AUC
 #' 
@@ -96,7 +96,17 @@ disc_mit <- function(postsynth,
     
   } else {
     
-    return(blended_data)
+    # calculate complete ROC 
+    roc <- yardstick::roc_curve(blended_data,
+                                dplyr::all_of("source"),
+                                dplyr::all_of("pseudo_probability"))
+    
+    return(
+      list(
+        "results" = blended_data,
+        "roc" = roc
+      )
+    )
     
   }
   
