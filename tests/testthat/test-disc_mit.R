@@ -101,6 +101,22 @@ test_that("Identical training and holdout data", {
   
 })
 
+test_that("Disaggregation returns tibble", {
+  
+  test4 <- disc_mit(
+    postsynth = postsynth,
+    data = data3, 
+    holdout_data = data3,
+    summary = FALSE
+  )
+  
+  expect_s3_class(test4, "tbl")
+  expect_identical(names(test4),
+                   c("source","a", "b", "distance", 
+                     "pseudo_probability", "prediction"))
+  
+})
+
 test_that("disc_mit() input errors ", {
   
   expect_error(

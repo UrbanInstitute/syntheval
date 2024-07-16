@@ -4,7 +4,13 @@
 \alias{disc_mit}
 \title{Run a membership inference test}
 \usage{
-disc_mit(postsynth, data, holdout_data, threshold_percentile = NULL)
+disc_mit(
+  postsynth,
+  data,
+  holdout_data,
+  threshold_percentile = NULL,
+  summary = TRUE
+)
 }
 \arguments{
 \item{postsynth}{A postsynth object or tibble with synthetic data generated from the data input}
@@ -19,6 +25,9 @@ postsynth.}
 percentile will be predicted as in the training data. If the
 threshold_percentile is not provided, the function calculates it with the
 following formula: \code{nrow(data)/(nrow(data) + nrow(holdout_data))}}
+
+\item{summary}{Boolean if TRUE, returns summary statistics, if FALSE, returns
+disaggregated dataframe of individual distances, pseudo-probabilities, etc.}
 }
 \value{
 A list with precision, recall, the confusion matrix, and ROC AUC
