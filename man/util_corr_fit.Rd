@@ -4,23 +4,27 @@
 \alias{util_corr_fit}
 \title{Calculate the correlation fit metric of a confidential data set.}
 \usage{
-util_corr_fit(postsynth, data)
+util_corr_fit(postsynth, data, group_by = NULL)
 }
 \arguments{
 \item{postsynth}{A postsynth object from tidysynthesis or a tibble}
 
 \item{data}{an original (observed) data set.}
+
+\item{group_by}{The unquoted name of a (or multiple) grouping variable(s)}
 }
 \value{
 A \code{list} of fit metrics:
 \itemize{
-\item \code{correlation_original}: correlation matrix of the original data.
-\item \code{correlation_synthetic}: correlation matrix of the synthetic data.
-\item \code{correlation_difference}: difference between \code{correlation_synthetic} and
-\code{correlation_original}.
+\item \code{correlation_data}: A \code{tibble} of the correlations among the
+numeric variables for the actual and synthetic data
 \item \code{correlation_fit}: square root of the sum of squared differences between
-\code{correlation_synthetic} and \code{correlation_original}, divided by the number of
+the synthetic and original data, divided by the number of
 cells in the correlation matrix.
+\item \code{correlation_difference_mae}: the mean of the absolute correlation
+differences between the actual and synthetic data
+\item \code{correlation_difference_rmse}: the root mean of the squared correlation
+differences between the actual and synthetic data
 }
 }
 \description{
