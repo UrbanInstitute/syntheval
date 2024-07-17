@@ -9,6 +9,8 @@
 #' percentile will be predicted as in the training data. If the 
 #' threshold_percentile is not provided, the function calculates it with the 
 #' following formula: `nrow(data)/(nrow(data) + nrow(holdout_data))`
+#' @param summary Boolean if TRUE, returns summary statistics, if FALSE, returns 
+#' two disaggregated dataframes of individual distances and ROC curve points.
 #'
 #' @return A list with precision, recall, the confusion matrix, and ROC AUC
 #' 
@@ -16,7 +18,11 @@
 #' 
 #' @export
 #'
-disc_mit <- function(postsynth, data, holdout_data, threshold_percentile = NULL) {
+disc_mit <- function(postsynth, 
+                     data, 
+                     holdout_data, 
+                     threshold_percentile = NULL,
+                     summary = TRUE) {
 
   if (is_postsynth(postsynth)) {
 
@@ -70,19 +76,40 @@ disc_mit <- function(postsynth, data, holdout_data, threshold_percentile = NULL)
 
   blended_data <- dplyr::bind_cols(
     blended_data,
-    prediction = prediction,
-    pseudo_probability = pseudo_probabilities
+    distance = distances$distance[1, ],
+    pseudo_probability = pseudo_probabilities,
+    prediction = prediction
   ) %>%
     dplyr::mutate(prediction = factor(prediction, levels = c("training", "holdout")))
 
-  # calculate metrics
-  membership_metrics <- list(
-    precision = yardstick::precision(blended_data, truth = source, estimate = prediction)$.estimate,
-    recall = yardstick::recall(blended_data, truth = source, estimate = prediction)$.estimate,
-    auc = yardstick::roc_auc_vec(truth = blended_data$source, estimate = blended_data$pseudo_probability),
-    conf_mat = yardstick::conf_mat(blended_data, truth = source, estimate = prediction)
-  )
-
-  return(membership_metrics)
+  if (summary) {
+    
+    # calculate metrics
+    membership_metrics <- list(
+      precision = yardstick::precision(blended_data, truth = source, estimate = prediction)$.estimate,
+      recall = yardstick::recall(blended_data, truth = source, estimate = prediction)$.estimate,
+      auc = yardstick::roc_auc_vec(truth = blended_data$source, estimate = blended_data$pseudo_probability),
+      conf_mat = yardstick::conf_mat(blended_data, truth = source, estimate = prediction)
+    )
+    
+    return(membership_metrics)
+    
+  } else {
+    
+    # calculate complete ROC 
+    roc <- yardstick::roc_curve(
+      data = blended_data,
+      truth = .data[["source"]],
+      .data[["pseudo_probability"]]
+    )
+    
+    return(
+      list(
+        "results" = blended_data,
+        "roc" = roc
+      )
+    )
+    
+  }
   
 }

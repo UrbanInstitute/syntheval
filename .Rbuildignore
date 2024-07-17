@@ -1,7 +1,10 @@
+^renv$
+^renv\.lock$
 ^syntheval\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^README\.Rmd$
+^README\.qmd$
 ^data-raw$
 ^test.R
 disriminators.qmd
