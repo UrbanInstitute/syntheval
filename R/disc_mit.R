@@ -97,9 +97,11 @@ disc_mit <- function(postsynth,
   } else {
     
     # calculate complete ROC 
-    roc <- yardstick::roc_curve(blended_data,
-                                .data[["source"]],
-                                .data[["pseudo_probability"]])
+    roc <- yardstick::roc_curve(
+      data = blended_data,
+      truth = .data[["source"]],
+      .data[["pseudo_probability"]]
+    )
     
     return(
       list(
