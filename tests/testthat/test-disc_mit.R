@@ -121,6 +121,42 @@ test_that("Disaggregation returns tibble", {
   
 })
 
+test_that("disc_mit() multiple synthesis", {
+  
+  test5 <- disc_mit(
+    postsynth = list(data1, data1, data1),
+    data = data3, 
+    holdout_data = data3
+  )
+  
+  expect_equal(
+    test5$precision, 
+    0.5
+  )
+  
+  expect_equal(
+    test5$recall, 
+    0.5
+  )
+  
+  expect_equal(
+    test5$auc, 
+    0.5
+  )
+  
+  test6 <- disc_mit(
+    postsynth = list(data1, data1, data1),
+    data = data3, 
+    holdout_data = data3,
+    summary = FALSE
+  )
+  
+  expect_s3_class(test6$results, "data.frame")
+  expect_equal(dim(test6$results)[1], 24)
+  
+  
+})
+
 test_that("disc_mit() input errors ", {
   
   expect_error(
