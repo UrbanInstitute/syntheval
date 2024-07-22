@@ -9,9 +9,7 @@
 #' 
 #' @export
 #'
-
 eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
-  
   
   stopifnot(inherits(conf_data, "data.frame"))
   
@@ -25,7 +23,8 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
     
   }
   
-  if (inherits(synth_data, "postsynth")) {
+  # single replicate logic
+  if (is_postsynth(synth_data)) {
     
     synth_data <- synth_data$synthetic_data
     n_rep <- 1
@@ -36,6 +35,9 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
     
   } else {
     
+    stopifnot("list" %in% class(synth_data))
+    
+    # multiple replicate logic
     n_rep <- length(synth_data)
     
     if (inherits(synth_data[[1]], "postsynth")) {
@@ -62,5 +64,33 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
   eval_data <- structure(eval_data, class = "eval_data")
   
   return(eval_data)
+  
+}
+
+is_eval_data <- function(x) {
+  inherits(x, "eval_data")
+}
+
+#' @export
+print.eval_data <- function(x, ...) {
+  
+  cat("Evaluation Data \n")
+  cat("Confidential Data: ", 
+      dim(x$conf_data)[1], 
+      " rows x ", 
+      dim(x$conf_data)[2], 
+      " columns \n")
+  cat("Synthetic Data: ", 
+      x$n_rep, 
+      " replicate(s) \n")
+  if (!is.null(x$holdout_data)) {
+    cat("Holdout Data: ", 
+        dim(x$holdout_data)[1], 
+        " rows x ", 
+        dim(x$holdout_data)[2], 
+        " columns \n")
+  }
+  
+  invisible(x)
   
 }
