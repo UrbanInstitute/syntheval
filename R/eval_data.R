@@ -53,7 +53,7 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
       
       synth_data <- purrr::map(
         .x = synth_data,
-        .f ~ .x$synthetic_data
+        .f = ~ .x$synthetic_data
         )
       
     } else {
@@ -61,8 +61,8 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
       stopifnot(
         all(
           purrr::map_lgl(
-            x. = synth_data, 
-            .f ~ inherits(.x, "data.frame")
+            .x = synth_data, 
+            .f = ~ inherits(.x, "data.frame")
             )
           )
         )
@@ -97,9 +97,33 @@ print.eval_data <- function(x, ...) {
       " rows x ", 
       dim(x$conf_data)[2], 
       " columns \n")
+  
   cat("Synthetic Data: ", 
       x$n_rep, 
       " replicate(s) \n")
+  
+  if (x$n_rep == 1) {
+    
+    cat(
+      dim(x$synth_data)[1], 
+      " rows x ", 
+      dim(x$synth_data)[2], 
+      " columns \n"
+    )
+    
+  } else {
+    
+    cat(
+      "First synthetic dataset: ",
+      dim(x$synth_data[[1]])[1], 
+      " rows x ", 
+      dim(x$synth_data[[1]])[2], 
+      " columns \n"
+    )
+    
+  }
+  
+
   if (!is.null(x$holdout_data)) {
     cat("Holdout Data: ", 
         dim(x$holdout_data)[1], 
