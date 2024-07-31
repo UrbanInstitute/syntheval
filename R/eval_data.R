@@ -42,13 +42,30 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
     
     if (inherits(synth_data[[1]], "postsynth")) {
       
-      stopifnot(all(purrr::map_lgl(synth_data, ~ inherits(.x, "postsynth"))))
+      stopifnot(
+        all(
+          purrr::map_lgl(
+            .x = synth_data, 
+            .f = ~ inherits(.x, "postsynth")
+            )
+          )
+        )
       
-      synth_data <- purrr::map(synth_data, ~ .x$synthetic_data)
+      synth_data <- purrr::map(
+        .x = synth_data,
+        .f ~ .x$synthetic_data
+        )
       
     } else {
       
-      stopifnot(all(purrr::map_lgl(synth_data, ~ inherits(.x, "data.frame"))))
+      stopifnot(
+        all(
+          purrr::map_lgl(
+            x. = synth_data, 
+            .f ~ inherits(.x, "data.frame")
+            )
+          )
+        )
       
     }
     
