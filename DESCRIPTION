@@ -23,6 +23,7 @@ Config/testthat/edition: 3
 Imports: 
     broom,
     dplyr,
+    forcats,
     ggplot2,
     gower,
     gridExtra,
@@ -34,6 +35,7 @@ Imports:
     recipes,
     rlang,
     rsample,
+    stringr,
     tibble,
     tidyr,
     tidyselect,
