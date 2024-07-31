@@ -1,0 +1,18 @@
+
+
+# Test Data Reconstruction
+
+The scripts in this folder reproduce the test data sets written to file
+in the `./data` folder.
+
+## Penguins
+
+The objects `penguins_*.rda` are derived from the
+`library(palmerpenguins)` dataset, available in its original form on
+`CRAN`.
+
+## American Community Survey
+
+The objects `acs_*.rda` are derived from IPUMS extracts from the
+American Community Survey (ACS). Citation is available in the `acs_conf`
+docstring.
