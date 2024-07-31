@@ -84,6 +84,7 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
   
 }
 
+#' @export
 is_eval_data <- function(x) {
   inherits(x, "eval_data")
 }
