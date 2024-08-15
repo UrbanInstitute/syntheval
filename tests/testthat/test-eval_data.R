@@ -33,17 +33,6 @@ test_that("eval_data input errors", {
    
 })
 
-test_that("eval_data holdout and confidential data columns agree", {
-  
-  expect_error(
-    eval_data(
-      conf_data = mtcars,
-      synth_data = mtcars,
-      holdout_data = data.frame(a=1:5)
-    )
-  )
-})
-
 test_that("eval_data calculates n_rep", {
   
   rep1_ed <- eval_data(

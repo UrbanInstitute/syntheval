@@ -18,15 +18,12 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
     # check holdout data is dataframe
     stopifnot(inherits(holdout_data, "data.frame"))
     
-    # check holdout data has same columns as confidential data
-    stopifnot(identical(names(conf_data), names(holdout_data)))
-    
   }
   
   # single replicate logic
   if (is_postsynth(synth_data)) {
     
-    synth_data <- synth_data$synthetic_data
+    synth_data <- synth_data[["synthetic_data"]]
     n_rep <- 1
     
   } else if (inherits(synth_data, "data.frame")) {
@@ -53,7 +50,7 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
       
       synth_data <- purrr::map(
         .x = synth_data,
-        .f = ~ .x$synthetic_data
+        .f = ~ .x[["synthetic_data"]]
         )
       
     } else {
@@ -106,6 +103,7 @@ print.eval_data <- function(x, ...) {
   if (x$n_rep == 1) {
     
     cat(
+      "    ",
       dim(x$synth_data)[1], 
       " rows x ", 
       dim(x$synth_data)[2], 
@@ -115,7 +113,7 @@ print.eval_data <- function(x, ...) {
   } else {
     
     cat(
-      "First synthetic dataset: ",
+      "    First synthetic dataset: ",
       dim(x$synth_data[[1]])[1], 
       " rows x ", 
       dim(x$synth_data[[1]])[2], 
