@@ -88,8 +88,8 @@ nn_membership_inference <- function(
     # calculate complete ROC 
     roc <- yardstick::roc_curve(
       data = blended_data,
-      truth = .data[["source"]],
-      .data[["pseudo_probability"]]
+      truth = tidyselect::all_of("source"),
+      tidyselect::all_of("pseudo_probability")
     )
     
     return(
@@ -232,8 +232,8 @@ disc_mit <- function(eval_data,
       # calculate complete ROC 
       roc <- yardstick::roc_curve(
         data = blended_data,
-        truth = .data[["source"]],
-        .data[["pseudo_probability"]]
+        truth = tidyselect::all_of("source"),
+        tidyselect::all_of("pseudo_probability")
       )
       
       return(
