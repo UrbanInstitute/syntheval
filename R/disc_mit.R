@@ -105,16 +105,11 @@ nn_membership_inference <- function(
 
 #' Run a nearest-neighbor membership inference test 
 #'
-#' @param postsynth Either a single postsynth object, a tibble with synthetic data 
-#' generated from the data input, or a list of either
-#' @param data A data frame with a subset of the original data
-#' @param holdout_data A dataframe with observations similar to the original but
-#' not used to train the synthesizer. The data should have the same variables as
-#' postsynth.
+#' @param eval_data An `eval_data` object.
 #' @param threshold_percentile Distances below the value associated with this 
 #' percentile will be predicted as in the training data. If the 
 #' threshold_percentile is not provided, the function calculates it with the 
-#' following formula: `nrow(data)/(nrow(data) + nrow(holdout_data))`
+#' following formula: `nrow(data) / (nrow(data) + nrow(holdout_data))`
 #' @param summary Boolean if TRUE, returns summary statistics, if FALSE, returns 
 #' two disaggregated dataframes of individual distances and ROC curve points.
 #'
@@ -124,26 +119,18 @@ nn_membership_inference <- function(
 #' 
 #' @export
 #'
-disc_mit <- function(postsynth, 
-                     data, 
-                     holdout_data, 
+disc_mit <- function(eval_data, 
                      threshold_percentile = NULL,
                      summary = TRUE) {
   
   # if single replicate supplied
-  if (is_postsynth(postsynth) | ("data.frame" %in% class(postsynth))) {
-    
-    if (is_postsynth(postsynth) ) {
-      
-      postsynth <- postsynth$synthetic_data
-      
-    }
+  if (eval_data[["n_rep"]] == 1) {
     
     return(
       nn_membership_inference(
-        synth_data = postsynth, 
-        conf_data = data, 
-        holdout_data = holdout_data, 
+        synth_data = eval_data[["synth_data"]], 
+        conf_data = eval_data[["conf_data"]], 
+        holdout_data = eval_data[["holdout_data"]], 
         threshold_percentile = threshold_percentile,
         summary = summary
       )
@@ -164,39 +151,26 @@ disc_mit <- function(postsynth,
       
     } else {
       
-      threshold_percentile <- nrow(data) / (nrow(data) + nrow(holdout_data))
+      threshold_percentile <- (
+        nrow(eval_data[["conf_data"]]) / (
+          nrow(eval_data[["conf_data"]]) + nrow(eval_data[["holdout_data"]])
+        )
+      )
       
     }
     
     # concatenate synthetic data and add synthesis id
     synths <- purrr::imap(
-      postsynth,
-      \(x, idx) {
-        
-        if (is_postsynth(x)) {
-          
-          return(
-            x$synthetic_data %>%
-               dplyr::mutate(synth_id = idx)
-            )
-          
-        } else {
-          
-          return(
-            x %>%
-              dplyr::mutate(synth_id = idx)
-          )
-          
-          
-        }
-        
+      .x = eval_data[["synth_data"]],
+      .f = \(x, idx) {
+        dplyr::mutate(x, synth_id = idx)
       }
     ) 
     
-    conf_data_id <- data %>% 
+    conf_data_id <- eval_data[["conf_data"]] %>% 
       tibble::rowid_to_column("nn_mi_id")
     
-    holdout_data_id <- holdout_data %>%
+    holdout_data_id <- eval_data[["holdout_data"]] %>%
       tibble::rowid_to_column("nn_mi_id")
     
     blended_data <- dplyr::bind_rows(
@@ -209,8 +183,8 @@ disc_mit <- function(postsynth,
     # for each record in the blended data, calculate the distance to the closest 
     # record in each synthetic dataset
     synth_distances <- purrr::map(
-      synths, 
-      \(.x) { 
+      .x = synths, 
+      .f = \(.x) { 
         
           gower::gower_topn(
               x = dplyr::select(blended_data, -source),
@@ -221,7 +195,10 @@ disc_mit <- function(postsynth,
       }
     ) 
     
-    all_distances <- Reduce(c, synth_distances)
+    all_distances <- purrr::reduce(
+      .x = synth_distances,
+      .f = c
+    )
     
     pseudo_probabilities <- 1 - (all_distances / max(all_distances))
     
@@ -231,7 +208,7 @@ disc_mit <- function(postsynth,
     prediction <- ifelse(all_distances <= threshold, "training", "holdout")
     
     blended_data <- dplyr::bind_cols(
-      dplyr::bind_rows(rep(list(blended_data), length(postsynth))),
+      dplyr::bind_rows(rep(list(blended_data), eval_data[["n_rep"]])),
       distance = all_distances,
       pseudo_probability = pseudo_probabilities,
       prediction = prediction
