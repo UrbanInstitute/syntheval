@@ -27,9 +27,11 @@ class(postsynth) <- "postsynth"
 test_that("Perfect training match and perfect holdout lack of match", {
 
   test1 <- disc_mit(
-    postsynth = postsynth,
-    data = data1, 
-    holdout_data = data2
+    eval_data(
+      conf_data = data1, 
+      synth_data = postsynth,
+      holdout_data = data2
+    )
   )
   
   
@@ -53,9 +55,11 @@ test_that("Perfect training match and perfect holdout lack of match", {
 test_that("Perfect training lack of match and perfect holdout match", {
   
   test2 <- disc_mit(
-    postsynth = postsynth,
-    data = data2, 
-    holdout_data = data1
+    eval_data(
+      conf_data = data2, 
+      synth_data = postsynth,
+      holdout_data = data1
+    )
   )
   
   
@@ -79,9 +83,11 @@ test_that("Perfect training lack of match and perfect holdout match", {
 test_that("Identical training and holdout data", {
   
   test3 <- disc_mit(
-    postsynth = postsynth,
-    data = data3, 
-    holdout_data = data3
+    eval_data(
+      conf_data = data3, 
+      synth_data = postsynth,
+      holdout_data = data3
+    )
   )
   
   expect_equal(
@@ -104,9 +110,11 @@ test_that("Identical training and holdout data", {
 test_that("Disaggregation returns tibble", {
   
   test4 <- disc_mit(
-    postsynth = postsynth,
-    data = data3, 
-    holdout_data = data3,
+    eval_data(
+      conf_data = data3,
+      synth_data = postsynth,
+      holdout_data = data3
+    ),
     summary = FALSE
   )
   
@@ -121,31 +129,76 @@ test_that("Disaggregation returns tibble", {
   
 })
 
+test_that("disc_mit() multiple synthesis", {
+  
+  test5 <- disc_mit(
+    eval_data(
+      conf_data = data3,
+      synth_data = list(data1, data1, data1),
+      holdout_data = data3
+    )
+  )
+  
+  expect_equal(
+    test5$precision, 
+    0.5
+  )
+  
+  expect_equal(
+    test5$recall, 
+    0.5
+  )
+  
+  expect_equal(
+    test5$auc, 
+    0.5
+  )
+  
+  test6 <- disc_mit(
+    eval_data(
+      conf_data = data3,
+      synth_data = list(data1, data1, data1),
+      holdout_data = data3
+    ),
+    summary = FALSE
+  )
+  
+  expect_s3_class(test6$results, "data.frame")
+  expect_equal(dim(test6$results)[1], 24)
+  
+})
+
 test_that("disc_mit() input errors ", {
   
   expect_error(
     disc_mit(
-      postsynth = postsynth,
-      data = data3, 
-      holdout_data = data3,
+      eval_data(
+        conf_data = data3,
+        synth_data = postsynth,
+        holdout_data = data3
+      ),
       threshold_percentile = "abc"
     )
   )
   
   expect_error(
     disc_mit(
-      postsynth = postsynth,
-      data = data3, 
-      holdout_data = data3,
+      eval_data(
+        conf_data = data3,
+        synth_data = postsynth,
+        holdout_data = data3
+      ),
       threshold_percentile = -1
     )
   )
   
   expect_error(
     disc_mit(
-      postsynth = postsynth,
-      data = data3, 
-      holdout_data = data3,
+      eval_data(
+        conf_data = data3,
+        synth_data = postsynth,
+        holdout_data = data3
+      ),
       threshold_percentile = 1.1
     )
   )
