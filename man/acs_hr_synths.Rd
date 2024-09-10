@@ -30,10 +30,17 @@ A list of 30 data frames with 1,000 rows and 11 columns:
 acs_hr_synths
 }
 \description{
-A list of 30 samples of higher-risk synthetic data derived from \code{acs_conf},
-generated using weakly variable resampling and models overfit to the confidential data.
+A list of 30 samples of partial synthetic data derived from \code{acs_conf},
+generated using models that intentionally overfit to the confidential data.
+These are referred to as "higher-risk" relative to the "lower-risk" synthetic
+data also available in this package; the synthetic data is purely for testing purposes.
 }
 \details{
+Categorical variables are primarily kept "as-is" in this partially synthetic data,
+with a small proportion of categorical records resampled from the data. Numeric
+variables are resampled from decision tree models that are intentionally designed
+to overfit to the confidential data.
+
 Original data source:
 Steven Ruggles, Sarah Flood, Matthew Sobek, Daniel Backman, Annie Chen,
 Grace Cooper, Stephanie Richards, Renae Rogers, and Megan Schouweiler.

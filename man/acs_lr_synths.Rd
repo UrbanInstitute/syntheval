@@ -30,10 +30,17 @@ A list of 30 data frames with 1,000 rows and 11 columns:
 acs_lr_synths
 }
 \description{
-A list of 30 samples of lower-risk synthetic data derived from \code{acs_conf},
+A list of 30 samples of synthetic data derived from \code{acs_conf},
 generated using noise infusion for both categorical and numeric random variables.
+These are referred to as "lower-risk" relative to the "higher-risk" synthetic data
+also available in this package; the synthetic data is purely for testing purposes.
 }
 \details{
+Categorical random variables are selected by resampling from a mixture of the
+original multivariate cell proportions and a uniform mixture. Numeric random
+variables are first modelled using regression trees, and new sampled values
+each have additional discrete two-sided geometric noise added to them.
+
 Original data source:
 Steven Ruggles, Sarah Flood, Matthew Sobek, Daniel Backman, Annie Chen,
 Grace Cooper, Stephanie Richards, Renae Rogers, and Megan Schouweiler.

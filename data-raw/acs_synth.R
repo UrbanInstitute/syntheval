@@ -19,12 +19,12 @@ conf_props <- acs_conf %>%
                   .drop = FALSE) %>%
   dplyr::tally() %>% 
   dplyr::ungroup() %>%
-  dplyr::mutate(prop = n / dim(acs_conf)[1])
+  dplyr::mutate(prop = n / nrow(acs_conf))
 
 # lower-risk synthesis ------------------------------------------------------
 
 #'
-#' Create one lower-disclosure-risk sample 
+#' Create one lower-disclosure-risk synthetic data sample 
 #' 
 #' @param synth_id Integer, ID to associate with synthetic data replicate
 #' 
@@ -33,11 +33,11 @@ sample_lr_synth <- function(synth_id) {
   # lower-risk categorical synthesis: sample from regularized cell frequencies
   lr_synth <- conf_props %>%
     dplyr::mutate(
-      lr_n = rmultinom(
-        1, 
-        dim(conf_data)[1], 
+      lr_n = stats::rmultinom(
+        n = 1, 
+        size = nrow(conf_data), 
         # mixture of 95% confidential data and 5% uniform sample
-        conf_props$prop * .95 + .5 / dim(conf_props)[1]
+        prob = conf_props$prop * 0.95 + 0.5 / nrow(conf_props)
       )[, 1]
     ) %>%
     tidyr::uncount(weights = lr_n) %>%
@@ -81,11 +81,13 @@ sample_lr_synth <- function(synth_id) {
       dplyr::mutate(
         synth_id = synth_id,
         # add two-sided geometric row-wise noise to each numeric synthesis
-        age = age + rgeom(dim(acs_conf)[1], .5) - rgeom(dim(acs_conf)[1], .5),
+        age = age + rgeom(n = nrow(acs_conf), prob = 0.5) - 
+          rgeom(n = nrow(acs_conf), prob = 0.5),
         inctot = dplyr::if_else(
           inctot > 0, 
           round(inctot, -1) + 10 * (
-            rgeom(dim(acs_conf)[1], .2) - rgeom(dim(acs_conf)[1], .2)
+            rgeom(n = nrow(acs_conf), prob = 0.2) - 
+              rgeom(n = nrow(acs_conf), prob = 0.2)
           ),
           inctot
         )
@@ -106,7 +108,7 @@ usethis::use_data(acs_lr_synths, overwrite = TRUE)
 # higher-risk synthesis ------------------------------------------------------
   
 #'
-#' Create one higher-disclosure-risk sample 
+#' Create one higher-disclosure-risk synthetic data sample 
 #' 
 #' @param synth_id Integer, ID to associate with synthetic data replicate
 #' 
@@ -119,7 +121,7 @@ sample_hr_synth <- function(synth_id) {
     ) %>%
     dplyr::mutate(
       keep_ix = (
-        sample(1:dim(acs_conf)[1]) > round(.05 * dim(acs_conf)[1])
+        sample(1:nrow(acs_conf)) > round(0.05 * nrow(acs_conf))
       )
     ) %>%
     dplyr::filter(keep_ix == TRUE) 

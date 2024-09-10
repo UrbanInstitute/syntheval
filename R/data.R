@@ -29,8 +29,15 @@
 
 #' American Community Survey lower-risk synthetic data
 #'
-#' A list of 30 samples of lower-risk synthetic data derived from `acs_conf`, 
-#' generated using noise infusion for both categorical and numeric random variables.
+#' A list of 30 samples of synthetic data derived from `acs_conf`, 
+#' generated using noise infusion for both categorical and numeric random variables. 
+#' These are referred to as "lower-risk" relative to the "higher-risk" synthetic data
+#' also available in this package; the synthetic data is purely for testing purposes.
+#' 
+#' Categorical random variables are selected by resampling from a mixture of the 
+#' original multivariate cell proportions and a uniform mixture. Numeric random 
+#' variables are first modelled using regression trees, and new sampled values
+#' each have additional discrete two-sided geometric noise added to them. 
 #'
 #' Original data source:
 #' Steven Ruggles, Sarah Flood, Matthew Sobek, Daniel Backman, Annie Chen, 
@@ -59,8 +66,15 @@
 
 #' American Community Survey higher-risk synthetic data
 #'
-#' A list of 30 samples of higher-risk synthetic data derived from `acs_conf`, 
-#' generated using weakly variable resampling and models overfit to the confidential data.
+#' A list of 30 samples of partial synthetic data derived from `acs_conf`, 
+#' generated using models that intentionally overfit to the confidential data. 
+#' These are referred to as "higher-risk" relative to the "lower-risk" synthetic 
+#' data also available in this package; the synthetic data is purely for testing purposes.
+#' 
+#' Categorical variables are primarily kept "as-is" in this partially synthetic data,
+#' with a small proportion of categorical records resampled from the data. Numeric
+#' variables are resampled from decision tree models that are intentionally designed
+#' to overfit to the confidential data.
 #' 
 #' Original data source:
 #' Steven Ruggles, Sarah Flood, Matthew Sobek, Daniel Backman, Annie Chen, 
