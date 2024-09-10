@@ -81,7 +81,6 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
   
 }
 
-<<<<<<< HEAD
 #' 
 #' Check if obejct is `eval_data`
 #' 
@@ -89,8 +88,6 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
 #' 
 #' @return A boolean
 #' 
-=======
->>>>>>> ae01008 (add discrete helper functions and tests)
 #' @export
 is_eval_data <- function(x) {
   inherits(x, "eval_data")

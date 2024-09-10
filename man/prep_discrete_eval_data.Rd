@@ -7,12 +7,26 @@
 prep_discrete_eval_data(eval_data, col_map)
 }
 \arguments{
-\item{eval_data}{A data.frame}
+\item{eval_data}{An \code{eval_data} object.}
 
 \item{col_map}{A list mapping each column to its discretization parameters, one
 of either "k" (for specifying the total number of categories) or "width" (for
 specifying the width of each bin)}
 }
+\value{
+An \code{eval_data} object.
+}
 \description{
 Discretize numeric columns for disclosure risk metrics
+}
+\examples{
+
+prep_discrete_eval_data(
+  eval_data(acs_conf, acs_lr_synths),
+  col_map = list(
+    "age" = list("k" = 10),
+    "inctot" = list("width" = 10000)
+   )
+ )
+
 }

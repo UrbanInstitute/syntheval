@@ -136,7 +136,7 @@
 #' of either "k" (for specifying the total number of categories) or "width" (for 
 #' specifying the width of each bin)
 #' 
-#' @returns An `eval_data` object.
+#' @return An `eval_data` object.
 #' 
 #' @examples
 #' 

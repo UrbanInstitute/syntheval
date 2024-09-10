@@ -11,6 +11,9 @@
 
 \item{keys}{A character vector of column names, or NULL to use all column names.}
 }
+\value{
+\code{0} if all validation checks pass.
+}
 \description{
 Input validation for categorical disclosure risk metrics.
 }
