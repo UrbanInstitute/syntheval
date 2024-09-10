@@ -2,9 +2,40 @@ library(ipumsr)
 
 set.seed(20240726)
 
-ddi <- ipumsr::read_ipums_ddi("./data-raw/acs_extract.xml")
-data <- ipumsr::read_ipums_micro(ddi, 
-                                 data_file = "./data-raw/acs_extract.dat.gz")
+# IPUMPS API extract definition --------------------------------------------
+
+message(
+  "This script assumes you have an IPUMS API key already set up within your 
+  global environment. If not, use ipumsr::set_ipums_api_key() to do so."
+)
+
+acs_extract_request <- ipumsr::define_extract_micro(
+  description = "Example 2019 Nebraska ACS Extract",
+  collection = "usa",
+  samples = c("us2019a"),
+  variables = list(
+    var_spec("STATEFIP", case_selections = c("31")),
+    var_spec("COUNTYFIP"),
+    var_spec("GQ"),
+    var_spec("SEX"),
+    var_spec("MARST"),
+    var_spec("HCOVANY"),
+    var_spec("EMPSTAT"),
+    var_spec("CLASSWKR"),
+    var_spec("AGE"),
+    var_spec("FAMSIZE"),
+    var_spec("TRANTIME"),
+    var_spec("INCTOT")
+  ),
+  data_structure = "rectangular"
+)
+submitted_extract <- ipumsr::submit_extract(acs_extract_request)
+downloadable_extract <- ipumsr::wait_for_extract(submitted_extract)
+path_to_data_files <- ipumsr::download_extract(downloadable_extract)
+
+data <- ipumsr::read_ipums_micro(path_to_data_files)
+
+# Gold-standard dataset pre-processing / cleaning -------------------------
 
 acs_conf <- data %>%
   dplyr::transmute(
