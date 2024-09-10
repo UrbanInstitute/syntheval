@@ -81,6 +81,13 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
   
 }
 
+#' 
+#' Check if obejct is `eval_data`
+#' 
+#' @param x object
+#' 
+#' @return A boolean
+#' 
 #' @export
 is_eval_data <- function(x) {
   inherits(x, "eval_data")
