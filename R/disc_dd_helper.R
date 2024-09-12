@@ -46,7 +46,6 @@
   } else {
     
     stopifnot(all(keys %in% names(eval_data$conf_data)))
-    keys <- keys
     
   } 
   
@@ -160,7 +159,8 @@ prep_discrete_eval_data <- function(eval_data, col_map) {
     
     stopifnot(any(c("k", "width") %in% names(col_map[[col]])))
     
-    # get combined boundaries from all eval_data components
+    # get the observed extrema from all eval_data components, starting with 
+    # the confidential data
     col_min_candidates <- c(
       min(dplyr::pull(eval_data$conf_data, col), na.rm = TRUE)
     )
@@ -168,6 +168,7 @@ prep_discrete_eval_data <- function(eval_data, col_map) {
       max(dplyr::pull(eval_data$conf_data, col), na.rm = TRUE)
     )
     
+    # if using a single synthetic data replicate, add extrema to candidate list
     if (eval_data$n_rep == 1) {
       
       col_min_candidates <- c(
@@ -179,7 +180,8 @@ prep_discrete_eval_data <- function(eval_data, col_map) {
         col_max_candidates,
         max(dplyr::pull(eval_data$synth_data, col), na.rm = TRUE)
       )
-      
+    
+      # else add column-wise extrema to candidate list across replicates
     } else {
       
       col_min_candidates <- c(
@@ -204,6 +206,7 @@ prep_discrete_eval_data <- function(eval_data, col_map) {
       
     }
     
+    # if holdout data is supplied, add to candidates
     if (!is.null(eval_data$holdout_data)) {
       
       col_min_candidates <- c(
@@ -222,7 +225,6 @@ prep_discrete_eval_data <- function(eval_data, col_map) {
     col_max <- max(col_max_candidates, na.rm = TRUE)
     
     # apply col_map parameters to calculate discretization bounds
-    
     if ("k" %in% names(col_map[[col]])) {
       
       breaks <- seq(
@@ -246,8 +248,9 @@ prep_discrete_eval_data <- function(eval_data, col_map) {
       
       # apply non-NA breaks
       non_na_cut <- base::cut(
-        dplyr::pull(data, col_name), 
-        breaks
+        x = dplyr::pull(data, col_name), 
+        breaks = breaks,
+        include.lowest = TRUE
       )
       
       # reintroduce NA as a factor level 

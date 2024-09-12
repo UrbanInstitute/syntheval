@@ -1,3 +1,6 @@
+
+# .aggregate_qid tests ---------------------------------------
+
 test_that(".aggregate_qid basic functionality", {
   
   res <- .aggregate_qid(
@@ -46,6 +49,8 @@ test_that(".aggregate_qid basic functionality", {
   )
   
 })
+
+# .validate_eval_keys tests ---------------------------------------
 
 test_that(".validate_eval_keys validates valid eval_data objects", {
   
@@ -97,6 +102,7 @@ test_that(".validate_eval_keys validates valid eval_data objects", {
   
 })
 
+
 test_that(".validate_eval_keys fails when expected", {
   
   expect_error(
@@ -147,21 +153,25 @@ test_that(".validate_eval_keys fails when expected", {
   
 })
 
-test_that("prep_discrete_eval_data basic functionality", {
-  
-  orig_ed <- eval_data(
-    conf_data = acs_conf, 
-    synth_data = acs_lr_synths,
-    holdout_data = acs_conf
+
+# prep_discrete_eval_data tests ---------------------------------------
+
+
+orig_ed <- eval_data(
+  conf_data = acs_conf, 
+  synth_data = acs_lr_synths,
+  holdout_data = acs_conf
+)
+
+disc_ed1 <- prep_discrete_eval_data(
+  orig_ed,
+  col_map = list(
+    "age" = list("k" = 10), 
+    "inctot" = list("width" = 10000)
   )
-  
-  disc_ed1 <- prep_discrete_eval_data(
-    orig_ed,
-    col_map = list(
-      "age" = list("k" = 10), 
-      "inctot" = list("width" = 10000)
-    )
-  )
+)
+
+test_that("prep_discrete_eval_data type functionality", {
   
   # check column types
   expect_identical(
@@ -203,7 +213,7 @@ test_that("prep_discrete_eval_data basic functionality", {
     levels(disc_ed1$holdout_data$inctot)
   )
   
-  # check maintaining NA levels
+  # check that first level is NA
   expect_identical(
     levels(disc_ed1$holdout_data$age)[1], 
     NA_character_
@@ -214,17 +224,34 @@ test_that("prep_discrete_eval_data basic functionality", {
     NA_character_
   )
   
+}) 
+
+
+test_that("prep_discrete_eval_data boundary construction", {
+  
   # check discretization logic 
   expect_equal(length(levels(disc_ed1$conf_data$age)), 11)
   
+  # check that first interval includes the smallest value
+  first_boundary <- stringr::str_extract(
+    levels(disc_ed1$conf_data$inctot), "(?<=\\[).*?(?=\\])"
+  ) %>% 
+    stringr::str_split_fixed(",", n = 2)
+  
+  expect_equal(
+    as.numeric(first_boundary[2, 2]) - as.numeric(first_boundary[2, 1]), 
+    10000
+  )
+  
+  # extract boundaries for all except the first window (left-open intervals)
   boundaries <- stringr::str_extract(
     levels(disc_ed1$conf_data$inctot), "(?<=\\().*(?=\\])"
   ) %>%
     stringr::str_split_fixed(",", n = 2)
   
-  # all except the first row (NA) and last boundary...
+  # all except the first two rows (NA) and last boundary...
   boundaries <- boundaries[
-    2:(length(levels(disc_ed1$conf_data$inctot)) - 1), 
+    3:(length(levels(disc_ed1$conf_data$inctot)) - 1), 
   ] %>% 
     base::apply(2, as.numeric)
   
@@ -232,6 +259,21 @@ test_that("prep_discrete_eval_data basic functionality", {
   expect_equal(
     unique(round(boundaries[2, ] - boundaries[1, ], -4)),
     10000
+  )
+  
+})
+
+test_that("prep_discrete_eval_data boundary application", {
+  
+  # ensure each value gets mapped to a non-trivial factor level
+  expect_false(
+    NA %in% unique(disc_ed1$conf_data$age)
+  )
+  expect_false(
+    NA %in% unique(disc_ed1$synth_data$age)
+  )
+  expect_false(
+    NA %in% unique(disc_ed1$holdout_data$age)
   )
   
 })
