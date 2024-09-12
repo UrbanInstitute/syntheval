@@ -12,6 +12,7 @@
 #' This option will frequently result in an error because quantile() is strict 
 #' about missing values.
 #' @param synth_vars A logical for if only synthesized variables should be kept
+#' @param na.rm A logical for ignoring `NA` values in computations.
 #'
 #' @return A `tibble` of summary statistics.
 #'
@@ -26,7 +27,8 @@ util_percentiles <- function(postsynth,
                         group_by = NULL,
                         drop_zeros = FALSE,
                         common_vars = TRUE,
-                        synth_vars = TRUE) {
+                        synth_vars = TRUE,
+                        na.rm = FALSE) {
   
   # catch binding error
   . <- NULL
@@ -85,14 +87,13 @@ util_percentiles <- function(postsynth,
   )
   
     
-  na.rm_toggle <- FALSE
-  if (drop_zeros) {
-    
-    combined_data[combined_data == 0] <- NA
-    na.rm_toggle <- TRUE
-    
-  }
-  
+  # prep data for NA handling
+  combined_data <- prep_combined_data_for_na.rm(
+    combined_data,
+    na.rm = na.rm, 
+    drop_zeros = drop_zeros
+  )
+  na.rm_flag <- (na.rm | drop_zeros)
   
   # set weight to 1 for unweighted statistics
   if (missing(weight_var)) {
@@ -105,7 +106,7 @@ util_percentiles <- function(postsynth,
           .fns = ~ stats::quantile(
             x = .x, 
             probs = probs, 
-            na.rm = na.rm_toggle
+            na.rm = na.rm_flag
           )
         ),
         p = probs
@@ -128,7 +129,7 @@ util_percentiles <- function(postsynth,
             x = ., 
             weights = {{ weight_var }}, 
             probs = probs, 
-            na.rm = na.rm_toggle
+            na.rm = na.rm_flag
           )
         ),
         p = probs
