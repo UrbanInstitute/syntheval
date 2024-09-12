@@ -63,7 +63,7 @@ prep_combined_data_for_na.rm <- function(
         )
       
     }
-    
+
   }
   
   return(combined_data)
@@ -127,4 +127,8 @@ convert_na_to_level <- function(data) {
   
   return(data_converted)
   
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> bedece1 (add univariate na.rm functionality)

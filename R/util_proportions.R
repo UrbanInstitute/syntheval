@@ -32,7 +32,7 @@ util_proportions <- function(postsynth,
     
     variable_order <- 
       levels(postsynth$jth_synthesis_time$variable)
-  
+    
   } else {
     
     synthetic_data <- postsynth
@@ -118,10 +118,10 @@ util_proportions <- function(postsynth,
   
   # combining confidential and synthetic data 
   combined_data <- dplyr::bind_rows(
-      synthetic = synthetic_data,
-      original = data,
-      .id = "source"
-    ) 
+    synthetic = synthetic_data,
+    original = data,
+    .id = "source"
+  ) 
   
   group_by_weights <- combined_data %>%
     tidyr::pivot_longer(
@@ -172,9 +172,9 @@ util_proportions <- function(postsynth,
               )  
           )
         }
- 
-        }
-      ) %>%
+        
+      }
+    ) %>%
       dplyr::bind_rows() %>% 
       dplyr::cross_join(
         combined_data %>% 
@@ -182,12 +182,22 @@ util_proportions <- function(postsynth,
           dplyr::distinct()
       )
     
+    if (is.null(group_by)) {
+      
+      join_spec <- dplyr::join_by(class, variable, source)
+      
+    } else {
+      
+      join_spec <- dplyr::join_by(class, variable, source, {{ group_by }})
+      
+    }
+    
     combined_data <- dplyr::left_join(
-        all_levels,
-        combined_data_long,
-        by = NULL,
-        na_matches = "na"
-      ) %>% 
+      all_levels,
+      combined_data_long,
+      by = join_spec,
+      na_matches = "na"
+    ) %>% 
       tidyr::replace_na(list(".temp_weight" = 0))
     
   } else {
@@ -232,7 +242,7 @@ util_proportions <- function(postsynth,
                      original = sum(.data$original, na.rm = TRUE)) %>%
     dplyr::mutate(difference = .data$synthetic - .data$original) %>%
     dplyr::ungroup()
-    
+  
   # (group_by) -- variable -- class -- original -- synthetic -- difference
   return(combined_data)
   
