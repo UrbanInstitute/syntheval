@@ -2,13 +2,14 @@
 
 ## Overview
 
-This document explains the project and programming conventions used for `library(syntheval)` and the evaluation of synthetic data. The document is a work-and-progress and should be updated as conventions are created or changed. 
+This document explains the project and programming conventions used for `library(syntheval)` and the evaluation of synthetic data. The document is a work-in-progress and should be updated as conventions are created or changed. 
 
 ## Contents
 
 * [Principles](#principles)
   - [tidyverse](#tidyverse)
   - [tidymodels](#tidymodels)
+  - [syntheval](#syntheval)
 * [Project Organization](#project-organization)
   - [Directory Structure](#directory-structure)
   - [Documentation](#documentation)
@@ -43,6 +44,12 @@ Building smaller packages that handle discrete tasks instead of large packages t
 * Retain the minimally sufficient objects in the model object.
 * Every class should have a `print` method that gives a concise description of the object.
 
+### syntheval
+
+* All utility evaluations should start `R/util_*.R`, with `*` naming the functions or group of functions used.
+* All disclosure risk evaluations should start `R/disc_*.R`, with `*` naming the functions or group of functions used.
+* All evaluation metrics should accept an `eval_data` object as the first input. 
+
 ## Project Organization
 
 ### Directories
@@ -72,9 +79,9 @@ Out-of-date and incorrect documentation can be more damaging than no documentati
 5.  Run `devtools::document()` to update package documentation and the package NAMESPACE
 6.  Build and install the package (with Ctrl-Shift-b if using RStudio)
 7.  Run R CMD check (with Ctrl-Shift-E if using RStudio) and resolve any issues.
-8.  Push the code and put in a Pull Request to the `development` branch. Request at least one reviewer for any changes to code or documentation. 
+8.  Push the code and put in a Pull Request to the `version#.#.#` branch. Request at least one reviewer for any changes to code or documentation. 
 9.  Delete the remote branch (and possibly the local branch) when all changes are merged into the master branch
-10. From time-to-time, new releases will be moved from `development` to `main`. The `main` branch should be stable at all times and updated according to a release schedule. 
+10. From time-to-time, new releases will be moved from `version#.#.#` to `main`. The `main` branch should be stable at all times and updated according to a release schedule. 
 
 **Note:** do not use `devtools::load_all(.)`.
 
@@ -83,10 +90,8 @@ Out-of-date and incorrect documentation can be more damaging than no documentati
 ### Releases
 
 * Major changes should be tracked in `NEWS.md`. `library(parnsip)` is a good [example](https://github.com/tidymodels/parsnip/blob/master/NEWS.md). 
-* Changes on the development branch should be tracked at the top under the header `syntheval (development version)`.
-* Version numbers will update as the code is merged to `main`. Accordingly, changes should be moved to the corresponding version number. 
-
-We will us [semantic versioning](https://semver.org/) once the first version of the API is finalized (i.e. `syntheval` moves to version 0.1.0)
+* Changes on the `version#.#.#` branch should be tracked at the top under the header `syntheval (development version)`.
+* We are using [semantic versioning](https://semver.org/).
 
 ## Styles
 
