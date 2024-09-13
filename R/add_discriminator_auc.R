@@ -18,7 +18,8 @@ add_discriminator_auc <- function(discrimination, split = TRUE) {
       dplyr::group_by(.data$.sample) %>%
       yardstick::roc_auc(".source_label", ".pred_synthetic") %>%
       dplyr::mutate(.sample = factor(.data$.sample, levels = c("training", "testing"))) %>%
-      dplyr::arrange(.data$.sample)
+      dplyr::arrange(.data$.sample) %>%
+      dplyr::ungroup()
     
   } else {
     

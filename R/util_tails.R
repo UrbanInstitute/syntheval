@@ -60,7 +60,8 @@ util_tails <- function(postsynth,
   # calculate proportion of total contained in each observation
   long_data <- long_data %>%
     dplyr::group_by(source, .data$variable) %>%
-    dplyr::mutate(.weighted_prop = .data$.weighted_value / sum(.data$.weighted_value))
+    dplyr::mutate(.weighted_prop = .data$.weighted_value / sum(.data$.weighted_value)) %>%
+    dplyr::ungroup()
   
   # keep top n
   if (end == "max") {
