@@ -1,4 +1,4 @@
-#' American Community Survey microdata
+#' American Community Survey confidential microdata
 #'
 #' An extract constructed from the 2019 American Community Survey containing a 
 #' random sample of n = 1000 Nebraska respondents.
@@ -26,6 +26,37 @@
 #' }
 #' @source <https://usa.ipums.org/usa/>
 "acs_conf"
+
+#' American Community Survey holdout microdata
+#'
+#' An extract constructed from the 2019 American Community Survey containing a 
+#' random sample of n = 1000 Nebraska respondents. This sample is distinct from 
+#' `acs_conf` and is not used in producing the synthetic data available in this 
+#' package.
+#'
+#' Original data source:
+#' Steven Ruggles, Sarah Flood, Matthew Sobek, Daniel Backman, Annie Chen, 
+#' Grace Cooper, Stephanie Richards, Renae Rogers, and Megan Schouweiler. 
+#' IPUMS USA: Version 15.0 \[dataset\]. Minneapolis, MN: IPUMS, 2024. 
+#' https://doi.org/10.18128/D010.V15.0
+#'
+#' @format ## `acs_holdout`
+#' A data frame with 1,000 rows and 11 columns:
+#' \describe{
+#'   \item{county}{fct, county}
+#'   \item{gq}{fct, group quarter kind}
+#'   \item{sex}{fct, sex}
+#'   \item{marst}{fct, marital status}
+#'   \item{hcovany}{fct, health insurance status}
+#'   \item{empstat}{fct, employment status}
+#'   \item{classwkr}{fct, employment kind (ex: self-employed, etc.)}
+#'   \item{age}{dbl, age (in years)}
+#'   \item{famsize}{dbl, household/family size}
+#'   \item{transit_time}{dbl, transit time to work (in minutes)}
+#'   \item{inctot}{dbl, annual income}
+#' }
+#' @source <https://usa.ipums.org/usa/>
+"acs_holdout"
 
 #' American Community Survey lower-risk synthetic data
 #'
