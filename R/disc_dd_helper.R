@@ -16,7 +16,7 @@
       ) %>%
       dplyr::summarise(raw_n = dplyr::n()) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate(prop = .data$raw_n / dim(df)[1]) %>%
+      dplyr::mutate(prop = .data$raw_n / nrow(df)) %>%
       dplyr::arrange(!!!rlang::syms(keys)) %>%
       tibble::remove_rownames() %>%
       tibble::rowid_to_column("key_id")
