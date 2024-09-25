@@ -91,7 +91,8 @@ util_percentiles <- function(postsynth,
   combined_data <- prep_combined_data_for_na.rm(
     combined_data,
     na.rm = na.rm, 
-    drop_zeros = drop_zeros
+    drop_zeros = drop_zeros,
+    drop_zeros_exclude = group_by
   )
   na.rm_flag <- (na.rm | drop_zeros)
   

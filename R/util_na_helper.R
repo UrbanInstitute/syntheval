@@ -4,6 +4,7 @@
 #' @param combined_data A data frame or tibble
 #' @param na.rm A boolean for whether to ignore missing values
 #' @param drop_zeros A boolean for whether to ignore zero values in utility metrics
+#' @param drop_zeros_exclude An optional set of unquoted columns on which to drop zeros 
 #'
 #' @return A data frame or tibble with missing and/or zero values set to NA
 #' 
@@ -12,7 +13,8 @@
 prep_combined_data_for_na.rm <- function(
     combined_data,
     na.rm = FALSE,
-    drop_zeros = FALSE) {
+    drop_zeros = FALSE,
+    drop_zeros_exclude = NULL) {
   
   # raise warning if missing values present
   if (na.rm == FALSE) {
@@ -42,7 +44,25 @@ prep_combined_data_for_na.rm <- function(
   
   if (drop_zeros) {
     
-    combined_data[combined_data == 0] <- NA
+    if (is.null(drop_zeros_exclude)) {
+      
+      combined_data[combined_data == 0] <- NA
+      
+    }
+
+    else {
+      
+      combined_data <- combined_data %>%
+        dplyr::mutate(
+          dplyr::across(
+            -dplyr::all_of(drop_zeros_exclude),
+            \(x) {
+              dplyr::if_else(x == 0, NA, x)
+            }
+          )
+        )
+      
+    }
     
   }
   

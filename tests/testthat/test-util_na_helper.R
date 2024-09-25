@@ -44,6 +44,16 @@ test_that("prep_combined_data_for_na.rm functionality", {
     c(NA, NA, 10, NA)
   )
   
+  # drop_zeros optionally ignores unspecified columns
+  expect_identical(
+    prep_combined_data_for_na.rm(
+      df_with_nas[, c("weight", "d")],
+      drop_zeros = TRUE,
+      drop_zeros_exclude = rlang::sym("d")
+    )[, "d"], 
+    c(0, 0, 10, 0)
+  )
+  
 })
 
 

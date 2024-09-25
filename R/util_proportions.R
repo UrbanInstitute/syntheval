@@ -123,13 +123,6 @@ util_proportions <- function(postsynth,
       .id = "source"
     ) 
   
-  # if flagged, convert missing levels to character "NA" levels
-  if (na.rm) {
-    
-    combined_data <- convert_na_to_level(combined_data)
-    
-  }
-  
   group_by_weights <- combined_data %>%
     tidyr::pivot_longer(
       cols = -c(source, {{ group_by }}, ".temp_weight"),
@@ -140,6 +133,9 @@ util_proportions <- function(postsynth,
       dplyr::across({{ group_by }}), source, variable,
       .drop = !keep_empty_levels
     ) 
+  
+  # convert NAs to separate levels
+  combined_data <- convert_na_to_level(combined_data)
   
   # lengthening combined data to find proportions for each level
   combined_data_long <- combined_data %>%
@@ -159,36 +155,54 @@ util_proportions <- function(postsynth,
     all_levels <- purrr::map(
       .x = prop_col_names, 
       .f = \(.x) { 
-        data.frame("class" = levels(combined_data[[.x]])) %>% 
-          dplyr::mutate(
-            "variable" = .x
-          )   
+        if (pillar::type_sum(combined_data[[.x]]) == "chr") {
+          return(
+            data.frame(
+              "class" = levels(factor(combined_data[[.x]]))) %>% 
+              dplyr::mutate(
+                "variable" = .x
+              ) 
+          )
+        } else {
+          return(
+            data.frame(
+              "class" = levels(combined_data[[.x]])) %>% 
+              dplyr::mutate(
+                "variable" = .x
+              )  
+          )
         }
-      ) %>% dplyr::cross_join(
+ 
+        }
+      ) %>%
+      dplyr::bind_rows() %>% 
+      dplyr::cross_join(
         combined_data %>% 
           dplyr::select(c(source, {{ group_by }})) %>% 
-          unique()
+          dplyr::distinct()
       )
     
-    combined_data <- combined_data %>%
-      tidyr::pivot_longer(
-        cols = -c(source, {{ group_by }}, ".temp_weight"), 
-        names_to = "variable", 
-        values_to = "class"
-      ) %>% dplyr::right_join(
-        all_levels, 
-        by = c(source, {{ group_by }}, "variable", "class")
+    combined_data <- dplyr::left_join(
+        all_levels,
+        combined_data_long,
+        by = NULL,
+        na_matches = "na"
       ) %>% 
       tidyr::replace_na(list(".temp_weight" = 0))
     
   } else {
     
+    combined_data <- combined_data_long
+    
+  }
+  
+  # if flagged, remove NA levels
+  if (na.rm) {
+    
     combined_data <- combined_data %>%
-      tidyr::pivot_longer(
-        cols = -c(source, {{ group_by }}, ".temp_weight"), 
-        names_to = "variable", 
-        values_to = "class"
-      ) 
+      dplyr::filter(
+        !is.na(class) & (class != "NA")
+      )
     
   }
   

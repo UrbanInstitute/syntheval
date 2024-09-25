@@ -6,6 +6,15 @@ df <- data.frame(
   weight = c(100, 100, 200)
 )
 
+df_na <- data.frame(
+  a = c(1, 2, 1, 1),
+  b = c("orange", "yellow", "green", NA),
+  c = factor(c("1", "1", "2", NA), 
+             levels = c("1", "2", "3", NA),
+             exclude = NULL),
+  weight = c(100, 100, 200, 100)
+)
+
 # postsynth data object
 syn <- list(
   synthetic_data = data.frame(
@@ -13,6 +22,22 @@ syn <- list(
     b = c("orange", "yellow", "green"),
     c = as.factor(c("1", "2", "2")),
     weight = c(150, 150, 100)
+  ),
+  jth_synthesis_time = data.frame(
+    variable = factor(c("b", "c"))
+  )
+) %>%
+  structure(class = "postsynth")
+
+# postsynth data object
+syn_na <- list(
+  synthetic_data = data.frame(
+    a = c(2, 2, 2, NA),
+    b = c("orange", "yellow", "green", "green"),
+    c = factor(c("1", "1", "2", NA), 
+               levels = c("1", "2", "3", NA),
+               exclude = NULL),
+    weight = c(150, 150, 100, 100)
   ),
   jth_synthesis_time = data.frame(
     variable = factor(c("b", "c"))
@@ -348,6 +373,44 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
       )
     ),
     c(9, 5)
+  )
+  
+})
+
+test_that("na.rm in levels works as expected", {
+  res <- util_proportions(
+    postsynth = syn_na,
+    data = df_na
+  )
+  expect_identical(
+    res$class,
+    c("NA", "green", "orange", "yellow", "1", "2", NA)  
+  )
+  
+  res_rm <- util_proportions(
+    postsynth = syn_na,
+    data = df_na,
+    na.rm = TRUE
+  )
+  
+  expect_identical(
+    res_rm$class,
+    c("green", "orange", "yellow", "1", "2")  
+  )
+  
+})
+
+test_that("keep_empty_levels works as expected", {
+  
+  res <- util_proportions(
+    postsynth = syn_na,
+    data = df_na,
+    keep_empty_levels = TRUE
+  )
+  
+  # expect to show 0 proportion in empty level "3" for variable c
+  expect_true(
+    all(res[7, c("synthetic", "original")] == c(0, 0))
   )
   
 })
