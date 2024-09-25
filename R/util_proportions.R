@@ -183,7 +183,7 @@ util_proportions <- function(postsynth,
       )
     
     if (is.null(group_by)) {
-      
+
       join_spec <- dplyr::join_by(class, variable, source)
       
     } else {
