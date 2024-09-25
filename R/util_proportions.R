@@ -139,7 +139,8 @@ util_proportions <- function(postsynth,
     dplyr::group_by(dplyr::across({{ group_by }}), .data$variable, .data$class) %>%
     dplyr::summarise(synthetic = sum(.data$synthetic, na.rm = TRUE),
                      original = sum(.data$original, na.rm = TRUE)) %>%
-    dplyr::mutate(difference = .data$synthetic - .data$original)
+    dplyr::mutate(difference = .data$synthetic - .data$original) %>%
+    dplyr::ungroup()
     
   # (group_by) -- variable -- class -- original -- synthetic -- difference
   return(combined_data)
