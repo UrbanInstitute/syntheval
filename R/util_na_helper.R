@@ -127,8 +127,4 @@ convert_na_to_level <- function(data) {
   
   return(data_converted)
   
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> bedece1 (add univariate na.rm functionality)
