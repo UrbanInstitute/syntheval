@@ -37,7 +37,7 @@ data <- ipumsr::read_ipums_micro(path_to_data_files)
 
 # Gold-standard dataset pre-processing / cleaning -------------------------
 
-acs_conf <- data %>%
+acs <- data %>%
   dplyr::transmute(
     county = haven::as_factor(COUNTYFIP) %>%
       forcats::fct_recode(
@@ -81,6 +81,10 @@ acs_conf <- data %>%
     transit_time = as.double(TRANTIME),
     inctot = dplyr::if_else(INCTOT == 9999999, NA, as.double(INCTOT)) 
     ) %>% 
-  dplyr::slice_sample(n = 1000)
+  dplyr::slice_sample(n = 2000)
+
+acs_conf <- acs[1:1000, ]
+acs_holdout <- acs[1001:2000, ]
   
 usethis::use_data(acs_conf, overwrite = TRUE)
+usethis::use_data(acs_holdout, overwrite = TRUE)
