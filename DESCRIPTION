@@ -40,6 +40,7 @@ Imports:
     tidyr,
     tidyselect,
     tune,
+    twosamples,
     workflows,
     yardstick
 Suggestions:
