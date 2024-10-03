@@ -12,7 +12,8 @@ util_percentiles(
   group_by = NULL,
   drop_zeros = FALSE,
   common_vars = TRUE,
-  synth_vars = TRUE
+  synth_vars = TRUE,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -35,6 +36,8 @@ This option will frequently result in an error because quantile() is strict
 about missing values.}
 
 \item{synth_vars}{A logical for if only synthesized variables should be kept}
+
+\item{na.rm}{A logical for ignoring \code{NA} values in computations.}
 }
 \value{
 A \code{tibble} of summary statistics.

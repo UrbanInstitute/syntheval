@@ -8,11 +8,35 @@ df <- data.frame(
   weight = c(100, 100, 200)
 )
 
+df_na <- data.frame(
+  a = c(1000, 1000, NA),
+  b = c(1200, 800, NA),
+  c = c("1", "1", "2"),
+  d = c(0, 0, 10), 
+  e = c("a", "b", "b"),
+  weight = c(100, 100, 200)
+)
+
 # test synth (4 of 8 combinations)
 syn <- list(
   synthetic_data = data.frame(
     a = c(1400, 0, 1000),
     b = c(1000, 1000, 1000),
+    c = c("1", "1", "2"),
+    d = c(20, 10, 0), 
+    e = c("a", "b", "b"),
+    weight = c(150, 150, 100)
+  ),
+  jth_synthesis_time = data.frame(
+    variable = factor(c("a", "b", "d", "weight"))
+  )
+) %>%
+  structure(class = "postsynth")
+
+syn_na <- list(
+  synthetic_data = data.frame(
+    a = c(1400, 0, 1000),
+    b = c(1000, 1000, NA),
     c = c("1", "1", "2"),
     d = c(20, 10, 0), 
     e = c("a", "b", "b"),
@@ -246,7 +270,8 @@ test_that("util_moments() variables selection returns correct dimensions ", {
     structure(class = "postsynth")
   
   # are variable names missing ever?
-  expect_false(
+  expect_message(
+    expect_false(
       util_moments(
         postsynth = syn, 
         data = storms_sub, 
@@ -255,45 +280,54 @@ test_that("util_moments() variables selection returns correct dimensions ", {
       )$variable %>%
         is.na() %>%
         all()
+    )
   )
 
+
   # are statistics names missing ever?
-  expect_false(
-    util_moments(
-      postsynth = syn, 
-      data = storms_sub, 
-      common_vars = FALSE, 
-      synth_vars = FALSE
-    )$statistic %>%
-      is.na() %>%
-      all()
-  )
-  
-  # 55 rows = all 11 variables times 5 statistics
-  expect_equal(
-    dim(
+  expect_message(
+    expect_false(
       util_moments(
         postsynth = syn, 
         data = storms_sub, 
         common_vars = FALSE, 
         synth_vars = FALSE
-      )
-    ),
-    c(55, 6)
+      )$statistic %>%
+        is.na() %>%
+        all()
+    )
+  )
+  
+  # 55 rows = all 11 variables times 5 statistics
+  expect_message(
+    expect_equal(
+      dim(
+        util_moments(
+          postsynth = syn, 
+          data = storms_sub, 
+          common_vars = FALSE, 
+          synth_vars = FALSE
+        )
+      ),
+      c(55, 6)
+    )
   )
 
   # 50 rows = 10 common variables times 5 statistics
-  expect_equal(
-    dim(
-      util_moments(
-        postsynth = syn, 
-        data = storms_sub, 
-        common_vars = TRUE, 
-        synth_vars = FALSE
-      )
-    ),
-    c(50, 6)
+  expect_message(
+    expect_equal(
+      dim(
+        util_moments(
+          postsynth = syn, 
+          data = storms_sub, 
+          common_vars = TRUE, 
+          synth_vars = FALSE
+        )
+      ),
+      c(50, 6)
+    )
   )
+
  
   # 15 rows = 3 synthesized numeric variables times 5 statistics
   expect_equal(
@@ -321,4 +355,28 @@ test_that("util_moments() variables selection returns correct dimensions ", {
     c(15, 6)
   )
   
+})
+
+
+test_that("util_moments na.rm works as expected", {
+  expect_message(
+    res <- util_moments(
+      postsynth = syn_na,
+      data = df_na,
+      na.rm = FALSE
+    )
+  )
+  expect_true(
+    all(is.na(res[res["variable"] == "a", "original"]))
+  )
+  
+  res_rm <- util_moments(
+    postsynth = syn_na,
+    data = df_na,
+    na.rm = TRUE
+  )
+
+  expect_true(
+    all(res_rm[2, c("original", "synthetic")] == c(1000, 800))
+  )
 })
