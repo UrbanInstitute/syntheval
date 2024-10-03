@@ -148,40 +148,50 @@ util_proportions <- function(postsynth,
   # if flagged, join in empty levels to pivoted data
   if (keep_empty_levels) {
     
-    prop_col_names <- combined_data %>% 
-      dplyr::select(-c(source, {{ group_by }}, ".temp_weight")) %>%
-      names
+    # first, get explicit column names for variables where we need to keep 
+    # empty levels (excludes variables in group_by, excluded by common_vars, etc)
+    prop_col_names <- names(
+      combined_data %>% 
+        dplyr::select(-c(source, {{ group_by }}, ".temp_weight"))
+      )
     
-    all_levels <- purrr::map(
-      .x = prop_col_names, 
-      .f = \(.x) { 
-        if (pillar::type_sum(combined_data[[.x]]) == "chr") {
-          return(
-            data.frame(
-              "class" = levels(factor(combined_data[[.x]]))) %>% 
-              dplyr::mutate(
-                "variable" = .x
-              ) 
-          )
-        } else {
-          return(
-            data.frame(
-              "class" = levels(combined_data[[.x]])) %>% 
-              dplyr::mutate(
-                "variable" = .x
-              )  
-          )
-        }
+    extract_levels <- function(x) { 
+      
+      # for character columns, convert to factor before extracting levels
+      if (pillar::type_sum(combined_data[[x]]) == "chr") {
+        
+        return(
+          data.frame("class" = levels(factor(combined_data[[x]]))) %>% 
+          dplyr::mutate("variable" = x) 
+        )
+        
+      } else {
+        
+        return(
+          # else, use pre-existing column factor levels (in case empty levels 
+          # are unsynthesized)
+          data.frame("class" = levels(combined_data[[x]])) %>% 
+          dplyr::mutate("variable" = x)  
+        )
         
       }
+      
+    }
+    
+    all_levels <- purrr::map(
+      .x = prop_col_names,  
+      .f = extract_levels
     ) %>%
       dplyr::bind_rows() %>% 
+      # create one copy of the complete levels for each source and groupby level
+      # by cross-joining
       dplyr::cross_join(
         combined_data %>% 
           dplyr::select(c(source, {{ group_by }})) %>% 
           dplyr::distinct()
       )
     
+    # create the join specification depending on whether group_by is specified
     if (is.null(group_by)) {
 
       join_spec <- dplyr::join_by(class, variable, source)
@@ -192,6 +202,8 @@ util_proportions <- function(postsynth,
       
     }
     
+    # join in all_levels to combined data and set weights to 0 where levels are 
+    # unobserved
     combined_data <- dplyr::left_join(
       all_levels,
       combined_data_long,
