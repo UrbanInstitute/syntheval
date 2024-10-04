@@ -132,112 +132,121 @@ disc_baseline <- function(
         dplyr::select(dplyr::all_of(c(qid_keys, "key_id"))),
       by = qid_keys
     )
+  
+  # define per-metrics function per grouped data frame and key name 
+  per_qik_metrics <- function(gdf, names) {
+    
+    # calculate distinct l-diversity across each sensitive key column
+    l_div <- gdf %>%
+      dplyr::summarise(
+        dplyr::across(dplyr::all_of(sens_keys), dplyr::n_distinct)
+      )
+    
+    # define t-closeness function (defined here because it depends on 
+    # `gdf` and `names`)
+    t_closeness_func <- function(x) {
+      
+      if (sens_key_types[dplyr::cur_column()] == "fct") {
+        
+        # for factor variables, calculate per-level probabilities
+        qid_prop <- c(table(x, exclude=NULL)) / nrow(gdf)
+        complete_prop <- complete_dist_stats[[dplyr::cur_column()]]
+        
+        # calculate appropriate distance between probability vectors
+        return(
+          dplyr::case_when(
+            tclose_metric_cat == "l1" ~ (
+              sum(abs(qid_prop - complete_prop))
+            ),
+            tclose_metric_cat == "l2" ~ (
+              sqrt(sum((qid_prop - complete_prop)**2))
+            ),
+            # default is L-infinity (maximum difference)
+            TRUE ~ (
+              max(abs(qid_prop - complete_prop))
+            )
+          )
+        )
+        
+      } else {
+        
+        # for numerics, first collect samples for each column
+        qid_samps <- dplyr::pull(gdf, dplyr::cur_column())
+        complete_samps <- complete_dist_stats[[dplyr::cur_column()]]
+        
+        return(
+          
+          # calculate appropriate distance between empirical CDFs
+          dplyr::case_when(
+            tclose_metric_numeric == "wass" ~ (
+              twosamples::wass_stat(qid_samps, complete_samps)
+            ),
+            tclose_metric_numeric == "cvm" ~ (
+              twosamples::cvm_stat(qid_samps, complete_samps)
+            ),
+            tclose_metric_numeric == "ad" ~ (
+              twosamples::ad_stat(qid_samps, complete_samps)
+            ),
+            # default is Kolmogorov-Smirnov
+            TRUE ~ (
+              twosamples::ks_stat(qid_samps, complete_samps)
+            )
+          )
+          
+        )
+        
+      }
+      
+    }
+    
+    # calculate t-closeness according to the specified metric
+    t_close <- gdf %>%
+      dplyr::summarise(
+        dplyr::across(dplyr::all_of(sens_keys), t_closeness_func))
+    
+    return(
+      data.frame(
+        "l_div" = l_div, 
+        "t_close" = t_close,
+        "key_id" = as.numeric(gdf[1, "key_id"])
+      ) 
+    )
+    
+  }
 
   # for observed keys, calculate additional metrics
   sens_metrics <- conf_w_key_ids %>% 
     dplyr::group_by(
       dplyr::across(dplyr::all_of(qid_keys))
     ) %>%
-    # for each qid group....
-    dplyr::group_map(
-      \(gdf, names) {
-        
-        # calculate distinct l-diversity across each sensitive key column
-        l_div <- gdf %>%
-          dplyr::summarise(
-            dplyr::across(dplyr::all_of(sens_keys), dplyr::n_distinct)
-          )
-        
-        # calculate t-closeness according to the specified metric
-        t_close <- gdf %>%
-          dplyr::summarise(
-            dplyr::across(
-              dplyr::all_of(sens_keys), 
-              \(x) {
-                if (sens_key_types[dplyr::cur_column()] == "fct") {
-                  
-                  # for factor variables, calculate per-level probabilities
-                  qid_prop <- c(table(x, exclude=NULL)) / nrow(gdf)
-                  complete_prop <- complete_dist_stats[[dplyr::cur_column()]]
-                  
-                  # calculate appropriate distance between probability vectors
-                  return(
-                    dplyr::case_when(
-                      tclose_metric_cat == "l1" ~ (
-                        sum(abs(qid_prop - complete_prop))
-                      ),
-                      tclose_metric_cat == "l2" ~ (
-                        sqrt(sum((qid_prop - complete_prop)**2))
-                      ),
-                      # default is L-infinity (maximum difference)
-                      TRUE ~ (
-                        max(abs(qid_prop - complete_prop))
-                      )
-                    )
-                  )
-                    
-                } else {
-                  
-                  # for numerics, first collect samples for each column
-                  qid_samps <- dplyr::pull(gdf, dplyr::cur_column())
-                  complete_samps <- complete_dist_stats[[dplyr::cur_column()]]
-                  
-                  return(
-                    
-                    # calculate appropriate distance between empirical CDFs
-                    dplyr::case_when(
-                      tclose_metric_numeric == "wass" ~ (
-                        twosamples::wass_stat(qid_samps, complete_samps)
-                      ),
-                      tclose_metric_numeric == "cvm" ~ (
-                        twosamples::cvm_stat(qid_samps, complete_samps)
-                      ),
-                      tclose_metric_numeric == "ad" ~ (
-                        twosamples::ad_stat(qid_samps, complete_samps)
-                      ),
-                      # default is Kolmogorov-Smirnov
-                      TRUE ~ (
-                        twosamples::ks_stat(qid_samps, complete_samps)
-                      )
-                    )
-                    
-                  )
-                  
-                }
-              }
-            )
-          )
-        
-        return(
-          data.frame(
-          "l_div" = l_div, 
-          "t_close" = t_close,
-          "key_id" = as.numeric(gdf[1, "key_id"])
-          ) 
-        )
-      }
-    ) %>%
+    dplyr::group_map(per_qik_metrics) %>%
     dplyr::bind_rows()
   
-  return(
-    list(
-      "qid_keys" = qid_keys,
-      "qid_metrics" = qid_metrics,
-      "sens_keys" = sens_keys,
-      "sens_metrics" = dplyr::inner_join(
-        qid_agg %>% # join original QID aggregation to pivoted results on key_id
-          dplyr::select(dplyr::all_of(c("key_id", qid_keys, "raw_n", "prop"))),
-        tidyr::pivot_longer(
-          sens_metrics, 
-          -dplyr::one_of("key_id"), 
-          names_sep = "\\.", 
-          names_to = c("metric", "sens_var")
-        ),
-        by = "key_id"
-      ) 
-    ) %>%
-      structure(class = "baseline_metrics")
-  )
+  # join together k-anonymity and l-diversity / t-closeness metrics...
+  joined_sens_metrics <- dplyr::inner_join( 
+    qid_agg %>% # first, select k-anonymity results with QID keys
+      dplyr::select(dplyr::all_of(c("key_id", qid_keys, "raw_n", "prop"))),
+    # next, create rows for each key_id per metric and sensitive variable
+    tidyr::pivot_longer(
+      sens_metrics, 
+      # pivot longer on all variables except key_id
+      -dplyr::one_of("key_id"),
+      # break up metrics and associated variables (ex: "tcloseness.sens_col1") 
+      names_sep = "\\.", 
+      names_to = c("metric", "sens_var")
+    ),
+    by = "key_id"
+  ) 
+  
+  result <- list(
+    "qid_keys" = qid_keys,
+    "qid_metrics" = qid_metrics,
+    "sens_keys" = sens_keys,
+    "sens_metrics" = joined_sens_metrics
+  ) %>%
+    structure(class = "baseline_metrics")
+  
+  return(result)
   
 }
 
