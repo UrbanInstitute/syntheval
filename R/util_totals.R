@@ -6,6 +6,7 @@
 #' @param group_by The unquoted name of a (or multiple) grouping variable(s)
 #' @param common_vars A logical for if only common variables should be kept
 #' @param synth_vars A logical for if only synthesized variables should be kept
+#' @param na.rm A logical for ignoring `NA` values in computations.
 #'
 #' @return A `tibble` of totals.
 #'
@@ -18,7 +19,8 @@ util_totals<- function(postsynth,
                        weight_var = 1,
                        group_by = NULL,
                        common_vars = TRUE,
-                       synth_vars = TRUE) {
+                       synth_vars = TRUE,
+                       na.rm = FALSE) {
   
   # catch binding error
   . <- NULL
@@ -75,8 +77,6 @@ util_totals<- function(postsynth,
     `synthetic` = synthetic_data,
     .id = "source"
   )
-    
-  na.rm_toggle <- FALSE
   
   # calculate summary statistics
   totals <- combined_data %>%
@@ -86,8 +86,8 @@ util_totals<- function(postsynth,
       dplyr::across(
         .cols = -".temp_weight",
         .fns = list(
-          count = ~ sum((. != 0) * .data$.temp_weight, na.rm = na.rm_toggle),
-          total = ~ sum(. * .data$.temp_weight, na.rm = na.rm_toggle)
+          count = ~ sum((. != 0) * .data$.temp_weight, na.rm = na.rm),
+          total = ~ sum(. * .data$.temp_weight, na.rm = na.rm)
         )
       )
     ) %>%

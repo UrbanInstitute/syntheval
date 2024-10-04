@@ -8,11 +8,35 @@ df <- data.frame(
   weight = c(100, 100, 200)
 )
 
+df_na <- data.frame(
+  a = c(1000, 1000, 1000, NA),
+  b = c(1200, 800, 1000, NA),
+  c = c("1", "1", "2", "2"),
+  d = c(0, 0, 10, 0), 
+  e = c("a", "b", "b", "a"),
+  weight = c(100, 100, 200, 100)
+)
+
 # test synth (4 of 8 combinations)
 syn <- list(
   synthetic_data = data.frame(
     a = c(1400, 0, 1000),
     b = c(1000, 1000, 1000),
+    c = c("1", "1", "2"),
+    d = c(20, 10, 0), 
+    e = c("a", "b", "b"),
+    weight = c(150, 150, 100)
+  ),
+  jth_synthesis_time = data.frame(
+    variable = factor(c("a", "b", "d", "weight"))
+  )
+) %>%
+  structure(class = "postsynth")
+
+syn_na <- list(
+  synthetic_data = data.frame(
+    a = c(1400, 0, 1000),
+    b = c(1000, NA, 1000),
     c = c("1", "1", "2"),
     d = c(20, 10, 0), 
     e = c("a", "b", "b"),
@@ -319,6 +343,30 @@ test_that("util_totals() variables selection returns correct dimensions ", {
       )
     ),
     c(6, 6)
+  )
+  
+})
+
+test_that("util_totals() na.rm works as expected", {
+  
+  res <- util_totals(
+    postsynth = syn_na, 
+    data = df_na,
+    na.rm = FALSE
+  )
+  
+  expect_true(
+    all(is.na(res[1:4, "original"]))
+  )
+  
+  res_rm <- util_totals(
+    postsynth = syn_na, 
+    data = df_na,
+    na.rm = TRUE
+  )
+  
+  expect_true(
+    all(res_rm[2, c("original", "synthetic")] == c(3000, 2400))
   )
   
 })

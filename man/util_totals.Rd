@@ -10,7 +10,8 @@ util_totals(
   weight_var = 1,
   group_by = NULL,
   common_vars = TRUE,
-  synth_vars = TRUE
+  synth_vars = TRUE,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ util_totals(
 \item{common_vars}{A logical for if only common variables should be kept}
 
 \item{synth_vars}{A logical for if only synthesized variables should be kept}
+
+\item{na.rm}{A logical for ignoring \code{NA} values in computations.}
 }
 \value{
 A \code{tibble} of totals.
