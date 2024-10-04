@@ -42,13 +42,17 @@ test_that("aggregate_qid_eval expected errors", {
 test_that("aggregate_qid_eval expected behavior", {
   
   # expect number of rows is consistent
-  expected_rows <- purrr::map(
-    .x = qid_keys, 
-    .f = \(x) {length(levels(acs_conf[[x]]))}
-  ) %>%
-    purrr::reduce(`*`) * 
-    acs_eval[["n_rep"]]
-  
+  # first, calculate expected number of rows, which should be the product of...
+  expected_rows <- acs_eval[["n_rep"]] * # the number of synthetic data reps...
+    purrr::reduce(
+      # ...times the number of levels in each factor...
+      purrr::map(
+        .x = qid_keys, 
+        .f = \(x) {length(levels(acs_conf[[x]]))}
+      ), 
+    `*`) # all multiplied together
+    
+  # check that this equals the size of the computed result
   expect_equal(nrow(acs_eval_agg), expected_rows)
   expect_equal(nrow(acs_eval_holdout_agg), expected_rows)
   

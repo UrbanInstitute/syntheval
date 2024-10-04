@@ -8,7 +8,7 @@ plot_prob_qid_abs_err(
   agg_eval_data,
   keys,
   max_k = 20,
-  qtiles = c(0.5, 0.75, 0.9),
+  probs = c(0.5, 0.75, 0.9),
   holdout = FALSE
 )
 }
@@ -19,7 +19,7 @@ plot_prob_qid_abs_err(
 
 \item{max_k}{largest partition selection size}
 
-\item{qtiles}{Quantiles at which to estimate confidence of QID count}
+\item{probs}{Quantiles at which to estimate confidence of QID count}
 
 \item{holdout}{boolean, use data from holdout instead of confidential}
 }
