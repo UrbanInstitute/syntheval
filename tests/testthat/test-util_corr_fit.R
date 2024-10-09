@@ -52,13 +52,13 @@ test_that("util_corr_fit is correct with postsynth ", {
 test_that("util_corr_fit works with NA ", {
   
   syn <- list(
-    synthetic_data = tidysynthesis::example_na
+    synthetic_data = acs_conf
   ) %>%
     structure(class = "postsynth")
   
   corr <- util_corr_fit(
     postsynth = syn, 
-    data = tidysynthesis::example_na,
+    data = acs_conf,
     use = "pairwise.complete.obs"
   )
   

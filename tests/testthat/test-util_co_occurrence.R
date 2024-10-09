@@ -41,13 +41,13 @@ test_that("util_co_occurrence() is correct with different data ", {
 test_that("util_co_occurrence() works with NA ", {
   
   syn <- list(
-    synthetic_data = tidysynthesis::example_na
+    synthetic_data = acs_conf
   ) %>%
     structure(class = "postsynth")
   
   co_occurrence <- util_co_occurrence(
     postsynth = syn, 
-    data = tidysynthesis::example_na,
+    data = acs_conf,
     na.rm = TRUE
   )
 
