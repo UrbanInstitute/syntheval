@@ -63,3 +63,19 @@ test_that("KS distance is 1 ", {
   expect_equal(D$D, c(1, 1))
   
 })
+
+test_that("KS distance works with NA ", {
+  
+  syn <- list(
+    synthetic_data = tidysynthesis::example_na
+  ) %>%
+    structure(class = "postsynth")
+  
+  D <- util_ks_distance(
+    postsynth = syn, 
+    data = tidysynthesis::example_na,
+    na.rm = TRUE)
+  
+  expect_equal(max(D$D), 0)
+  
+})

@@ -1,8 +1,9 @@
 #' Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in 
 #' the synthetic and confidential data
 #'
-#' @param postsynth A postsynth object or tibble with synthetic data
-#' @param data A data frame with the original data
+#' @param postsynth a postsynth object or tibble with synthetic data
+#' @param data a data frame with the original data
+#' @param na.rm a logical indicating whether missing values should be removed.
 #'
 #' @return A tibble with the D and location of the largest distance for each 
 #' numeric variable
@@ -11,7 +12,7 @@
 #' 
 #' @export
 #'
-util_ks_distance <- function(postsynth, data) {
+util_ks_distance <- function(postsynth, data, na.rm = FALSE) {
   
   if ("postsynth" %in% class(postsynth)) {
     
@@ -60,8 +61,14 @@ util_ks_distance <- function(postsynth, data) {
     ecdf_orig <- stats::ecdf(dplyr::pull(data, var))
     
     # calculate the minimum and maximum across both variables
-    minimum <- min(c(dplyr::pull(synthetic_data, var), dplyr::pull(data, var)))
-    maximum <- max(c(dplyr::pull(synthetic_data, var), dplyr::pull(data, var)))
+    minimum <- min(
+      c(dplyr::pull(synthetic_data, var), dplyr::pull(data, var)),
+      na.rm = na.rm
+    )
+    maximum <- max(
+      c(dplyr::pull(synthetic_data, var), dplyr::pull(data, var)),
+      na.rm = na.rm
+    )
     
     # create a grid of values for calculating the distances between the two
     # eCDFs
