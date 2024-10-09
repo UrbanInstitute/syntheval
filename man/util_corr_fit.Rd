@@ -4,12 +4,17 @@
 \alias{util_corr_fit}
 \title{Calculate the correlation fit metric of a confidential data set.}
 \usage{
-util_corr_fit(postsynth, data)
+util_corr_fit(postsynth, data, use = "everything")
 }
 \arguments{
 \item{postsynth}{A postsynth object from tidysynthesis or a tibble}
 
 \item{data}{an original (observed) data set.}
+
+\item{use}{optional character string giving a method for computing
+covariances in the presence of missing values. This must be (an abbreviation
+of) one of the strings "everything", "all.obs", "complete.obs",
+"na.or.complete", or "pairwise.complete.obs".}
 }
 \value{
 A \code{list} of fit metrics:

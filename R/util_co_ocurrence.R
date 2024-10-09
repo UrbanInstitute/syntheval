@@ -1,7 +1,10 @@
 #' Calculate the co-occurrence fit metric of a confidential data set.
 #'
-#' @param postsynth A postsynth object from tidysynthesis or a tibble
+#' @param postsynth a postsynth object from tidysynthesis or a tibble
 #' @param data an original (observed) data set.
+#' @param na.rm a logical indicating whether missing values should be removed. 
+#'  Note: values are jointly removed for each pair of variables even if only one
+#'  value is missing.
 #'
 #' @return A `list` of fit metrics:
 #'  - `co_occurrence_original`: co-occurrence matrix of the original data.
@@ -19,7 +22,7 @@
 #'
 #' @export
 #' 
-util_co_occurrence <- function(postsynth, data) {
+util_co_occurrence <- function(postsynth, data, na.rm = FALSE) {
   
   if (is_postsynth(postsynth)) {
 
@@ -44,7 +47,7 @@ util_co_occurrence <- function(postsynth, data) {
     co_occurrence_matrix <-
       x %>%
       dplyr::select_if(is.numeric) %>%
-      co_occurrence()
+      co_occurrence(na.rm = na.rm)
     
     # set the values in the upper triangle to zero to avoid double counting
     co_occurrence_matrix[upper.tri(co_occurrence_matrix, diag = TRUE)] <- NA

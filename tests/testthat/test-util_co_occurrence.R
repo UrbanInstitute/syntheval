@@ -8,23 +8,6 @@ syn <- list(synthetic_data = data.frame(a = c(1, 0, 0, 0),
                                         b = c(1, 0, 0, 0))) %>%
   structure(class = "postsynth")
 
-
-
-
-
-
-# # difference matrix for tests
-# diff_matrix <- matrix(
-#   c(NA, NA, NA,
-#     -2, NA, NA,
-#     0, -2, NA),
-#   ncol = 3,
-#   byrow = TRUE
-# ) 
-
-# rownames(diff_matrix) <- c("a", "c", "b")
-# colnames(diff_matrix) <- c("a", "c", "b")
-
 # test with postsynth
 test_that("util_co_occurrence() is correct with identical data ", {
 
@@ -53,4 +36,23 @@ test_that("util_co_occurrence() is correct with different data ", {
   expect_equal(co_occurrence$co_occurrence_difference, diff_matrix)
   expect_equal(co_occurrence$co_occurrence_difference_mae, mean(abs(-0.25)))
   expect_equal(co_occurrence$co_occurrence_difference_rmse, sqrt(mean((-0.25) ^ 2)))
+})
+
+test_that("util_co_occurrence() works with NA ", {
+  
+  syn <- list(
+    synthetic_data = acs_conf
+  ) %>%
+    structure(class = "postsynth")
+  
+  co_occurrence <- util_co_occurrence(
+    postsynth = syn, 
+    data = acs_conf,
+    na.rm = TRUE
+  )
+
+  expect_equal(max(co_occurrence$co_occurrence_difference, na.rm = TRUE), 0)
+  expect_equal(co_occurrence$co_occurrence_difference_mae, 0)
+  expect_equal(co_occurrence$co_occurrence_difference_rmse, 0)
+  
 })

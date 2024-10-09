@@ -4,12 +4,16 @@
 \alias{util_co_occurrence}
 \title{Calculate the co-occurrence fit metric of a confidential data set.}
 \usage{
-util_co_occurrence(postsynth, data)
+util_co_occurrence(postsynth, data, na.rm = FALSE)
 }
 \arguments{
-\item{postsynth}{A postsynth object from tidysynthesis or a tibble}
+\item{postsynth}{a postsynth object from tidysynthesis or a tibble}
 
 \item{data}{an original (observed) data set.}
+
+\item{na.rm}{a logical indicating whether missing values should be removed.
+Note: values are jointly removed for each pair of variables even if only one
+value is missing.}
 }
 \value{
 A \code{list} of fit metrics:
