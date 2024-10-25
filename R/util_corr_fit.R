@@ -2,6 +2,10 @@
 #'
 #' @param postsynth A postsynth object from tidysynthesis or a tibble
 #' @param data an original (observed) data set.
+#' @param use optional character string giving a method for computing 
+#' covariances in the presence of missing values. This must be (an abbreviation 
+#' of) one of the strings "everything", "all.obs", "complete.obs", 
+#' "na.or.complete", or "pairwise.complete.obs".
 #'
 #' @return A `list` of fit metrics:
 #'  - `correlation_original`: correlation matrix of the original data.
@@ -16,7 +20,7 @@
 #'
 #' @export
 
-util_corr_fit <- function(postsynth, data) {
+util_corr_fit <- function(postsynth, data, use = "everything") {
   
   if (is_postsynth(postsynth)) {
   
@@ -35,13 +39,13 @@ util_corr_fit <- function(postsynth, data) {
   data <- dplyr::select(data, names(synthetic_data))
   
   # helper function to find a correlation matrix with the upper tri set to zeros
-  lower_triangle <- function(x) {
+  lower_triangle <- function(x, use) {
     
     # find the linear correlation matrix of numeric variables from a data set
     correlation_matrix <-
       x %>%
       dplyr::select_if(is.numeric) %>%
-      stats::cor()
+      stats::cor(use = use)
     
     # set the values in the upper triangle to zero to avoid double counting
     correlation_matrix[upper.tri(correlation_matrix, diag = TRUE)] <- NA
@@ -50,10 +54,10 @@ util_corr_fit <- function(postsynth, data) {
   }
   
   # find the lower triangle of the original data linear correlation matrix
-  original_lt <- lower_triangle(data)
+  original_lt <- lower_triangle(data, use = use)
   
   # find the lower triangle of the synthetic data linear correlation matrix
-  synthetic_lt <- lower_triangle(synthetic_data)
+  synthetic_lt <- lower_triangle(synthetic_data, use = use)
   
   # compare names
   if (any(rownames(original_lt) != rownames(synthetic_lt))) {
