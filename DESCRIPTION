@@ -1,10 +1,16 @@
 Package: syntheval
 Title: A set of tools for evaluating synthetic data utility and disclosure risk
-Version: 0.0.3
+Version: 0.0.4
 Authors@R: c(
-    person(given = "Aaron R.", family = "Williams", 
+    person(given = "Aaron R.", 
+           family = "Williams", 
            email = "awilliams@urban.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5564-1938")),
+    person(given = "Jeremy",
+           family = "Seeman", 
+           email = "jseeman@urban.org",
+           role = "aut",
+           comment = c(ORCID = "0000-0003-3526-3209")),        
     person("Gabe", "Morrison", , "gmorrison@urban.org", role = "ctb"),
     person("Elyse", "McFalls", , "emcfalls@urban.org", role = "ctb")
   )

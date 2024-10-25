@@ -1,3 +1,11 @@
+# syntheval 0.0.4
+
+* Add empirical disclosure risk metrics.
+* Add comparison visualization utilities.
+* Add `na.rm` functionality to most functions to handle `NA` values.
+* Add families to roxygen2 headers.
+* Ensure that all functions return ungrouped output.
+
 # syntheval 0.0.3
 
 * Add a README with examples.

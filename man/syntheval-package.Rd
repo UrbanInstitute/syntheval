@@ -18,6 +18,11 @@ Useful links:
 \author{
 \strong{Maintainer}: Aaron R. Williams \email{awilliams@urban.org} (\href{https://orcid.org/0000-0001-5564-1938}{ORCID})
 
+Authors:
+\itemize{
+  \item Jeremy Seeman \email{jseeman@urban.org} (\href{https://orcid.org/0000-0003-3526-3209}{ORCID})
+}
+
 Other contributors:
 \itemize{
   \item Gabe Morrison \email{gmorrison@urban.org} [contributor]
