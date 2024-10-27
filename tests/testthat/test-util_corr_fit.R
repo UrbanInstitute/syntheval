@@ -48,3 +48,22 @@ test_that("util_corr_fit is correct with postsynth ", {
   expect_equal(corr$correlation_difference_mae, mean(abs(c(0, -2, -2))))
   expect_equal(corr$correlation_difference_rmse, sqrt(mean(c(0, -2, -2) ^ 2)))
 })
+
+test_that("util_corr_fit works with NA ", {
+  
+  syn <- list(
+    synthetic_data = acs_conf
+  ) %>%
+    structure(class = "postsynth")
+  
+  corr <- util_corr_fit(
+    postsynth = syn, 
+    data = acs_conf,
+    use = "pairwise.complete.obs"
+  )
+  
+  expect_equal(max(corr$correlation_difference, na.rm = TRUE), 0)
+  expect_equal(corr$correlation_fit, 0)
+  expect_equal(corr$correlation_difference_mae, 0)
+  expect_equal(corr$correlation_difference_rmse, 0)
+})

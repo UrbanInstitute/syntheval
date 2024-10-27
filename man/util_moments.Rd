@@ -11,7 +11,8 @@ util_moments(
   group_by = NULL,
   drop_zeros = FALSE,
   common_vars = TRUE,
-  synth_vars = TRUE
+  synth_vars = TRUE,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ util_moments(
 \item{common_vars}{A logical for if only common variables should be kept}
 
 \item{synth_vars}{A logical for if only synthesized variables should be kept}
+
+\item{na.rm}{A logical for ignoring \code{NA} values in computations.}
 }
 \value{
 A \code{tibble} of summary statistics.

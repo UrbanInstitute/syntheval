@@ -1,10 +1,16 @@
 Package: syntheval
 Title: A set of tools for evaluating synthetic data utility and disclosure risk
-Version: 0.0.3
+Version: 0.0.4
 Authors@R: c(
-    person(given = "Aaron R.", family = "Williams", 
+    person(given = "Aaron R.", 
+           family = "Williams", 
            email = "awilliams@urban.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5564-1938")),
+    person(given = "Jeremy",
+           family = "Seeman", 
+           email = "jseeman@urban.org",
+           role = "aut",
+           comment = c(ORCID = "0000-0003-3526-3209")),        
     person("Gabe", "Morrison", , "gmorrison@urban.org", role = "ctb"),
     person("Elyse", "McFalls", , "emcfalls@urban.org", role = "ctb")
   )
@@ -16,17 +22,23 @@ License: AGPL (>= 3)
 BugReports: https://github.com/UI-Research/syntheval/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Suggests: 
+    forcats,
+    stringr,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
     broom,
     dplyr,
+    ggplot2,
     gower,
+    gridExtra,
     Hmisc,
     magrittr,
     parsnip,
+    pillar,
+    purrr,
     recipes,
     rlang,
     rsample,
@@ -34,6 +46,7 @@ Imports:
     tidyr,
     tidyselect,
     tune,
+    twosamples,
     workflows,
     yardstick
 Suggestions:

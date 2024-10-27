@@ -2,28 +2,25 @@
 % Please edit documentation in R/disc_mit.R
 \name{disc_mit}
 \alias{disc_mit}
-\title{Run a membership inference test}
+\title{Run a nearest-neighbor membership inference test}
 \usage{
-disc_mit(postsynth, data, holdout_data, threshold_percentile = NULL)
+disc_mit(eval_data, threshold_percentile = NULL, summary = TRUE)
 }
 \arguments{
-\item{postsynth}{A postsynth object or tibble with synthetic data generated from the data input}
-
-\item{data}{A data frame with a subset of the original data}
-
-\item{holdout_data}{A dataframe with observations similar to the original but
-not used to train the synthesizer. The data should have the same variables as
-postsynth.}
+\item{eval_data}{An \code{eval_data} object.}
 
 \item{threshold_percentile}{Distances below the value associated with this
 percentile will be predicted as in the training data. If the
 threshold_percentile is not provided, the function calculates it with the
-following formula: \code{nrow(data)/(nrow(data) + nrow(holdout_data))}}
+following formula: \code{nrow(data) / (nrow(data) + nrow(holdout_data))}}
+
+\item{summary}{Boolean if TRUE, returns summary statistics, if FALSE, returns
+two disaggregated dataframes of individual distances and ROC curve points.}
 }
 \value{
 A list with precision, recall, the confusion matrix, and ROC AUC
 }
 \description{
-Run a membership inference test
+Run a nearest-neighbor membership inference test
 }
 \concept{Disclosure risk metrics}

@@ -1,7 +1,11 @@
+^renv$
+^renv\.lock$
 ^syntheval\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^README\.Rmd$
+^README\.qmd$
+^README_files$
 ^data-raw$
 ^test.R
-disriminators.qmd
+^project-standards.md$

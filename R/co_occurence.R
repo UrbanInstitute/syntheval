@@ -1,10 +1,11 @@
 #' Construct a co-occurrence matrix
 #'
 #' @param data A tibble with numeric variables
+#' @param na.rm a logical indicating whether missing values should be removed.
 #'
 #' @return A co-occurrence matrix
 #' 
-co_occurrence <- function(data) {
+co_occurrence <- function(data, na.rm = FALSE) {
   
   # create a vector of variable names
   data_names <- names(data)
@@ -19,8 +20,20 @@ co_occurrence <- function(data) {
     
     for (col_name in data_names) {
       
+      row_var <- dplyr::pull(data, row_name)
+      col_var <- dplyr::pull(data, col_name)
+
+      if (na.rm) {
+        
+        # remove missing values
+        na_lgl <- !is.na(row_var) & !is.na(col_var)
+        row_var <- row_var[na_lgl]
+        col_var <- col_var[na_lgl]
+        
+      } 
+      
       co_occurence_matrix[row_name, col_name] <- 
-        mean(dplyr::pull(data, row_name) != 0 & dplyr::pull(data, col_name) != 0)
+        mean(row_var != 0 & col_var != 0)
       
     }
     

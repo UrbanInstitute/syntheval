@@ -4,8 +4,33 @@
 #' @param data A data frame with the original data
 #' @param formula A formula for a linear regression model
 #'
-#' @return A list with the regression confidence interval overlap and estimated 
-#' coefficients
+#' @return A list of two dataframes:
+#'   * `ci_overlap`: one row per model parameter with utility metrics.
+#'     * `overlap `: symmetric overlap metric, calculated as the average of the 
+#'       interval overlap contained in the synthetic confidence interval and the 
+#'       interval overlap contained in the confidential confidence interval.
+#'     * `coef_diff`: synthetic parameter estimate - confidential parameter estimate
+#'     * `std_coef_diff`: `coef_diff` divided by the standard error for the confidential data.
+#'     * `sign_match`: boolean if the synthetic and confidential parameter estimates have the same sign.
+#'     * `significance_match`: boolean if the null hypothesis test where the 
+#'       parameter is 0 has p-value less than .05 agrees in both confidential and
+#'       synthetic data.
+#'     * `ss`: boolean if both `sign_match` and `significance_match` are true.
+#'     * `sso`: boolean if `sign_match` is true and `overlap` is positive. 
+#'   * `coef_diff`: one row per model parameter and data source (confidential or 
+#'     synthetic) listing parameter estimates, standard errors, test statistics,
+#'     p-values for null hypothesis tests, and 95% confidence interval bounds.
+#' 
+#' @examples
+#' conf_data <- mtcars
+#' synth_data <- mtcars %>% 
+#'    dplyr::slice_sample(n = nrow(mtcars) / 2)
+#' 
+#' util_ci_overlap(
+#'   conf_data,
+#'   synth_data,
+#'   mpg ~ disp + vs + am
+#' )
 #' 
 #' @family Utility metrics
 #' 

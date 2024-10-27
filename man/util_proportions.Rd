@@ -10,7 +10,9 @@ util_proportions(
   weight_var = NULL,
   group_by = NULL,
   common_vars = TRUE,
-  synth_vars = TRUE
+  synth_vars = TRUE,
+  keep_empty_levels = FALSE,
+  na.rm = FALSE
 )
 }
 \arguments{
@@ -25,6 +27,11 @@ util_proportions(
 \item{common_vars}{A logical for if only common variables should be kept}
 
 \item{synth_vars}{A logical for if only synthesized variables should be kept}
+
+\item{keep_empty_levels}{A logical for keeping all class levels in the group_by
+statements, including missing levels.}
+
+\item{na.rm}{A logical for ignoring \code{NA} values in proportion calculations.}
 }
 \value{
 A tibble with variables, classes, and relative frequencies
@@ -34,10 +41,10 @@ Calculate relative frequency tables for categorical variables
 }
 \seealso{
 Other Utility metrics: 
-\code{\link{add_pmse_ratio}()},
 \code{\link{add_pmse}()},
-\code{\link{add_propensities_tuned}()},
+\code{\link{add_pmse_ratio}()},
 \code{\link{add_propensities}()},
+\code{\link{add_propensities_tuned}()},
 \code{\link{add_specks}()},
 \code{\link{discrimination}()},
 \code{\link{util_ci_overlap}()},

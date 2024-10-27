@@ -5,12 +5,14 @@
 \title{Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in
 the synthetic and confidential data}
 \usage{
-util_ks_distance(postsynth, data)
+util_ks_distance(postsynth, data, na.rm = FALSE)
 }
 \arguments{
-\item{postsynth}{A postsynth object or tibble with synthetic data}
+\item{postsynth}{a postsynth object or tibble with synthetic data}
 
-\item{data}{A data frame with the original data}
+\item{data}{a data frame with the original data}
+
+\item{na.rm}{a logical indicating whether missing values should be removed.}
 }
 \value{
 A tibble with the D and location of the largest distance for each
@@ -22,10 +24,10 @@ the synthetic and confidential data
 }
 \seealso{
 Other Utility metrics: 
-\code{\link{add_pmse_ratio}()},
 \code{\link{add_pmse}()},
-\code{\link{add_propensities_tuned}()},
+\code{\link{add_pmse_ratio}()},
 \code{\link{add_propensities}()},
+\code{\link{add_propensities_tuned}()},
 \code{\link{add_specks}()},
 \code{\link{discrimination}()},
 \code{\link{util_ci_overlap}()},

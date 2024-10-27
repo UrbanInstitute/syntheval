@@ -1,8 +1,9 @@
 #' Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in 
 #' the synthetic and confidential data
 #'
-#' @param postsynth A postsynth object or tibble with synthetic data
-#' @param data A data frame with the original data
+#' @param postsynth a postsynth object or tibble with synthetic data
+#' @param data a data frame with the original data
+#' @param na.rm a logical indicating whether missing values should be removed.
 #'
 #' @return A tibble with the D and location of the largest distance for each 
 #' numeric variable
@@ -11,7 +12,7 @@
 #' 
 #' @export
 #'
-util_ks_distance <- function(postsynth, data) {
+util_ks_distance <- function(postsynth, data, na.rm = FALSE) {
   
   if ("postsynth" %in% class(postsynth)) {
     
@@ -55,20 +56,31 @@ util_ks_distance <- function(postsynth, data) {
   names(distances) <- variables
   for (var in variables) {
     
+    var_synth <- dplyr::pull(synthetic_data, var)
+    var_data <- dplyr::pull(data, var)
+    
+    # drop missing values
+    if (na.rm) {
+      
+      var_synth <- var_synth[!is.na(var_synth)]
+      var_data <- var_data[!is.na(var_data)]
+      
+    }
+    
     # find the eCDFs for both variables
-    ecdf_synth <- stats::ecdf(dplyr::pull(synthetic_data, var))
-    ecdf_orig <- stats::ecdf(dplyr::pull(data, var))
+    ecdf_synth <- stats::ecdf(var_synth)
+    ecdf_orig <- stats::ecdf(var_data)
     
     # calculate the minimum and maximum across both variables
-    minimum <- min(c(dplyr::pull(synthetic_data, var), dplyr::pull(data, var)))
-    maximum <- max(c(dplyr::pull(synthetic_data, var), dplyr::pull(data, var)))
+    minimum <- min(c(var_synth, var_data))
+    maximum <- max(c(var_synth, var_data))
     
     # create a grid of values for calculating the distances between the two
     # eCDFs
     z <- seq(
       from = minimum, 
       to = maximum,
-      length.out = min(nrow(synthetic_data), nrow(data), 10000)
+      length.out = min(length(var_synth), length(var_data), 10000)
     )
     
     # for each variable, find D and the location of D

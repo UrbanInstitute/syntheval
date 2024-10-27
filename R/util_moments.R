@@ -7,6 +7,7 @@
 #' @param drop_zeros A logical for if zeros should be dropped
 #' @param common_vars A logical for if only common variables should be kept
 #' @param synth_vars A logical for if only synthesized variables should be kept
+#' @param na.rm A logical for ignoring `NA` values in computations.
 #'
 #' @return A `tibble` of summary statistics.
 #'
@@ -20,7 +21,8 @@ util_moments <- function(postsynth,
                          group_by = NULL,
                          drop_zeros = FALSE,
                          common_vars = TRUE,
-                         synth_vars = TRUE) {
+                         synth_vars = TRUE, 
+                         na.rm = FALSE) {
   
   # catch binding error
   . <- NULL
@@ -77,14 +79,15 @@ util_moments <- function(postsynth,
     `synthetic` = synthetic_data,
     .id = "source"
   )
-    
-  na.rm_toggle <- FALSE
-  if (drop_zeros) {
-    
-    combined_data[combined_data == 0] <- NA
-    na.rm_toggle <- TRUE
-    
-  }
+  
+  # prep data for NA handling
+  combined_data <- prep_combined_data_for_na.rm(
+    combined_data,
+    na.rm = na.rm, 
+    drop_zeros = drop_zeros,
+    drop_zeros_exclude = group_by
+  )
+  na.rm_flag <- (na.rm | drop_zeros)
   
   # calculate summary statistics
   summary_stats <- combined_data %>%
@@ -94,11 +97,11 @@ util_moments <- function(postsynth,
       dplyr::across(
         .cols = -".temp_weight",
         .fns = list(
-          count = ~ sum((. != 0) * .data$.temp_weight, na.rm = na.rm_toggle),
-          mean = ~ stats::weighted.mean(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
-          sd = ~ weighted_sd(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
-          skewness = ~ weighted_skewness(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle),
-          kurtosis = ~ weighted_kurtosis(x = ., w = .data$.temp_weight, na.rm = na.rm_toggle)
+          count = ~ sum((. != 0) * .data$.temp_weight, na.rm = na.rm_flag),
+          mean = ~ stats::weighted.mean(x = ., w = .data$.temp_weight, na.rm = na.rm_flag),
+          sd = ~ weighted_sd(x = ., w = .data$.temp_weight, na.rm = na.rm_flag),
+          skewness = ~ weighted_skewness(x = ., w = .data$.temp_weight, na.rm = na.rm_flag),
+          kurtosis = ~ weighted_kurtosis(x = ., w = .data$.temp_weight, na.rm = na.rm_flag)
         )
       )
     ) %>%

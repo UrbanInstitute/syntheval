@@ -8,10 +8,34 @@ df <- data.frame(
   weight = c(300, 100, 100)
 )
 
+df_na <- data.frame(
+  a = c(1000, 1000, 1000, 1000),
+  b = c(-1200, -800, 1000, NA),
+  c = c("1", "1", "2", "2"),
+  d = c(0, 0, 10, 0), 
+  e = c("a", "b", "a", "b"),
+  weight = c(300, 100, 100, 100)
+)
+
 # test synth (4 of 8 combinations)
 syn <- list(
   synthetic_data = data.frame(
     a = c(1400, 0, 1000),
+    b = c(1000, 1000, 1000),
+    c = c("1", "1", "2"),
+    d = c(20, 10, 0), 
+    e = c("a", "b", "a"),
+    weight = c(300, 100, 100)
+  ),
+  jth_synthesis_time = data.frame(
+    variable = factor(c("a", "b", "d", "weight"))
+  )
+) %>%
+  structure(class = "postsynth")
+
+syn_na <- list(
+  synthetic_data = data.frame(
+    a = c(1400, NA, 1000),
     b = c(1000, 1000, 1000),
     c = c("1", "1", "2"),
     d = c(20, 10, 0), 
@@ -219,12 +243,14 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
   )
   
   # error: quantile doesn't work with missing values
-  expect_error(
-    util_percentiles(
-      postsynth = syn, 
-      data = storms_sub, 
-      common_vars = FALSE, 
-      synth_vars = FALSE
+  expect_message(
+    expect_error(
+      util_percentiles(
+        postsynth = syn, 
+        data = storms_sub, 
+        common_vars = FALSE, 
+        synth_vars = FALSE
+      )
     )
   )
   
@@ -265,6 +291,34 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
       )
     ),
     c(9, 6)
+  )
+  
+})
+
+test_that("util_percentiles na.rm", {
+  
+  # if na.rm = FALSE, raise error for missing values
+  expect_message(
+    expect_error(
+      util_percentiles(
+        postsynth = syn_na, 
+        data = df_na,
+        probs = 0.5,
+        na.rm = FALSE
+      )
+    )
+  )
+  
+  # else, re
+  res <- util_percentiles(
+    postsynth = syn_na, 
+    data = df_na,
+    probs = 0.5,
+    na.rm = TRUE
+  )
+  
+  expect_true(
+    all(res[1, c("original", "synthetic")] == c(1000, 1200))
   )
   
 })

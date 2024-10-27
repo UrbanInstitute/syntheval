@@ -4,10 +4,12 @@
 \alias{co_occurrence}
 \title{Construct a co-occurrence matrix}
 \usage{
-co_occurrence(data)
+co_occurrence(data, na.rm = FALSE)
 }
 \arguments{
 \item{data}{A tibble with numeric variables}
+
+\item{na.rm}{a logical indicating whether missing values should be removed.}
 }
 \value{
 A co-occurrence matrix
