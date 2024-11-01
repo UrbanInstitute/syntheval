@@ -1,7 +1,7 @@
-#' Regression confidence interval overlap
+#' Regression confidence interval overlap for one synthetic data replicate
 #'
-#' @param postsynth A postsynth object or tibble with synthetic data
-#' @param data A data frame with the original data
+#' @param synth_data A data.frame with synthetic data
+#' @param conf_data A data.frame with the confidential data
 #' @param formula A formula for a linear regression model
 #'
 #' @return A list of two dataframes:
@@ -21,37 +21,14 @@
 #'     synthetic) listing parameter estimates, standard errors, test statistics,
 #'     p-values for null hypothesis tests, and 95% confidence interval bounds.
 #' 
-#' @examples
-#' conf_data <- mtcars
-#' synth_data <- mtcars %>% 
-#'    dplyr::slice_sample(n = nrow(mtcars) / 2)
-#' 
-#' util_ci_overlap(
-#'   conf_data,
-#'   synth_data,
-#'   mpg ~ disp + vs + am
-#' )
-#' 
-#' @family Utility metrics
-#' 
-#' @export
-util_ci_overlap <- function(postsynth, data, formula) {
+.util_ci_overlap <- function(synth_data, conf_data, formula) {
   
-  if (is_postsynth(postsynth)) {
-    
-    synthetic_data <- postsynth$synthetic_data
-    
-  } else {
-    
-    synthetic_data <- postsynth
-    
-  }
   
   # original model ------------------------------------------------------
-  lm_original <- stats::lm(formula = formula, data = data)
+  lm_original <- stats::lm(formula = formula, data = conf_data)
   
   # synthetic model ---------------------------------------------------------
-  lm_synth <- stats::lm(formula = formula, data = synthetic_data)
+  lm_synth <- stats::lm(formula = formula, data = synth_data)
   
   coefficients <- dplyr::bind_rows(
     `original` = broom::tidy(lm_original, conf.int = TRUE),
@@ -98,5 +75,78 @@ util_ci_overlap <- function(postsynth, data, formula) {
     ci_overlap = ci_overlap,
     coefficient = coefficients
   )
+  
+}
+
+#' Regression confidence interval overlap
+#'
+#' @param eval_data An `eval_data` object
+#' @param formula A formula for a linear regression model
+#'
+#' @return A list of two dataframes (one per each synthetic data replicate):
+#'   * `ci_overlap`: one row per model parameter with utility metrics.
+#'     * `overlap `: symmetric overlap metric, calculated as the average of the 
+#'       interval overlap contained in the synthetic confidence interval and the 
+#'       interval overlap contained in the confidential confidence interval.
+#'     * `coef_diff`: synthetic parameter estimate - confidential parameter estimate
+#'     * `std_coef_diff`: `coef_diff` divided by the standard error for the confidential data.
+#'     * `sign_match`: boolean if the synthetic and confidential parameter estimates have the same sign.
+#'     * `significance_match`: boolean if the null hypothesis test where the 
+#'       parameter is 0 has p-value less than .05 agrees in both confidential and
+#'       synthetic data.
+#'     * `ss`: boolean if both `sign_match` and `significance_match` are true.
+#'     * `sso`: boolean if `sign_match` is true and `overlap` is positive. 
+#'   * `coef_diff`: one row per model parameter and data source (confidential or 
+#'     synthetic) listing parameter estimates, standard errors, test statistics,
+#'     p-values for null hypothesis tests, and 95% confidence interval bounds.
+#' 
+#' @family Utility metrics
+#' 
+#' @examples
+#' conf_data <- mtcars
+#' synth_data <- mtcars %>% 
+#'    dplyr::slice_sample(n = nrow(mtcars) / 2)
+#'  
+#' eval_data <- eval_data(conf_data, synth_data)
+#' 
+#' util_ci_overlap(
+#'   eval_data,
+#'   mpg ~ disp + vs + am
+#' )
+#' 
+#' @export
+#' 
+util_ci_overlap <- function(eval_data, formula) {
+  
+  stopifnot(is_eval_data(eval_data))
+  
+  if (eval_data$n_rep == 1) {
+    
+    return(
+      .util_ci_overlap(
+        conf_data = eval_data$conf_data, 
+        synth_data = eval_data$synth_data, 
+        formula = formula
+      )
+    )
+      
+  } else {
+    
+    return(
+      purrr::map(
+        .x = eval_data$synth_data,
+        .f = \(sd) {
+          
+          .util_ci_overlap(
+            conf_data = eval_data$conf_data, 
+            synth_data = sd, 
+            formula = formula
+          )
+          
+        }
+      )
+    )
+    
+  }
   
 }

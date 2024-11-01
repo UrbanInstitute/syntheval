@@ -1,7 +1,8 @@
-#' Calculate the co-occurrence fit metric of a confidential data set.
 #'
-#' @param postsynth a postsynth object from tidysynthesis or a tibble
-#' @param data an original (observed) data set.
+#' Compare the co-occurrence fit metric of a confidential and synthetic dataset
+#'
+#' @param synth_data A data.frame with synthetic data
+#' @param conf_data A data.frame with the confidential data
 #' @param na.rm a logical indicating whether missing values should be removed. 
 #'  Note: values are jointly removed for each pair of variables even if only one
 #'  value is missing.
@@ -17,28 +18,14 @@
 #'  `co_occurrence_original` and `co_occurrence_synthetic`
 #'  - `co_occurrence_difference_rmse`: Root mean squared error between 
 #'  `co_occurrence_original` and `co_occurrence_synthetic`
-#'  
-#' @family utility metrics
-#'
-#' @export
 #' 
-util_co_occurrence <- function(postsynth, data, na.rm = FALSE) {
+.util_co_occurrence <- function(synth_data, conf_data, na.rm = FALSE) {
   
-  if (is_postsynth(postsynth)) {
-
-    synthetic_data <- postsynth$synthetic_data
-
-  } else {
-
-    synthetic_data <- postsynth
-
-  }
-  
-  synthetic_data <- dplyr::select_if(synthetic_data, is.numeric)
-  data <- dplyr::select_if(data, is.numeric)
+  synth_data <- dplyr::select_if(synth_data, is.numeric)
+  conf_data <- dplyr::select_if(conf_data, is.numeric)
 
   # reorder data names
-  data <- dplyr::select(data, names(synthetic_data))
+  conf_data <- dplyr::select(conf_data, names(synth_data))
   
   # helper function to find a co-occurrence matrix with the upper tri set to zeros
   lower_triangle <- function(x) {
@@ -56,10 +43,10 @@ util_co_occurrence <- function(postsynth, data, na.rm = FALSE) {
   }
   
   # find the lower triangle of the original data linear co_occurrence matrix
-  original_lt <- lower_triangle(data)
+  original_lt <- lower_triangle(conf_data)
   
   # find the lower triangle of the synthetic data linear co_occurrence matrix
-  synthetic_lt <- lower_triangle(synthetic_data)
+  synthetic_lt <- lower_triangle(synth_data)
   
   # compare names
   if (any(rownames(original_lt) != rownames(synthetic_lt))) {
@@ -95,5 +82,64 @@ util_co_occurrence <- function(postsynth, data, na.rm = FALSE) {
       co_occurrence_difference_rmse = co_occurrence_difference_rmse
     )
   )
+  
+}
+
+#'
+#' Compare the co-occurrence fit metric of a confidential and synthetic dataset
+#'
+#' @param eval_data An `eval_data` object
+#' @param na.rm a logical indicating whether missing values should be removed. 
+#'  Note: values are jointly removed for each pair of variables even if only one
+#'  value is missing.
+#'
+#' @return A `list` of fit metrics (one per each synthetic data replicate)::
+#'  - `co_occurrence_original`: co-occurrence matrix of the original data.
+#'  - `co_occurrence_synthetic`: co-occurrence matrix of the synthetic data.
+#'  - `co_occurrence_difference`: difference between `co_occurrence_synthetic` and
+#'  `co_occurrence_original`.
+#'  `co_occurrence_synthetic` and `co_occurrence_original`, divided by the number of
+#'  cells in the co-occurrence matrix.
+#'  - `co_occurrence_difference_mae`: Mean absolute error between 
+#'  `co_occurrence_original` and `co_occurrence_synthetic`
+#'  - `co_occurrence_difference_rmse`: Root mean squared error between 
+#'  `co_occurrence_original` and `co_occurrence_synthetic`
+#' 
+#' @family Utility metrics
+#' 
+#' @export
+#' 
+util_co_occurrence <- function(eval_data, na.rm = FALSE) {
+  
+  stopifnot(is_eval_data(eval_data))
+  
+  if (eval_data$n_rep == 1) {
+    
+    return(
+      .util_co_occurrence(
+        conf_data = eval_data$conf_data, 
+        synth_data = eval_data$synth_data, 
+        na.rm = na.rm
+      )
+    )
+    
+  } else {
+    
+    return(
+      purrr::map(
+        .x = eval_data$synth_data,
+        .f = \(sd) {
+          
+          .util_co_occurrence(
+            conf_data = eval_data$conf_data, 
+            synth_data = sd, 
+            na.rm = na.rm
+          )
+          
+        }
+      )
+    )
+    
+  }
   
 }

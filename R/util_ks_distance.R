@@ -1,40 +1,26 @@
 #' Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in 
 #' the synthetic and confidential data
 #'
-#' @param postsynth a postsynth object or tibble with synthetic data
-#' @param data a data frame with the original data
+#' @param synth_data A data.frame with synthetic data
+#' @param conf_data A data.frame with the confidential data
 #' @param na.rm a logical indicating whether missing values should be removed.
 #'
 #' @return A tibble with the D and location of the largest distance for each 
 #' numeric variable
 #' 
-#' @family Utility metrics
-#' 
-#' @export
-#'
-util_ks_distance <- function(postsynth, data, na.rm = FALSE) {
-  
-  if ("postsynth" %in% class(postsynth)) {
-    
-    synthetic_data <- postsynth$synthetic_data
-    
-  } else {
-    
-    synthetic_data <- postsynth
-    
-  }
+.util_ks_distance <- function(synth_data, conf_data, na.rm = FALSE) {
   
   # drop non-numeric variables
-  data <- data %>%
+  conf_data <- conf_data %>%
     dplyr::select(tidyselect::where(is.numeric))
   
-  synthetic_data <- synthetic_data %>%
+  synth_data <- synth_data %>%
     dplyr::select(tidyselect::where(is.numeric))
   
   # find common variables
-  variables <- intersect(names(synthetic_data), names(data))
+  variables <- intersect(names(synth_data), names(conf_data))
   
-  var_not_in_synthetic <- setdiff(names(data), names(synthetic_data))
+  var_not_in_synthetic <- setdiff(names(conf_data), names(synth_data))
   if (length(var_not_in_synthetic) > 0) {
     
     warning("The following variables are in the confidential data but not the synthetic data: ", 
@@ -42,7 +28,7 @@ util_ks_distance <- function(postsynth, data, na.rm = FALSE) {
     
   }
     
-  var_not_in_conf <- setdiff(names(synthetic_data), names(data))
+  var_not_in_conf <- setdiff(names(synth_data), names(conf_data))
   if (length(var_not_in_conf) > 0) {
     
     warning("The following variables are in the synthetic data but not the confidential data: ", 
@@ -56,8 +42,8 @@ util_ks_distance <- function(postsynth, data, na.rm = FALSE) {
   names(distances) <- variables
   for (var in variables) {
     
-    var_synth <- dplyr::pull(synthetic_data, var)
-    var_data <- dplyr::pull(data, var)
+    var_synth <- dplyr::pull(synth_data, var)
+    var_data <- dplyr::pull(conf_data, var)
     
     # drop missing values
     if (na.rm) {
@@ -99,5 +85,53 @@ util_ks_distance <- function(postsynth, data, na.rm = FALSE) {
   D <- dplyr::bind_rows(distances, .id = "variable")
   
   return(D)
+  
+}
+
+#' Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in 
+#' the synthetic and confidential data
+#'
+#' @param eval_data An `eval_data` object
+#' @param na.rm a logical indicating whether missing values should be removed.
+#'
+#' @return A tibble with the D and location of the largest distance for each 
+#' numeric variable, one per synthetic data replicate
+#' 
+#' @family Utility metrics
+#' 
+#' @export
+#'
+util_ks_distance <- function(eval_data, na.rm = FALSE) {
+  
+  stopifnot(is_eval_data(eval_data))
+  
+  if (eval_data$n_rep == 1) {
+    
+    return(
+      .util_ks_distance(
+        conf_data = eval_data$conf_data, 
+        synth_data = eval_data$synth_data, 
+        na.rm = na.rm 
+      )
+    )
+    
+  } else {
+    
+    return(
+      purrr::map(
+        .x = eval_data$synth_data,
+        .f = \(sd) {
+          
+          .util_ks_distance(
+            conf_data = eval_data$conf_data, 
+            synth_data = sd, 
+            na.rm = na.rm 
+          )
+          
+        }
+      )
+    )
+    
+  }
   
 }

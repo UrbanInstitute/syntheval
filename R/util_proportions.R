@@ -130,7 +130,7 @@ util_proportions <- function(postsynth,
       values_to = "class"
     ) %>%
     dplyr::group_by(
-      dplyr::across({{ group_by }}), source, variable,
+      dplyr::across({{ group_by }}), source, !!rlang::sym("variable"),
       .drop = !keep_empty_levels
     ) 
   
@@ -194,11 +194,11 @@ util_proportions <- function(postsynth,
     # create the join specification depending on whether group_by is specified
     if (is.null(group_by)) {
 
-      join_spec <- dplyr::join_by(class, variable, source)
+      join_spec <- dplyr::join_by(class, "variable", source)
       
     } else {
       
-      join_spec <- dplyr::join_by(class, variable, source, {{ group_by }})
+      join_spec <- dplyr::join_by(class, "variable", source, {{ group_by }})
       
     }
     
