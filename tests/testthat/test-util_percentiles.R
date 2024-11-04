@@ -48,13 +48,13 @@ syn_na <- list(
 ) %>%
   structure(class = "postsynth")
 
+ed0 <- eval_data(conf_data = df, synth_data = df)
+ed1 <- eval_data(conf_data = df, synth_data = syn)
+ed_na <- eval_data(conf_data = df_na, synth_data = syn_na)
+
 test_that("unweighted percentiles make sense ", {
   
-  test1 <- util_percentiles(
-    postsynth = syn, 
-    data = df, 
-    probs = 0.5
-  )
+  test1 <- util_percentiles(ed1, probs = 0.5)
   
   # does the dimension make sense?
   expect_equal(
@@ -79,10 +79,10 @@ test_that("unweighted percentiles make sense ", {
 test_that("weighted percentiles make sense ", {
   
   test2 <- util_percentiles(
-    postsynth = syn, 
-    data = df, 
+    ed1,
     probs = 0.5,
-    weight_var = weight
+    weight_var = weight,
+    synth_vars = FALSE
   )
   
   # does the dimension make sense?
@@ -108,8 +108,7 @@ test_that("weighted percentiles make sense ", {
 test_that("percentiles can handle multiple percentile ", {
 
   test3 <- util_percentiles(
-    postsynth = syn, 
-    data = df, 
+    ed1,
     probs = c(0.01, 0.99), 
     weight_var = weight
   )
@@ -121,8 +120,7 @@ test_that("percentiles can handle multiple percentile ", {
   )
   
   test4 <- util_percentiles(
-    postsynth = syn, 
-    data = df, 
+    ed1,
     probs = c(0.1, 0.5, 0.9),
     weight_var = weight
   )
@@ -138,8 +136,7 @@ test_that("percentiles can handle multiple percentile ", {
 test_that("unweighted percentiles grouped by one variable ", {
   
   test5 <- util_percentiles(
-    postsynth = syn, 
-    data = df,
+    ed1,
     probs = 0.5, 
     group_by = c
   )
@@ -168,8 +165,7 @@ test_that("unweighted percentiles grouped by one variable ", {
 test_that("unweighted percentiles grouped by multiple variables ", {
   
   test6 <- util_percentiles(
-    postsynth = syn,
-    data = df,
+    ed1,
     probs = 0.5,
     group_by = c(c, e)
   )
@@ -218,11 +214,12 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
   ) %>%
     structure(class = "postsynth")
   
+  ed <- eval_data(conf_data = storms_sub, synth_data = syn)
+  
   # are variable names missing ever?
   expect_false(
     util_percentiles(
-      postsynth = syn, 
-      data = storms_sub, 
+      ed,
       common_vars = TRUE, 
       synth_vars = FALSE
     )$variable %>%
@@ -233,8 +230,7 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
   # are statistics names missing ever?
   expect_false(
     util_percentiles(
-      postsynth = syn, 
-      data = storms_sub, 
+      ed,
       common_vars = TRUE, 
       synth_vars = FALSE
     )$p %>%
@@ -246,8 +242,7 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
   expect_message(
     expect_error(
       util_percentiles(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed, 
         common_vars = FALSE, 
         synth_vars = FALSE
       )
@@ -258,8 +253,7 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
   expect_equal(
     dim(
       util_percentiles(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed,
         common_vars = TRUE, 
         synth_vars = FALSE
       )
@@ -271,8 +265,7 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
   expect_equal(
     dim(
       util_percentiles(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed,
         common_vars = FALSE, 
         synth_vars = TRUE
       )
@@ -284,8 +277,7 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
   expect_equal(
     dim(
       util_percentiles(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed,
         common_vars = TRUE, 
         synth_vars = TRUE
       )
@@ -301,8 +293,7 @@ test_that("util_percentiles na.rm", {
   expect_message(
     expect_error(
       util_percentiles(
-        postsynth = syn_na, 
-        data = df_na,
+        ed_na,
         probs = 0.5,
         na.rm = FALSE
       )
@@ -311,8 +302,7 @@ test_that("util_percentiles na.rm", {
   
   # else, re
   res <- util_percentiles(
-    postsynth = syn_na, 
-    data = df_na,
+    ed_na,
     probs = 0.5,
     na.rm = TRUE
   )

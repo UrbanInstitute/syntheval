@@ -5,8 +5,7 @@
 \title{Calculate summary statistics for original and synthetic data.}
 \usage{
 util_percentiles(
-  postsynth,
-  data,
+  eval_data,
   probs = c(0.1, 0.5, 0.9),
   weight_var = NULL,
   group_by = NULL,
@@ -17,9 +16,7 @@ util_percentiles(
 )
 }
 \arguments{
-\item{postsynth}{A postsynth object or tibble with synthetic data}
-
-\item{data}{A data frame with the original data}
+\item{eval_data}{An \code{eval_data} object.}
 
 \item{probs}{A numeric vector of probabilities with values in [0,1]. The
 percentiles are interpolated using an empirical CDF. It's possible that the
@@ -27,7 +24,7 @@ percentiles are an approximation; especially when weights are used.}
 
 \item{weight_var}{An unquoted name of a weight variable}
 
-\item{group_by}{An unquoted name of a (or multiple) grouping variable(s)}
+\item{group_by}{The unquoted name(s) of a (or multiple) grouping variable(s)}
 
 \item{drop_zeros}{A Boolean for if zeros should be dropped}
 
@@ -40,7 +37,7 @@ about missing values.}
 \item{na.rm}{A logical for ignoring \code{NA} values in computations.}
 }
 \value{
-A \code{tibble} of summary statistics.
+A \code{tibble} of summary statistics (one per synthetic data replicate)
 }
 \description{
 Calculate summary statistics for original and synthetic data.

@@ -5,8 +5,7 @@
 \title{Calculate relative frequency tables for categorical variables}
 \usage{
 util_proportions(
-  postsynth,
-  data,
+  eval_data,
   weight_var = NULL,
   group_by = NULL,
   common_vars = TRUE,
@@ -16,17 +15,15 @@ util_proportions(
 )
 }
 \arguments{
-\item{postsynth}{A postsynth object or tibble with synthetic data}
-
-\item{data}{A data frame with the original data}
+\item{eval_data}{An \code{eval_data} object}
 
 \item{weight_var}{An unquoted name of a weight variable}
 
-\item{group_by}{An unquoted name of a (or multiple) grouping variable(s)}
+\item{group_by}{The unquoted name(s) of a (or multiple) grouping variable(s)}
 
 \item{common_vars}{A logical for if only common variables should be kept}
 
-\item{synth_vars}{A logical for if only synthesized variables should be kept}
+\item{synth_vars}{A logical for if \emph{only} synthesized variables should be kept}
 
 \item{keep_empty_levels}{A logical for keeping all class levels in the group_by
 statements, including missing levels.}

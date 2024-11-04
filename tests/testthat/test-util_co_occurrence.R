@@ -5,7 +5,10 @@ df <- data.frame(a = c(1, 0, 1, 2),
 
 syn <- list(synthetic_data = data.frame(a = c(1, 0, 0, 0),
                                         c = c("c", "c", "c", "c"),
-                                        b = c(1, 0, 0, 0))) %>%
+                                        b = c(1, 0, 0, 0)),
+            jth_synthesis_time = data.frame(
+              variable = factor(c("a", "c", "b"))
+            )) %>%
   structure(class = "postsynth")
 
 ed0 <- eval_data(conf_data = df, synth_data = df)
@@ -46,13 +49,8 @@ test_that("util_co_occurrence() is correct with different data ", {
 
 test_that("util_co_occurrence() works with NA ", {
   
-  syn <- list(
-    synthetic_data = acs_conf
-  ) %>%
-    structure(class = "postsynth")
-  
   ed2 <- eval_data(
-    synth_data = syn,
+    synth_data = acs_conf,
     conf_data = acs_conf
   )
   

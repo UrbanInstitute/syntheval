@@ -125,7 +125,7 @@ prep_combined_data_for_na.rm <- function(
       combined_data <- combined_data %>%
         dplyr::mutate(
           dplyr::across(
-            -dplyr::all_of(drop_zeros_exclude),
+            -dplyr::any_of(drop_zeros_exclude),
             \(x) {
               dplyr::if_else(x == 0, NA, x)
             }

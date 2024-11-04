@@ -4,11 +4,10 @@
 \alias{plot_numeric_hist_kde}
 \title{Create a histogram + KDE estimate for a numeric variable.}
 \usage{
-plot_numeric_hist_kde(joint_data, var_name, cat1_name = NULL, cat2_name = NULL)
+plot_numeric_hist_kde(eval_data, var_name, cat1_name = NULL, cat2_name = NULL)
 }
 \arguments{
-\item{joint_data}{A data.frame combining rows from confidential and synthetic
-data, with the column 'source' identifying the two.}
+\item{eval_data}{An \code{eval_data} object.}
 
 \item{var_name}{Numeric variable name to plot.}
 

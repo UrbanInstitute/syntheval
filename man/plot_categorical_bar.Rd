@@ -4,11 +4,10 @@
 \alias{plot_categorical_bar}
 \title{Create bar charts for a categorical random variable.}
 \usage{
-plot_categorical_bar(joint_data, var_name, cat1_name = NULL, cat2_name = NULL)
+plot_categorical_bar(eval_data, var_name, cat1_name = NULL, cat2_name = NULL)
 }
 \arguments{
-\item{joint_data}{A data.frame combining rows from confidential and synthetic
-data, with the column 'source' identifying the two.}
+\item{eval_data}{An \code{eval_data} object.}
 
 \item{var_name}{Categorical variable name to plot.}
 

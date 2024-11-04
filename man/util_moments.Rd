@@ -6,11 +6,11 @@
 \usage{
 util_moments(
   eval_data,
-  weight_var = 1,
+  weight_var = NULL,
   group_by = NULL,
   drop_zeros = FALSE,
   common_vars = TRUE,
-  synth_vars = NULL,
+  synth_vars = TRUE,
   na.rm = FALSE
 )
 }
@@ -25,7 +25,7 @@ util_moments(
 
 \item{common_vars}{A logical for if only common variables should be kept}
 
-\item{synth_vars}{A list of variables synthesized to filter on, else \code{NULL}}
+\item{synth_vars}{A logical for if \emph{only} synthesized variables should be kept}
 
 \item{na.rm}{A logical for ignoring \code{NA} values in computations.}
 }

@@ -4,12 +4,10 @@
 \alias{discrimination}
 \title{Combine synthetic data and data for a discriminant based metric}
 \usage{
-discrimination(postsynth, data)
+discrimination(eval_data)
 }
 \arguments{
-\item{postsynth}{A postsynth object from tidysynthesis or a tibble}
-
-\item{data}{an original (observed) data set.}
+\item{eval_data}{An \code{eval_data} object.}
 }
 \value{
 A list of class discrimination

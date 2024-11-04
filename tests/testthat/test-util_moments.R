@@ -243,33 +243,35 @@ test_that("util_moments() variables selection returns correct dimensions ", {
     expect_false(
       util_moments(
         ed, 
-        common_vars = FALSE
+        common_vars = FALSE,
+        synth_vars = FALSE
       )$variable %>%
         is.na() %>%
         all()
     )
   )
 
-
   # are statistics names missing ever?
   expect_message(
     expect_false(
       util_moments(
         ed, 
-        common_vars = FALSE
+        common_vars = FALSE,
+        synth_vars = FALSE
       )$statistic %>%
         is.na() %>%
         all()
     )
   )
-  
+
   # 55 rows = all 11 variables times 5 statistics
   expect_message(
     expect_equal(
       dim(
         util_moments(
           ed,
-          common_vars = FALSE
+          common_vars = FALSE,
+          synth_vars = FALSE
         )
       ),
       c(55, 6)
@@ -282,7 +284,8 @@ test_that("util_moments() variables selection returns correct dimensions ", {
       dim(
         util_moments(
           ed, 
-          common_vars = TRUE
+          common_vars = TRUE,
+          synth_vars = FALSE
         )
       ),
       c(50, 6)
@@ -296,7 +299,7 @@ test_that("util_moments() variables selection returns correct dimensions ", {
       util_moments(
         ed, 
         common_vars = FALSE, 
-        synth_vars = c("month", "day", "year")
+        synth_vars = TRUE
       )
     ),
     c(15, 6)
@@ -308,7 +311,7 @@ test_that("util_moments() variables selection returns correct dimensions ", {
       util_moments(
         ed,
         common_vars = TRUE, 
-        synth_vars = c("month", "day", "year")
+        synth_vars = TRUE
       )
     ),
     c(15, 6)
