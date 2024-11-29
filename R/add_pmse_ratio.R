@@ -6,6 +6,7 @@
 #' @param prop The proportion of data to be retained for modeling/analysis in 
 #' the training/testing split. The sampling is stratified by the original and
 #' synthetic data.
+#' @param group A set of variables to group the pmse and null pmse by
 #' @param times The number of bootstrap samples.
 #'
 #' @return A discrimination with pMSE
@@ -13,7 +14,7 @@
 #' @family Utility metrics
 #' 
 #' @export
-add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
+add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, group = c(), times) {
   
   if (is.null(discrimination$pmse)) {
     
@@ -25,48 +26,86 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     
     # calculate the expected propensity
     prop_synthetic <- propensities %>%
-      dplyr::summarize(
-        n_synthetic = sum(.data$.source_label == "synthetic"),
-        n_total = dplyr::n()
-      ) %>%
-      dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) %>%
-      dplyr::pull("prop_synthetic")
+      dplyr::group_by(across(all_of(group))) %>%
+      dplyr::summarize("prop_synthetic" = list(c(sum(.data$.source_label == "synthetic")/dplyr::n()))) %>%
+      dplyr::pull(prop_synthetic)
     
     propensities_vec <- propensities %>%
-      dplyr::pull(".pred_synthetic")
+      dplyr::group_by(across(all_of(group))) %>%
+      dplyr::summarise(".pred_synthetic" = list(c(.pred_synthetic))) %>%
+      dplyr::pull(.pred_synthetic)
     
+    # function for pmse
+    pmse_func <- function(propensities_vec, prop_synthetic){
+      mean((propensities_vec - prop_synthetic)^2)
+    }
     # calculate the observed pMSE
-    pmse <- mean((propensities_vec - prop_synthetic) ^ 2)
+    pmse <- mapply(pmse_func, propensities_vec, prop_synthetic)
     
     return(pmse)
-    
   }
-
-  pmse_null_overall <- vector(mode = "numeric", length = times)
-  pmse_null_training <- vector(mode = "numeric", length = times)
-  pmse_null_testing <- vector(mode = "numeric", length = times)
+  # function to sample 2x size of grouped data, by group, 
+  # for the dataset with both confidential and synthetic data
+  # group_resample <- function(data){
+  #   # split by grouping variables
+  #   split_data = dplyr::group_split(data %>% dplyr::ungroup() %>% dplyr::group_by(across(all_of(group))))
+  #   bootstrap_sample = list()
+  #   for (elem in split_data){ # iterate through grouped dataset
+  #     # in each group, sample twice as much data
+  #     bootstrap_sample <- append(bootstrap_sample, list(dplyr::bind_cols(
+  #       elem %>%
+  #         dplyr::filter(.data$.source_label == "original") %>%
+  #         dplyr::group_by(across(all_of(group))) %>%
+  #         dplyr::slice_sample(n = nrow(elem), replace = TRUE) %>%
+  #         dplyr::select(-".source_label"),
+  #       elem %>%
+  #         dplyr::select(".source_label"))
+  #     ))
+  #   }
+  #   bootstrap_sample = dplyr::bind_rows(bootstrap_sample)
+  # }
   
-  for (a in seq_along(pmse_null_overall)) {
-    
+  group_resample <- function(data){
+    # split by grouping variables
+    split_data = dplyr::group_split(data %>% dplyr::ungroup() %>% dplyr::group_by(across(all_of(group))))
+    bootstrap_sample = vector("list", length = length(split_data))
+    for (i in 1:length(split_data)){ # iterate through grouped dataset
+      # in each group, sample twice as much data
+      bootstrap_sample[[i]] <- list(dplyr::bind_cols(
+        split_data[[i]] %>%
+          dplyr::filter(.data$.source_label == "original") %>%
+          dplyr::group_by(across(all_of(group))) %>%
+          dplyr::slice_sample(n = nrow(split_data[[i]]), replace = TRUE) %>%
+          dplyr::select(-".source_label"),
+        split_data[[i]] %>%
+          dplyr::select(".source_label"))
+      )
+    }
+    bootstrap_sample = dplyr::bind_rows(bootstrap_sample)
+  }
+  
+  # matrix instead of vector, where each entry is a simulation, containing a vector with groups
+  #pmse_null_overall <- c()
+  #pmse_null_training <- c()
+  #pmse_null_testing <- c()
+  
+  pmse_null_overall <- rep(NA, times)
+  pmse_null_training <- rep(NA, times)
+  pmse_null_testing <- rep(NA, times)
+  
+  for (a in 1:times) {
     # bootstrap sample original observations to equal the size of the combined 
-    # data
+    # data, with a vector of one set of observations per grouping variable (?)
     # append the original labels so the proportions match
-    bootstrap_sample <- dplyr::bind_cols(
-      discrimination$combined_data %>%
-        dplyr::filter(.data$.source_label == "original") %>%
-        dplyr::slice_sample(n = nrow(discrimination$combined_data), replace = TRUE) %>%
-        dplyr::select(-".source_label"),
-      discrimination$combined_data %>%
-        dplyr::select(".source_label")
-    )
-
+    bootstrap_sample <- group_resample(discrimination$combined_data)
+    
     if (split) {
       
-      # make training/testing split
+      # make training/testing split 
       data_split <- rsample::initial_split(
         data = bootstrap_sample,
         prop = prop,
-        strata = ".source_label"
+        strata = ".source_label" # NOTE: Should this also be stratified by group?
       )
       
       # fit the model from the pMSE on the bootstrap sample
@@ -89,14 +128,20 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
         )
       
       # calculate the pmse for each bootstrap
+      # pmse_null_overall <- append(pmse_null_overall, calc_pmse(propensities_df))
+      # pmse_null_training <- append(pmse_null_training, propensities_df %>%
+      #                                dplyr::filter(.data$.sample == "training") %>%
+      #                                calc_pmse())
+      # pmse_null_testing <- append(pmse_null_testing, propensities_df %>%
+      #                               dplyr::filter(.data$.sample == "testing") %>%
+      #                               calc_pmse())
       pmse_null_overall[a] <- calc_pmse(propensities_df)
       pmse_null_training[a] <- propensities_df %>%
-        dplyr::filter(.data$.sample == "training") %>%
-        calc_pmse()
+                                     dplyr::filter(.data$.sample == "training") %>%
+                                     calc_pmse()
       pmse_null_testing[a] <- propensities_df %>%
-        dplyr::filter(.data$.sample == "testing") %>%
-        calc_pmse()
-      
+                                    dplyr::filter(.data$.sample == "testing") %>%
+                                    calc_pmse()
     } else {
       
       # fit the model from the pMSE on the bootstrap sample
@@ -113,15 +158,17 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
       
       # calculate the pmse for each bootstrap
       pmse_null_overall[a] <- calc_pmse(propensities_df)
-    
+      
     }
     
   }
   
   # find the mean of the bootstrapped pMSEs
-  mean_null_pmse_overall <- mean(pmse_null_overall)
-  mean_null_pmse_training <- mean(pmse_null_training)
-  mean_null_pmse_testing <- mean(pmse_null_testing)
+  mean_null_pmse_overall <- colMeans(t(matrix(pmse_null_overall, ncol = times))) # each row is a new sample
+  if (split){
+    mean_null_pmse_training <- colMeans(t(matrix(pmse_null_training, ncol = times)))
+    mean_null_pmse_testing <- colMeans(t(matrix(pmse_null_testing, ncol= times)))
+  }
   
   # calculate the ratio for the training/testing split or overall data
   if (all(c("training", "testing") %in% discrimination$pmse$.source)) {
