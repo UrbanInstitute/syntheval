@@ -5,18 +5,16 @@
 \title{Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in
 the synthetic and confidential data}
 \usage{
-util_ks_distance(postsynth, data, na.rm = FALSE)
+util_ks_distance(eval_data, na.rm = FALSE)
 }
 \arguments{
-\item{postsynth}{a postsynth object or tibble with synthetic data}
-
-\item{data}{a data frame with the original data}
+\item{eval_data}{An \code{eval_data} object}
 
 \item{na.rm}{a logical indicating whether missing values should be removed.}
 }
 \value{
 A tibble with the D and location of the largest distance for each
-numeric variable
+numeric variable, one per synthetic data replicate
 }
 \description{
 Calculate the Kolmogorov-Smirnov distance (D) for each numeric variable in
@@ -31,6 +29,7 @@ Other Utility metrics:
 \code{\link{add_specks}()},
 \code{\link{discrimination}()},
 \code{\link{util_ci_overlap}()},
+\code{\link{util_co_occurrence}()},
 \code{\link{util_proportions}()}
 }
 \concept{Utility metrics}

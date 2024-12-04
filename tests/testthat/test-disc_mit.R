@@ -17,7 +17,10 @@ postsynth <- list(
   synthetic_data = tibble::tibble(
     a = c(1, 1, 1, 1),
     b = c(1, 1, 1, 1)
-    )
+    ),
+  jth_synthesis_time = data.frame(
+    variable = factor(c("a", "b"))
+  )
 )
 
 class(postsynth) <- "postsynth"

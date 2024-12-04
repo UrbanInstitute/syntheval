@@ -22,15 +22,21 @@ test_that("util_corr_fit is correct with postsynth ", {
   syn <- list(synthetic_data = data.frame(a = c(1, 2, 3),
                                           c = c(3, 2, 1),
                                           b = c(1, 2, 3),
-                                          RECID = c("a", "b", "c"))) %>%
+                                          RECID = c("a", "b", "c")),
+              jth_synthesis_time = data.frame(
+                variable = factor(c("a", "c", "b"))
+              )) %>%
     structure(class = "postsynth")
   
-  corr <- util_corr_fit(postsynth = syn, data = df)
+  ed <- eval_data(conf_data = df, synth_data = syn)
+  
+  corr <- util_corr_fit(ed)
   
   expect_equal(corr$correlation_difference, diff_matrix)
   expect_equal(corr$correlation_fit, sqrt(sum(c(0, -2, -2) ^ 2)) / 3)
   expect_equal(corr$correlation_difference_mae, mean(abs(c(0, -2, -2))))
   expect_equal(corr$correlation_difference_rmse, sqrt(mean(c(0, -2, -2) ^ 2)))
+  
 })
 
 # test with data
@@ -41,7 +47,9 @@ test_that("util_corr_fit is correct with postsynth ", {
                     b = c(1, 2, 3),
                     RECID = c("a", "b", "c"))
   
-  corr <- util_corr_fit(postsynth = syn, data = df)
+  ed <- eval_data(conf_data = df, synth_data = syn)
+  
+  corr <- util_corr_fit(ed)
 
   expect_equal(corr$correlation_difference, diff_matrix)
   expect_equal(corr$correlation_fit, sqrt(sum(c(0, -2, -2) ^ 2)) / 3)
@@ -51,16 +59,9 @@ test_that("util_corr_fit is correct with postsynth ", {
 
 test_that("util_corr_fit works with NA ", {
   
-  syn <- list(
-    synthetic_data = acs_conf
-  ) %>%
-    structure(class = "postsynth")
+  ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
   
-  corr <- util_corr_fit(
-    postsynth = syn, 
-    data = acs_conf,
-    use = "pairwise.complete.obs"
-  )
+  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs")
   
   expect_equal(max(corr$correlation_difference, na.rm = TRUE), 0)
   expect_equal(corr$correlation_fit, 0)

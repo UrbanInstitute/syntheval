@@ -20,11 +20,12 @@ test_that("Three recipe methods return identical results" , {
     parsnip::set_mode(mode = "classification") %>%
     parsnip::set_engine(engine = "glm")
   
-  rec <- recipes::recipe(.source_label ~ ., data = discrimination(penguins_postsynth, penguins_conf)$combined_data)
+  ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   # recipe and formula
   set.seed(1)
-  approach_custom <- discrimination(postsynth = penguins_postsynth, data = penguins_conf) %>%
+  approach_custom <- discrimination(ed) %>%
     add_propensities(
       recipe = rec,
       spec = logistic_mod
@@ -33,7 +34,7 @@ test_that("Three recipe methods return identical results" , {
   # no recipe, no formula
   set.seed(1)
   approach_default <- suppressMessages(
-    discrimination(postsynth = penguins_postsynth, data = penguins_conf) %>%
+    discrimination(ed) %>%
       add_propensities(
         spec = logistic_mod
       )
@@ -41,7 +42,7 @@ test_that("Three recipe methods return identical results" , {
   
   # formula and no recipe
   set.seed(1)
-  approach_formula <- discrimination(postsynth = penguins_postsynth, data = penguins_conf) %>%
+  approach_formula <- discrimination(ed) %>%
     add_propensities(
       spec = logistic_mod,
       formula = .source_label ~ .

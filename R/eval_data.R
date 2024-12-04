@@ -4,12 +4,19 @@
 #' @param synth_data A single (or list of) dataframe(s) or `postsynth` object(s).
 #' @param holdout_data An optional holdout dataframe containing the same columns
 #' as the confidential dataframe
+#' @param synth_vars An optional list of variables synthesized (if not using 
+#' full synthesis). If `synth_data` uses `postsynth` object(s), then these
+#' are inherited from `jth_synthesis_time`.
 #'
 #' @return An `eval_data` object.
 #' 
 #' @export
 #'
-eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
+eval_data <- function(
+    conf_data, 
+    synth_data, 
+    holdout_data = NULL,
+    synth_vars = NULL) {
   
   stopifnot(inherits(conf_data, "data.frame"))
   
@@ -23,7 +30,12 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
   # single replicate logic
   if (is_postsynth(synth_data)) {
     
+    synth_vars <- synth_data[["jth_synthesis_time"]] %>% 
+      dplyr::pull("variable") %>%
+      levels()
+    
     synth_data <- synth_data[["synthetic_data"]]
+    
     n_rep <- 1
     
   } else if (inherits(synth_data, "data.frame")) {
@@ -47,6 +59,10 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
             )
           )
         )
+      
+      synth_vars <- synth_data[[1]][["jth_synthesis_time"]] %>% 
+        dplyr::pull("variable") %>%
+        levels()
       
       synth_data <- purrr::map(
         .x = synth_data,
@@ -72,7 +88,8 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
     conf_data = conf_data, 
     synth_data = synth_data,
     holdout_data = holdout_data,
-    n_rep = n_rep
+    n_rep = n_rep,
+    synth_vars = synth_vars
   )
       
   eval_data <- structure(eval_data, class = "eval_data")
@@ -92,6 +109,7 @@ eval_data <- function(conf_data, synth_data, holdout_data = NULL) {
 is_eval_data <- function(x) {
   inherits(x, "eval_data")
 }
+
 
 #' @export
 print.eval_data <- function(x, ...) {

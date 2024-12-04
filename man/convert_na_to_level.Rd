@@ -5,13 +5,19 @@
 \title{Convert \code{NA} values to \code{"NA"} for categorical variables}
 \usage{
 convert_na_to_level(data)
+
+convert_na_to_level(data)
 }
 \arguments{
 \item{data}{A data frame or tibble}
 }
 \value{
 A data frame or tibble with \code{NA} converted to \code{"NA"}
+
+A data frame or tibble with \code{NA} converted to \code{"NA"}
 }
 \description{
+Convert \code{NA} values to \code{"NA"} for categorical variables
+
 Convert \code{NA} values to \code{"NA"} for categorical variables
 }
