@@ -235,25 +235,25 @@ util_proportions <- function(
     
   } else {
     
-    return(
-      purrr::map(
-        .x = eval_data$synth_data,
-        .f = \(sd) {
-          
-          .util_proportions(
-            conf_data = eval_data$conf_data, 
-            synth_data = sd, 
-            weight_var_q = weight_var_q,
-            group_by_q = group_by_q,
-            common_vars = common_vars,
-            synth_varnames = synth_varnames,
-            keep_empty_levels = keep_empty_levels,
-            na.rm = na.rm
-          )
-          
-        }
-      )
+    result <- purrr::map(
+      .x = eval_data$synth_data,
+      .f = \(sd) {
+        
+        .util_proportions(
+          conf_data = eval_data$conf_data, 
+          synth_data = sd, 
+          weight_var_q = weight_var_q,
+          group_by_q = group_by_q,
+          common_vars = common_vars,
+          synth_varnames = synth_varnames,
+          keep_empty_levels = keep_empty_levels,
+          na.rm = na.rm
+        )
+        
+      }
     )
+    
+    return(result)
     
   }
   

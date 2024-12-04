@@ -132,20 +132,20 @@ util_ci_overlap <- function(eval_data, formula) {
       
   } else {
     
-    return(
-      purrr::map(
-        .x = eval_data$synth_data,
-        .f = \(sd) {
-          
-          .util_ci_overlap(
-            conf_data = eval_data$conf_data, 
-            synth_data = sd, 
-            formula = formula
-          )
-          
-        }
-      )
+    result <- purrr::map(
+      .x = eval_data$synth_data,
+      .f = \(sd) {
+        
+        .util_ci_overlap(
+          conf_data = eval_data$conf_data, 
+          synth_data = sd, 
+          formula = formula
+        )
+        
+      }
     )
+    
+    return(result)
     
   }
   

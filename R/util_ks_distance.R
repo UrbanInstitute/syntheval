@@ -117,20 +117,20 @@ util_ks_distance <- function(eval_data, na.rm = FALSE) {
     
   } else {
     
-    return(
-      purrr::map(
-        .x = eval_data$synth_data,
-        .f = \(sd) {
-          
-          .util_ks_distance(
-            conf_data = eval_data$conf_data, 
-            synth_data = sd, 
-            na.rm = na.rm 
-          )
-          
-        }
-      )
+    result <- purrr::map(
+      .x = eval_data$synth_data,
+      .f = \(sd) {
+        
+        .util_ks_distance(
+          conf_data = eval_data$conf_data, 
+          synth_data = sd, 
+          na.rm = na.rm 
+        )
+        
+      }
     )
+    
+    return(result)
     
   }
   

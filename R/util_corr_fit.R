@@ -129,20 +129,20 @@ util_corr_fit <- function(eval_data, use = "everything") {
     
   } else {
     
-    return(
-      purrr::map(
-        .x = eval_data$synth_data,
-        .f = \(sd) {
-          
-          .util_corr_fit(
-            conf_data = eval_data$conf_data, 
-            synth_data = sd, 
-            use = use
-          )
-          
-        }
-      )
+    result <- purrr::map(
+      .x = eval_data$synth_data,
+      .f = \(sd) {
+        
+        .util_corr_fit(
+          conf_data = eval_data$conf_data, 
+          synth_data = sd, 
+          use = use
+        )
+        
+      }
     )
+    
+    return(result)
     
   }
   

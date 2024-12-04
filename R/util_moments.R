@@ -165,25 +165,25 @@ util_moments <- function(
     
   } else {
     
-    return(
-      purrr::map(
-        .x = eval_data$synth_data,
-        .f = \(sd) {
-          
-          .util_moments(
-            conf_data = eval_data$conf_data, 
-            synth_data = sd, 
-            weight_var_q = weight_var,
-            group_by_q = group_by,
-            drop_zeros = drop_zeros,
-            common_vars = common_vars,
-            synth_varnames = synth_varnames,
-            na.rm = na.rm
-          )
-          
-        }
-      )
+    result <- purrr::map(
+      .x = eval_data$synth_data,
+      .f = \(sd) {
+        
+        .util_moments(
+          conf_data = eval_data$conf_data, 
+          synth_data = sd, 
+          weight_var_q = weight_var,
+          group_by_q = group_by,
+          drop_zeros = drop_zeros,
+          common_vars = common_vars,
+          synth_varnames = synth_varnames,
+          na.rm = na.rm
+        )
+        
+      }
     )
+    
+    return(result)
     
   }
   

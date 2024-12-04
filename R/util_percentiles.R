@@ -188,26 +188,26 @@ util_percentiles <- function(
     
   } else {
     
-    return(
-      purrr::map(
-        .x = eval_data$synth_data,
-        .f = \(sd) {
-          
-          .util_percentiles(
-            conf_data = eval_data$conf_data, 
-            synth_data = sd, 
-            probs = probs,
-            weight_var_q = weight_var_q,
-            group_by_q = group_by_q,
-            drop_zeros = drop_zeros,
-            common_vars = common_vars,
-            synth_varnames = synth_varnames,
-            na.rm = na.rm
-          )
-          
-        }
-      )
+    result <- purrr::map(
+      .x = eval_data$synth_data,
+      .f = \(sd) {
+        
+        .util_percentiles(
+          conf_data = eval_data$conf_data, 
+          synth_data = sd, 
+          probs = probs,
+          weight_var_q = weight_var_q,
+          group_by_q = group_by_q,
+          drop_zeros = drop_zeros,
+          common_vars = common_vars,
+          synth_varnames = synth_varnames,
+          na.rm = na.rm
+        )
+        
+      }
     )
+    
+    return(result)
     
   }
   
