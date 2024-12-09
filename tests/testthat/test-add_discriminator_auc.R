@@ -17,13 +17,15 @@ test_that("add_discriminator_auc returns perfect value for identical data (no sp
     ) %>%
     structure(class = "postsynth")
   
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+  
   logistic_mod <- parsnip::logistic_reg() %>%
     parsnip::set_mode(mode = "classification") %>%
     parsnip::set_engine(engine = "glm")
   
-  rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
-  disc <- discrimination(postsynth, data) %>%
+  disc <- discrimination(ed) %>%
     add_propensities(
       recipe = rec,
       spec = logistic_mod
@@ -53,14 +55,16 @@ test_that("add_discriminator_auc returns perfect value for identical data (split
     ) %>%
     structure(class = "postsynth")
   
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+  
   logistic_mod <- parsnip::logistic_reg() %>%
     parsnip::set_mode(mode = "classification") %>%
     parsnip::set_engine(engine = "glm")
   
-  rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) %>%
+    discrimination(ed) %>%
       add_propensities(
         recipe = rec,
         spec = logistic_mod
@@ -97,14 +101,16 @@ test_that("add_pmse returns perfect value for seperable data (no split)" , {
     ) %>%
     structure(class = "postsynth")
   
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+  
   logistic_mod <- parsnip::logistic_reg() %>%
     parsnip::set_mode(mode = "classification") %>%
     parsnip::set_engine(engine = "glm")
   
-  rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) %>%
+    discrimination(ed) %>%
       add_propensities(
         recipe = rec,
         spec = logistic_mod

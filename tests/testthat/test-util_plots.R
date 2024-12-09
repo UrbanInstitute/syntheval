@@ -12,31 +12,27 @@ synth_df <- data.frame(
   c2 = factor(c("a", "b", "a", "b"))
 )
 
-joint_data <- dplyr::bind_rows(
-  confidential = conf_df,
-  synthetic = synth_df, 
-  .id = "source"
-)
+ed <- eval_data(conf_data = conf_df, synth_data = synth_df)
 
 test_that("plot_numeric_hist_kde throws expected errors", {
   
   expect_error(
-    plot_numeric_hist_kde(joint_data, "c1")
+    plot_numeric_hist_kde(ed, "c1")
   )
   
   expect_error(
-    plot_numeric_hist_kde(joint_data, "n1", "n2")
+    plot_numeric_hist_kde(ed, "n1", "n2")
   )
   
   expect_error(
-    plot_numeric_hist_kde(joint_data, "n1", "c1", "n2")
+    plot_numeric_hist_kde(ed, "n1", "c1", "n2")
   )
   
 })
 
 test_that("plot_numeric_hist_kde creates the right ggplot", {
   
-  plot <- plot_numeric_hist_kde(joint_data, "n1")
+  plot <- plot_numeric_hist_kde(ed, "n1")
   expect_s3_class(plot$layers[[1]]$geom, "GeomBar")
   expect_s3_class(plot$layers[[2]]$geom, "GeomDensity")
   
@@ -45,22 +41,22 @@ test_that("plot_numeric_hist_kde creates the right ggplot", {
 test_that("plot_categorical_bar throws expected errors", {
   
   expect_error(
-    plot_categorical_bar(joint_data, "n1")
+    plot_categorical_bar(ed, "n1")
   )
   
   expect_error(
-    plot_categorical_bar(joint_data, "c1", "n2")
+    plot_categorical_bar(ed, "c1", "n2")
   )
   
   expect_error(
-    plot_categorical_bar(joint_data, "c1", "c1", "n2")
+    plot_categorical_bar(ed, "c1", "c1", "n2")
   )
   
 })
 
 test_that("plot_categorical_bar creates the right ggplot", {
   
-  plot <- plot_categorical_bar(joint_data, "c1")
+  plot <- plot_categorical_bar(ed, "c1")
   expect_s3_class(plot$layers[[1]]$geom, "GeomBar")
   
 })

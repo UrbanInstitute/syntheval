@@ -48,14 +48,13 @@ syn_na <- list(
 ) %>%
   structure(class = "postsynth")
 
+ed0 <- eval_data(conf_data = df, synth_data = df)
+ed1 <- eval_data(conf_data = df, synth_data = syn)
+
 # full unweighted - postysynth
 test_that("moments full unweighted -- postsynth ", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = syn, 
-      data = df
-    ) %>%
+  summary_stats <- util_totals(ed1) %>%
     dplyr::filter(variable == "a")
   
   expect_equal(
@@ -70,11 +69,7 @@ test_that("moments full unweighted -- postsynth ", {
 
 test_that("moments full unweighted -- df ", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = df, 
-      data = df
-    ) %>%
+  summary_stats <- util_totals(ed0) %>%
     dplyr::filter(variable == "a")
   
   expect_equal(
@@ -90,12 +85,7 @@ test_that("moments full unweighted -- df ", {
 # full weighted
 test_that("moments full weighted -- postsynth", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = syn,
-      data = df,
-      weight_var = weight
-    ) %>%
+  summary_stats <- util_totals(ed1, weight_var = weight) %>%
     dplyr::filter(variable == "a")
   
   expect_equal(
@@ -110,12 +100,7 @@ test_that("moments full weighted -- postsynth", {
 
 test_that("moments full weighted -- df", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = df,
-      data = df,
-      weight_var = weight
-    ) %>%
+  summary_stats <- util_totals(ed0, weight_var = weight) %>%
     dplyr::filter(variable == "a")
   
   expect_equal(
@@ -130,11 +115,7 @@ test_that("moments full weighted -- df", {
 
 test_that("moments nonzero unweighted -- postsynth", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = syn,
-      data = df
-    ) %>%
+  summary_stats <- util_totals(ed1) %>%
     dplyr::filter(variable == "d")
   
   expect_equal(
@@ -149,11 +130,7 @@ test_that("moments nonzero unweighted -- postsynth", {
 
 test_that("moments nonzero unweighted -- postsynth", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = df,
-      data = df
-    ) %>%
+  summary_stats <- util_totals(ed0) %>%
     dplyr::filter(variable == "d")
   
   expect_equal(
@@ -168,12 +145,7 @@ test_that("moments nonzero unweighted -- postsynth", {
 
 test_that("moments nonzero weighted -- postsynth", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = syn,
-      data = df,
-      weight_var = weight
-    ) %>%
+  summary_stats <- util_totals(ed1, weight_var = weight) %>%
     dplyr::filter(variable == "d")
   
   expect_equal(
@@ -188,12 +160,7 @@ test_that("moments nonzero weighted -- postsynth", {
 
 test_that("moments nonzero weighted -- df", {
   
-  summary_stats <-
-    util_totals(
-      postsynth = df,
-      data = df,
-      weight_var = weight
-    ) %>%
+  summary_stats <- util_totals(ed0, weight_var = weight) %>%
     dplyr::filter(variable == "d")
   
   expect_equal(
@@ -208,10 +175,8 @@ test_that("moments nonzero weighted -- df", {
 
 test_that("moments test grouping var ", {
 
-  summary_stats <-
-    util_totals(
-      postsynth = syn,
-      data = df,
+  summary_stats <- util_totals(
+      ed1,
       weight_var = weight,
       group_by = c
     ) %>%
@@ -232,8 +197,7 @@ test_that("moments test grouping var ", {
 test_that("moments grouping by multiple variables", {
   summary_stats <- 
     util_totals(
-      postsynth = syn,
-      data = df,
+      ed1,
       weight_var = weight,
       group_by = c(c, e)
     ) %>%
@@ -269,11 +233,11 @@ test_that("util_totals() variables selection returns correct dimensions ", {
   ) %>%
     structure(class = "postsynth")
   
+  ed <- eval_data(conf_data = storms_sub, synth_data = syn)
   # are variable names missing ever?
   expect_false(
     util_totals(
-      postsynth = syn, 
-      data = storms_sub, 
+      ed, 
       common_vars = FALSE, 
       synth_vars = FALSE
     )$variable %>%
@@ -284,8 +248,7 @@ test_that("util_totals() variables selection returns correct dimensions ", {
   # are statistics names missing ever?
   expect_false(
     util_totals(
-      postsynth = syn, 
-      data = storms_sub, 
+      ed, 
       common_vars = FALSE, 
       synth_vars = FALSE
     )$statistic %>%
@@ -297,8 +260,7 @@ test_that("util_totals() variables selection returns correct dimensions ", {
   expect_equal(
     dim(
       util_totals(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed, 
         common_vars = FALSE, 
         synth_vars = FALSE
       )
@@ -310,8 +272,7 @@ test_that("util_totals() variables selection returns correct dimensions ", {
   expect_equal(
     dim(
       util_totals(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed, 
         common_vars = TRUE, 
         synth_vars = FALSE
       )
@@ -323,8 +284,7 @@ test_that("util_totals() variables selection returns correct dimensions ", {
   expect_equal(
     dim(
       util_totals(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed, 
         common_vars = FALSE, 
         synth_vars = TRUE
       )
@@ -336,8 +296,7 @@ test_that("util_totals() variables selection returns correct dimensions ", {
   expect_equal(
     dim(
       util_totals(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed, 
         common_vars = TRUE, 
         synth_vars = TRUE
       )
@@ -349,9 +308,10 @@ test_that("util_totals() variables selection returns correct dimensions ", {
 
 test_that("util_totals() na.rm works as expected", {
   
+  ed_na <- eval_data(conf_data = df_na, synth_data = syn_na)
+  
   res <- util_totals(
-    postsynth = syn_na, 
-    data = df_na,
+    ed_na,
     na.rm = FALSE
   )
   
@@ -360,8 +320,7 @@ test_that("util_totals() na.rm works as expected", {
   )
   
   res_rm <- util_totals(
-    postsynth = syn_na, 
-    data = df_na,
+    ed_na,
     na.rm = TRUE
   )
   

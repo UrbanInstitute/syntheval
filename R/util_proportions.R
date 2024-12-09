@@ -1,136 +1,58 @@
 #' Calculate relative frequency tables for categorical variables
 #'
-#' @param postsynth A postsynth object or tibble with synthetic data
-#' @param data A data frame with the original data
-#' @param weight_var An unquoted name of a weight variable
-#' @param group_by An unquoted name of a (or multiple) grouping variable(s)
+#' @param synth_data A data.frame with synthetic data
+#' @param conf_data A data.frame with the confidential data
+#' @param weight_var_q A quoted name of a weight variable
+#' @param group_by_q The quoted name(s) of a (or multiple) grouping variable(s)
 #' @param common_vars A logical for if only common variables should be kept
-#' @param synth_vars A logical for if only synthesized variables should be kept
+#' @param synth_varnames A list of variables synthesized to filter on, else `NULL`
 #' @param keep_empty_levels A logical for keeping all class levels in the group_by
 #' statements, including missing levels.
 #' @param na.rm A logical for ignoring `NA` values in proportion calculations.
 #'
 #' @return A tibble with variables, classes, and relative frequencies
-#' 
-#' @family Utility metrics
-#' 
-#' @export
 #'
-util_proportions <- function(postsynth, 
-                             data, 
-                             weight_var = NULL, 
-                             group_by = NULL,
-                             common_vars = TRUE,
-                             synth_vars = TRUE,
-                             keep_empty_levels = FALSE,
-                             na.rm = FALSE) {
+.util_proportions <- function(
+    synth_data,
+    conf_data,
+    weight_var_q = NULL, 
+    group_by_q = NULL,
+    common_vars = TRUE,
+    synth_varnames = TRUE,
+    keep_empty_levels = FALSE,
+    na.rm = FALSE) {
   
+  combined_data <- .create_combined_data_pointwise(
+    synth_data = synth_data,
+    conf_data = conf_data,
+    keep_numeric = FALSE,
+    group_by_q = group_by_q,
+    weight_var_q = weight_var_q, 
+    common_vars = common_vars,
+    synth_varnames = synth_varnames)
   
-  if (is_postsynth(postsynth)) {
+  # add weight var
+  if (weight_var_q == "NULL") {
     
-    synthetic_data <- postsynth$synthetic_data
-    
-    variable_order <- 
-      levels(postsynth$jth_synthesis_time$variable)
+    combined_data <- combined_data %>%
+      dplyr::mutate(.temp_weight = 1)
     
   } else {
     
-    synthetic_data <- postsynth
+    combined_data <- combined_data %>% 
+      dplyr::mutate(.temp_weight = .data[[weight_var_q]]) %>%
+      dplyr::select(-dplyr::all_of(weight_var_q))
     
   }
-  
-  # the goal is to create .temp_weight that is equal to 1 if weight_var isn't 
-  # specified and equal to the weight if weight_var is a variable
-  synthetic_weight <- synthetic_data %>%
-    dplyr::select({{ weight_var }}) %>%
-    dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
-    dplyr::select(-{{ weight_var }})
-  
-  # if {{ weight }} is NULL then set the weight to 1
-  if (ncol(synthetic_weight) == 0) {
-    
-    synthetic_weight <- synthetic_data %>%
-      dplyr::mutate(.temp_weight = 1) %>%
-      dplyr::select(".temp_weight")
-    
-  }
-  
-  data_weight <- data %>%
-    dplyr::select({{ weight_var }}) %>%
-    dplyr::mutate(.temp_weight = {{ weight_var }}) %>%
-    dplyr::select(-{{ weight_var }})
-  
-  # if {{ weight }} is NULL then set the weight to 1
-  if (ncol(data_weight) == 0) {
-    
-    data_weight <- data_weight %>%
-      dplyr::mutate(.temp_weight = 1) %>%
-      dplyr::select(".temp_weight")
-    
-  }
-  
-  # combine the weight variable df to the synthetic data
-  synthetic_data <- synthetic_data %>%
-    dplyr::bind_cols(synthetic_weight) %>%
-    dplyr::select(-{{ weight_var }})
-  
-  # combine the weight variable df to the confidential data
-  data <- data %>%
-    dplyr::bind_cols(data_weight) %>%
-    dplyr::select(-{{ weight_var }})
-  
-  # filter to only synthesized variables
-  # keep group_by variables
-  if (is_postsynth(postsynth) & synth_vars) {
-    
-    synthetic_data <- synthetic_data %>%
-      dplyr::select(dplyr::all_of(variable_order), {{ group_by }}, ".temp_weight")
-    
-    data <- data %>%
-      dplyr::select(dplyr::all_of(variable_order), {{ group_by }}, ".temp_weight")
-    
-  }
-  
-  # only keep variables in both data sets
-  # keep group_by variables
-  if (common_vars) {
-    
-    common_vars <- intersect(names(data), names(synthetic_data))
-    
-    data <- data %>%
-      dplyr::select(dplyr::all_of(common_vars), {{ group_by }}, ".temp_weight")
-    
-    synthetic_data <- synthetic_data %>%
-      dplyr::select(dplyr::all_of(common_vars), {{ group_by }}, ".temp_weight")
-    
-  }
-  
-  # dropping columns that are numeric (excluding the weight variable)
-  synthetic_data <- synthetic_data %>%
-    dplyr::select(tidyselect::where(is.factor), 
-                  tidyselect::where(is.character), 
-                  ".temp_weight")
-  
-  data <- data %>%
-    dplyr::select(tidyselect::where(is.factor), 
-                  tidyselect::where(is.character), 
-                  ".temp_weight")
-  
-  # combining confidential and synthetic data 
-  combined_data <- dplyr::bind_rows(
-    synthetic = synthetic_data,
-    original = data,
-    .id = "source"
-  ) 
   
   group_by_weights <- combined_data %>%
     tidyr::pivot_longer(
-      cols = -c(source, {{ group_by }}, ".temp_weight"),
+      cols = -dplyr::all_of(c("source", group_by_q, ".temp_weight")),
       names_to = "variable", 
       values_to = "class"
     ) %>%
     dplyr::group_by(
-      dplyr::across({{ group_by }}), source, variable,
+      dplyr::across(dplyr::all_of(c(group_by_q, "source", "variable"))),
       .drop = !keep_empty_levels
     ) 
   
@@ -140,7 +62,7 @@ util_proportions <- function(postsynth,
   # lengthening combined data to find proportions for each level
   combined_data_long <- combined_data %>%
     tidyr::pivot_longer(
-      cols = -c(source, {{ group_by }}, ".temp_weight"), 
+      cols = -dplyr::all_of(c("source", group_by_q, ".temp_weight")), 
       names_to = "variable", 
       values_to = "class"
     ) 
@@ -152,7 +74,7 @@ util_proportions <- function(postsynth,
     # empty levels (excludes variables in group_by, excluded by common_vars, etc)
     prop_col_names <- names(
       combined_data %>% 
-        dplyr::select(-c(source, {{ group_by }}, ".temp_weight"))
+        dplyr::select(-dplyr::all_of(c("source", group_by_q, ".temp_weight")))
       )
     
     extract_levels <- function(x) { 
@@ -187,18 +109,18 @@ util_proportions <- function(postsynth,
       # by cross-joining
       dplyr::cross_join(
         combined_data %>% 
-          dplyr::select(c(source, {{ group_by }})) %>% 
+          dplyr::select(dplyr::all_of(c("source", group_by_q))) %>% 
           dplyr::distinct()
       )
     
     # create the join specification depending on whether group_by is specified
-    if (is.null(group_by)) {
+    if (identical(group_by_q, character(0))) {
 
-      join_spec <- dplyr::join_by(class, variable, source)
+      join_spec <- dplyr::join_by(class, "variable", source)
       
     } else {
       
-      join_spec <- dplyr::join_by(class, variable, source, {{ group_by }})
+      join_spec <- dplyr::join_by(class, "variable", source, group_by_q)
       
     }
     
@@ -231,7 +153,7 @@ util_proportions <- function(postsynth,
   # calculating proportions for each level of each variable 
   combined_data <- combined_data %>%
     dplyr::group_by(
-      dplyr::across({{ group_by }}), 
+      dplyr::across(dplyr::all_of(group_by_q)), 
       .data$source, 
       .data$variable, 
       .data$class, 
@@ -245,7 +167,7 @@ util_proportions <- function(postsynth,
   combined_data <- combined_data %>%
     tidyr::pivot_wider(names_from = source, values_from = "prop") %>%
     dplyr::group_by(
-      dplyr::across({{ group_by }}), 
+      dplyr::across(dplyr::all_of(group_by_q)), 
       .data$variable, 
       .data$class, 
       .drop = !keep_empty_levels
@@ -257,5 +179,82 @@ util_proportions <- function(postsynth,
   
   # (group_by) -- variable -- class -- original -- synthetic -- difference
   return(combined_data)
+  
+}
+
+#' 
+#' Calculate relative frequency tables for categorical variables
+#'
+#' @param eval_data An `eval_data` object
+#' @param weight_var An unquoted name of a weight variable
+#' @param group_by The unquoted name(s) of a (or multiple) grouping variable(s)
+#' @param common_vars A logical for if only common variables should be kept
+#' @param synth_vars A logical for if *only* synthesized variables should be kept
+#' @param keep_empty_levels A logical for keeping all class levels in the group_by
+#' statements, including missing levels.
+#' @param na.rm A logical for ignoring `NA` values in proportion calculations.
+#'
+#' @return A tibble with variables, classes, and relative frequencies
+#' 
+#' @family Utility metrics
+#' 
+#' @export
+#'
+util_proportions <- function(
+    eval_data,
+    weight_var = NULL, 
+    group_by = NULL,
+    common_vars = TRUE,
+    synth_vars = TRUE,
+    keep_empty_levels = FALSE,
+    na.rm = FALSE
+) {
+  
+  stopifnot(is_eval_data(eval_data))
+  
+  # argument parsing
+  weight_var_q <- base::deparse(rlang::enexpr(weight_var))
+  group_by_q <- purrr::map_chr(as.list(rlang::enexpr(group_by)), base::deparse)
+  group_by_q <- group_by_q[2:length(group_by_q)] %>% purrr::discard(is.na)
+  synth_varnames <- if (identical(synth_vars, TRUE)) eval_data$synth_vars else NULL
+  
+  if (eval_data$n_rep == 1) {
+    
+    return(
+      .util_proportions(
+        conf_data = eval_data$conf_data, 
+        synth_data = eval_data$synth_data, 
+        weight_var_q = weight_var_q,
+        group_by_q = group_by_q,
+        common_vars = common_vars,
+        synth_varnames = synth_varnames,
+        keep_empty_levels = keep_empty_levels,
+        na.rm = na.rm
+      )
+    )
+    
+  } else {
+    
+    result <- purrr::map(
+      .x = eval_data$synth_data,
+      .f = \(sd) {
+        
+        .util_proportions(
+          conf_data = eval_data$conf_data, 
+          synth_data = sd, 
+          weight_var_q = weight_var_q,
+          group_by_q = group_by_q,
+          common_vars = common_vars,
+          synth_varnames = synth_varnames,
+          keep_empty_levels = keep_empty_levels,
+          na.rm = na.rm
+        )
+        
+      }
+    )
+    
+    return(result)
+    
+  }
   
 }

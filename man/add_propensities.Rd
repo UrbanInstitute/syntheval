@@ -46,6 +46,7 @@ Other Utility metrics:
 \code{\link{add_specks}()},
 \code{\link{discrimination}()},
 \code{\link{util_ci_overlap}()},
+\code{\link{util_co_occurrence}()},
 \code{\link{util_ks_distance}()},
 \code{\link{util_proportions}()}
 }

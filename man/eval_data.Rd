@@ -4,7 +4,7 @@
 \alias{eval_data}
 \title{Create evaluation data container}
 \usage{
-eval_data(conf_data, synth_data, holdout_data = NULL)
+eval_data(conf_data, synth_data, holdout_data = NULL, synth_vars = NULL)
 }
 \arguments{
 \item{conf_data}{A confidential dataframe}
@@ -13,6 +13,10 @@ eval_data(conf_data, synth_data, holdout_data = NULL)
 
 \item{holdout_data}{An optional holdout dataframe containing the same columns
 as the confidential dataframe}
+
+\item{synth_vars}{An optional list of variables synthesized (if not using
+full synthesis). If \code{synth_data} uses \code{postsynth} object(s), then these
+are inherited from \code{jth_synthesis_time}.}
 }
 \value{
 An \code{eval_data} object.
