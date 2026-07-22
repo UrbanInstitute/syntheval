@@ -20,8 +20,8 @@
 .util_corr_fit <- function(synth_data, conf_data, use = "everything") {
   
   
-  synth_data <- dplyr::select_if(synth_data, is.numeric)
-  conf_data <- dplyr::select_if(conf_data, is.numeric)
+  synth_data <- dplyr::select(synth_data, tidyselect::where(is.numeric))
+  conf_data <- dplyr::select(conf_data, tidyselect::where(is.numeric))
 
   # reorder data names
   conf_data <- dplyr::select(conf_data, names(synth_data))
@@ -32,7 +32,7 @@
     # find the linear correlation matrix of numeric variables from a data set
     correlation_matrix <-
       x %>%
-      dplyr::select_if(is.numeric) %>%
+      dplyr::select(tidyselect::where(is.numeric)) %>%
       stats::cor(use = use)
     
     # set the values in the upper triangle to zero to avoid double counting

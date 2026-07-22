@@ -36,7 +36,6 @@ Calculate totals for original and synthetic data.
 Other utility metrics: 
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
-\code{\link{util_percentiles}()},
-\code{\link{util_tails}()}
+\code{\link{util_percentiles}()}
 }
 \concept{utility metrics}

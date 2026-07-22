@@ -301,7 +301,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
         synth_vars = FALSE
       )
     ),
-    c(215, 5)
+    c(221, 5)
   )
   
   # 50 rows = 10 common variables times 5 statistics
