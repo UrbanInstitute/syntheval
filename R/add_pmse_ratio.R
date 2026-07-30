@@ -48,8 +48,14 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     return(pmse)
 
   }
-
-  calc_null_pmse <- function(a) {
+  # calculate the null pMSE for one bootstrap sample
+  #
+  # param: iteration_index The bootstrap iteration number. Unused because each
+  # iteration draws a fresh bootstrap sample from its own random seed.
+  #
+  # return: A named list with the overall, training, and testing null pMSEs.
+  # The training and testing elements are NA when split = FALSE.
+  calc_null_pmse <- function(iteration_index) {
 
     # bootstrap sample original observations to equal the size of the combined
     # data
@@ -131,8 +137,8 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
 
   # calculate the null pMSE for each bootstrap sample, in parallel when a
   # non-sequential future::plan() is set
-  # seed = TRUE gives each iteration a reproducible L'Ecuyer-CMRG stream so
-  # results are identical across plans for a given seed
+  # seed = TRUE assigns every iteration its own random seed up front, so
+  # results are reproducible and identical across plans for a given seed
   pmse_null <- furrr::future_map(
     .x = seq_len(times),
     .f = calc_null_pmse,
@@ -146,6 +152,16 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
 
   # calculate the ratio for the training/testing split or overall data
   if (all(c("training", "testing") %in% discrimination$pmse$.source)) {
+
+    if (!split) {
+
+      stop(
+        "Error: discrimination$pmse contains training/testing pMSEs but ",
+        "split = FALSE, so no training/testing null pMSEs were bootstrapped. ",
+        "Call add_pmse_ratio() with split = TRUE."
+      )
+
+    }
 
     pmse <- dplyr::bind_cols(
       discrimination$pmse,

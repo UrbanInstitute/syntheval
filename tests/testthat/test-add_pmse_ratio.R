@@ -98,6 +98,13 @@ test_that("add_pmse_ratio is reproducible and plan-independent", {
 
   expect_equal(seq_run1$pmse$.null_pmse, seq_run2$pmse$.null_pmse)
 
+  # split = FALSE cannot supply null pMSEs for a split pmse
+  disc_split <- suppressWarnings(add_pmse(disc, split = TRUE))
+  expect_error(
+    add_pmse_ratio(disc_split, split = FALSE, times = 2),
+    regexp = "split = TRUE"
+  )
+
   # parallel plan with the same seed must match the sequential result
   future::plan(future::multisession, workers = 2)
   on.exit(future::plan(future::sequential), add = TRUE)
