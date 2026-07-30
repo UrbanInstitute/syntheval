@@ -22,7 +22,12 @@ synthetic data.}
 A discrimination with pMSE
 }
 \description{
-Add pMSE ratio to discrimination object
+The null pMSEs in the denominator of the ratio are estimated with bootstrap
+samples that can be computed in parallel. The bootstrap iterations are
+evaluated with \code{furrr::future_map()}, so they run sequentially by default
+and in parallel under a non-sequential \code{\link[future:plan]{future::plan()}} (for example,
+\code{future::plan(future::multisession)}). Results are reproducible for a given
+seed and identical under sequential and parallel plans.
 }
 \seealso{
 Other Utility metrics: 
