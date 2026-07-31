@@ -292,7 +292,8 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
       all()
   )
   
-  # 55 rows = all 11 variables times 5 statistics
+  # 221 rows (221 distinct storm names + 1 NA) + (9 status levels) times 5 columns 
+  # storm names and status are the two non-numeric variables in the storms dataset
   expect_equal(
     dim(
       util_proportions(
@@ -304,7 +305,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
     c(221, 5)
   )
   
-  # 50 rows = 10 common variables times 5 statistics
+  # 50 rows = 9 unique values in status times 5 columns
   expect_equal(
     dim(
       util_proportions(
