@@ -1,16 +1,30 @@
 
-# syntheval
+
+# `syntheval`
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-syntheval makes it simple to evaluate the utility and disclosure risks
-of synthetic data. The package is designed to work with `postsynth`
-objects from `library(tidysynthesis)` but also works well with any data
-frame in R.
+`syntheval` makes it simple to evaluate the utility and disclosure risks
+of synthetic data. The package is designed to work any `data.frame`
+objects or `postsynth` objects from `tidysynthesis`.
+
+# Package Status and Documentation
+
+This package is still under active development before we release our
+first major version, 0.1.0. This will involve API changes and new
+functionality. You can keep track of our work in the following issues:
+
+- [Version 0.0.5](https://github.com/UrbanInstitute/syntheval/issues/77)
+- [Version 0.0.5](https://github.com/UrbanInstitute/syntheval/issues/78)
+- [Version
+  0.1.0](https://github.com/UrbanInstitute/syntheval/issues/107)
+
+For detailed documentation, you can see our [documentation
+website](https://ui-research.github.io/tidysynthesis-documentation/).
 
 **Note:** `library(tidysynthesis)` is currently under private
-development but will be made public in the future.
+development but will be made public in Q1 of 2025.
 
 ## Navigation
 
@@ -468,16 +482,16 @@ disc1 |>
     # A tibble: 666 × 10
        .pred_synthetic .source_label .sample  species island    sex   bill_length_mm
                  <dbl> <fct>         <chr>    <fct>   <fct>     <fct>          <dbl>
-     1          0.0556 original      training Adelie  Torgersen male            39.1
-     2          0.355  original      training Adelie  Torgersen fema…           39.5
-     3          0.636  original      training Adelie  Torgersen fema…           40.3
-     4          0.375  original      training Adelie  Torgersen fema…           36.7
-     5          0.76   original      testing  Adelie  Torgersen male            39.3
-     6          0.355  original      training Adelie  Torgersen fema…           38.9
-     7          0.375  original      training Adelie  Torgersen male            39.2
-     8          0.355  original      training Adelie  Torgersen fema…           41.1
-     9          0.4    original      training Adelie  Torgersen male            38.6
-    10          0.789  original      testing  Adelie  Torgersen male            34.6
+     1           0.154 original      training Adelie  Torgersen male            39.1
+     2           0.154 original      training Adelie  Torgersen fema…           39.5
+     3           0.369 original      training Adelie  Torgersen fema…           40.3
+     4           0.596 original      testing  Adelie  Torgersen fema…           36.7
+     5           0.154 original      training Adelie  Torgersen male            39.3
+     6           0.154 original      training Adelie  Torgersen fema…           38.9
+     7           0.714 original      training Adelie  Torgersen male            39.2
+     8           0.369 original      training Adelie  Torgersen fema…           41.1
+     9           0.596 original      testing  Adelie  Torgersen male            38.6
+    10           0.4   original      training Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -496,66 +510,68 @@ disc1 |>
     node), split, n, loss, yval, (yprob)
           * denotes terminal node
 
-       1) root 498 249 synthetic (0.50000000 0.50000000)  
-         2) bill_length_mm< 34.8 19   4 synthetic (0.78947368 0.21052632) *
-         3) bill_length_mm>=34.8 479 234 original (0.48851775 0.51148225)  
-           6) bill_depth_mm>=18.85 99  44 synthetic (0.55555556 0.44444444)  
-            12) bill_length_mm< 50.35 85  32 synthetic (0.62352941 0.37647059)  
-              24) species=Chinstrap 21   2 synthetic (0.90476190 0.09523810) *
-              25) species=Adelie 64  30 synthetic (0.53125000 0.46875000)  
-                50) flipper_length_mm< 192.5 40  15 synthetic (0.62500000 0.37500000)  
-                 100) bill_length_mm>=38.9 25   6 synthetic (0.76000000 0.24000000) *
-                 101) bill_length_mm< 38.9 15   6 original (0.40000000 0.60000000) *
-                51) flipper_length_mm>=192.5 24   9 original (0.37500000 0.62500000) *
-            13) bill_length_mm>=50.35 14   2 original (0.14285714 0.85714286) *
-           7) bill_depth_mm< 18.85 380 179 original (0.47105263 0.52894737)  
-            14) bill_length_mm>=50.55 45  17 synthetic (0.62222222 0.37777778) *
-            15) bill_length_mm< 50.55 335 151 original (0.45074627 0.54925373)  
-              30) bill_length_mm< 46.05 218 107 original (0.49082569 0.50917431)  
-                60) bill_depth_mm< 18.25 177  83 synthetic (0.53107345 0.46892655)  
-                 120) bill_depth_mm>=13.75 169  77 synthetic (0.54437870 0.45562130)  
-                   240) bill_length_mm>=36.55 142  61 synthetic (0.57042254 0.42957746)  
-                     480) bill_length_mm< 38.35 27   8 synthetic (0.70370370 0.29629630) *
-                     481) bill_length_mm>=38.35 115  53 synthetic (0.53913043 0.46086957)  
-                       962) bill_length_mm>=41.65 73  29 synthetic (0.60273973 0.39726027) *
-                       963) bill_length_mm< 41.65 42  18 original (0.42857143 0.57142857)  
-                        1926) flipper_length_mm>=193.5 11   4 synthetic (0.63636364 0.36363636) *
-                        1927) flipper_length_mm< 193.5 31  11 original (0.35483871 0.64516129) *
-                   241) bill_length_mm< 36.55 27  11 original (0.40740741 0.59259259) *
-                 121) bill_depth_mm< 13.75 8   2 original (0.25000000 0.75000000) *
-                61) bill_depth_mm>=18.25 41  13 original (0.31707317 0.68292683)  
-                 122) flipper_length_mm>=191.5 23  11 synthetic (0.52173913 0.47826087)  
-                   244) bill_depth_mm>=18.55 10   2 synthetic (0.80000000 0.20000000) *
-                   245) bill_depth_mm< 18.55 13   4 original (0.30769231 0.69230769) *
-                 123) flipper_length_mm< 191.5 18   1 original (0.05555556 0.94444444) *
-              31) bill_length_mm>=46.05 117  44 original (0.37606838 0.62393162)  
-                62) flipper_length_mm>=229.5 9   3 synthetic (0.66666667 0.33333333) *
-                63) flipper_length_mm< 229.5 108  38 original (0.35185185 0.64814815)  
-                 126) flipper_length_mm< 214.5 54  24 original (0.44444444 0.55555556)  
-                   252) body_mass_g>=3925 26  10 synthetic (0.61538462 0.38461538) *
-                   253) body_mass_g< 3925 28   8 original (0.28571429 0.71428571) *
-                 127) flipper_length_mm>=214.5 54  14 original (0.25925926 0.74074074) *
+      1) root 498 249 synthetic (0.50000000 0.50000000)  
+        2) bill_depth_mm>=16.65 332 153 synthetic (0.53915663 0.46084337)  
+          4) bill_length_mm< 34.2 10   1 synthetic (0.90000000 0.10000000) *
+          5) bill_length_mm>=34.2 322 152 synthetic (0.52795031 0.47204969)  
+           10) bill_length_mm>=42.6 128  49 synthetic (0.61718750 0.38281250)  
+             20) flipper_length_mm< 194.5 48  11 synthetic (0.77083333 0.22916667) *
+             21) flipper_length_mm>=194.5 80  38 synthetic (0.52500000 0.47500000)  
+               42) bill_length_mm< 52.45 73  32 synthetic (0.56164384 0.43835616)  
+                 84) bill_length_mm>=44.25 64  25 synthetic (0.60937500 0.39062500)  
+                  168) body_mass_g>=4175 27   6 synthetic (0.77777778 0.22222222) *
+                  169) body_mass_g< 4175 37  18 original (0.48648649 0.51351351)  
+                    338) bill_length_mm< 45.65 8   2 synthetic (0.75000000 0.25000000) *
+                    339) bill_length_mm>=45.65 29  12 original (0.41379310 0.58620690) *
+                 85) bill_length_mm< 44.25 9   2 original (0.22222222 0.77777778) *
+               43) bill_length_mm>=52.45 7   1 original (0.14285714 0.85714286) *
+           11) bill_length_mm< 42.6 194  91 original (0.46907216 0.53092784)  
+             22) bill_length_mm< 39.65 129  62 synthetic (0.51937984 0.48062016)  
+               44) flipper_length_mm>=180.5 121  56 synthetic (0.53719008 0.46280992)  
+                 88) bill_length_mm>=36.1 96  41 synthetic (0.57291667 0.42708333)  
+                  176) island=Biscoe 29   9 synthetic (0.68965517 0.31034483) *
+                  177) island=Dream,Torgersen 67  32 synthetic (0.52238806 0.47761194)  
+                    354) bill_length_mm< 38.75 47  19 synthetic (0.59574468 0.40425532) *
+                    355) bill_length_mm>=38.75 20   7 original (0.35000000 0.65000000)  
+                      710) flipper_length_mm>=190.5 7   2 synthetic (0.71428571 0.28571429) *
+                      711) flipper_length_mm< 190.5 13   2 original (0.15384615 0.84615385) *
+                 89) bill_length_mm< 36.1 25  10 original (0.40000000 0.60000000) *
+               45) flipper_length_mm< 180.5 8   2 original (0.25000000 0.75000000) *
+             23) bill_length_mm>=39.65 65  24 original (0.36923077 0.63076923) *
+        3) bill_depth_mm< 16.65 166  70 original (0.42168675 0.57831325)  
+          6) bill_length_mm>=51.35 10   2 synthetic (0.80000000 0.20000000) *
+          7) bill_length_mm< 51.35 156  62 original (0.39743590 0.60256410)  
+           14) body_mass_g>=3125 149  62 original (0.41610738 0.58389262)  
+             28) body_mass_g< 4387.5 34  15 synthetic (0.55882353 0.44117647)  
+               56) bill_depth_mm>=13.95 25   8 synthetic (0.68000000 0.32000000) *
+               57) bill_depth_mm< 13.95 9   2 original (0.22222222 0.77777778) *
+             29) body_mass_g>=4387.5 115  43 original (0.37391304 0.62608696)  
+               58) body_mass_g>=4612.5 104  42 original (0.40384615 0.59615385)  
+                116) bill_depth_mm< 14.15 18   6 synthetic (0.66666667 0.33333333) *
+                117) bill_depth_mm>=14.15 86  30 original (0.34883721 0.65116279) *
+               59) body_mass_g< 4612.5 11   1 original (0.09090909 0.90909091) *
+           15) body_mass_g< 3125 7   0 original (0.00000000 1.00000000) *
 
     $discriminator_auc
     # A tibble: 2 × 4
       .sample  .metric .estimator .estimate
       <fct>    <chr>   <chr>          <dbl>
-    1 training roc_auc binary         0.743
-    2 testing  roc_auc binary         0.461
+    1 training roc_auc binary         0.742
+    2 testing  roc_auc binary         0.425
 
     $pmse
     # A tibble: 2 × 4
       .source   .pmse .null_pmse .pmse_ratio
       <fct>     <dbl>      <dbl>       <dbl>
-    1 training 0.0465     0.0327        1.42
-    2 testing  0.0483     0.0325        1.49
+    1 training 0.0466     0.0320        1.46
+    2 testing  0.0437     0.0327        1.34
 
     $specks
     # A tibble: 2 × 2
       .source  .specks
       <fct>      <dbl>
-    1 training  0.386 
-    2 testing   0.0833
+    1 training   0.390
+    2 testing    0.143
 
     attr(,"class")
     [1] "discrimination"
@@ -653,16 +669,16 @@ disc2 |>
     # A tibble: 666 × 10
        .pred_synthetic .source_label .sample  species island    sex   bill_length_mm
                  <dbl> <fct>         <chr>    <fct>   <fct>     <fct>          <dbl>
-     1             0.5 original      training Adelie  Torgersen male            39.1
-     2             0.5 original      training Adelie  Torgersen fema…           39.5
-     3             0.5 original      training Adelie  Torgersen fema…           40.3
-     4             0.5 original      training Adelie  Torgersen fema…           36.7
-     5             0.5 original      testing  Adelie  Torgersen male            39.3
-     6             0.5 original      testing  Adelie  Torgersen fema…           38.9
-     7             0.5 original      training Adelie  Torgersen male            39.2
-     8             0.5 original      training Adelie  Torgersen fema…           41.1
-     9             0.5 original      training Adelie  Torgersen male            38.6
-    10             0.5 original      testing  Adelie  Torgersen male            34.6
+     1           0.409 original      training Adelie  Torgersen male            39.1
+     2           0.455 original      training Adelie  Torgersen fema…           39.5
+     3           0.360 original      testing  Adelie  Torgersen fema…           40.3
+     4           0.496 original      training Adelie  Torgersen fema…           36.7
+     5           0.420 original      training Adelie  Torgersen male            39.3
+     6           0.457 original      training Adelie  Torgersen fema…           38.9
+     7           0.539 original      training Adelie  Torgersen male            39.2
+     8           0.354 original      training Adelie  Torgersen fema…           41.1
+     9           0.483 original      training Adelie  Torgersen male            38.6
+    10           0.681 original      testing  Adelie  Torgersen male            34.6
     # ℹ 656 more rows
     # ℹ 3 more variables: bill_depth_mm <dbl>, flipper_length_mm <dbl>,
     #   body_mass_g <dbl>
@@ -684,52 +700,52 @@ disc2 |>
     Call:  glmnet::glmnet(x = maybe_matrix(x), y = y, family = "binomial",      alpha = ~1) 
 
        Df %Dev   Lambda
-    1   0 0.00 0.041780
-    2   1 0.09 0.038070
-    3   1 0.16 0.034680
-    4   1 0.22 0.031600
-    5   2 0.27 0.028800
-    6   2 0.36 0.026240
-    7   2 0.43 0.023910
-    8   4 0.51 0.021780
-    9   4 0.58 0.019850
-    10  4 0.63 0.018080
-    11  4 0.68 0.016480
-    12  6 0.72 0.015010
-    13  6 0.78 0.013680
-    14  6 0.83 0.012460
-    15  6 0.87 0.011360
-    16  7 0.90 0.010350
-    17  7 0.94 0.009429
-    18  7 0.97 0.008592
-    19  7 0.99 0.007828
-    20  7 1.02 0.007133
-    21  8 1.06 0.006499
-    22  8 1.15 0.005922
-    23  8 1.22 0.005396
-    24  9 1.29 0.004916
-    25  9 1.34 0.004480
-    26 11 1.39 0.004082
-    27 11 1.44 0.003719
-    28 11 1.49 0.003389
-    29 11 1.53 0.003088
-    30 11 1.56 0.002813
-    31 11 1.58 0.002563
-    32 11 1.61 0.002336
-    33 11 1.62 0.002128
-    34 11 1.64 0.001939
-    35 11 1.65 0.001767
-    36 12 1.66 0.001610
-    37 12 1.68 0.001467
-    38 12 1.69 0.001337
-    39 12 1.70 0.001218
-    40 11 1.70 0.001110
-    41 11 1.71 0.001011
-    42 11 1.71 0.000921
-    43 11 1.72 0.000839
-    44 11 1.72 0.000765
-    45 11 1.72 0.000697
-    46 11 1.73 0.000635
+    1   0 0.00 0.036370
+    2   3 0.07 0.033140
+    3   3 0.18 0.030200
+    4   3 0.27 0.027520
+    5   3 0.35 0.025070
+    6   3 0.41 0.022840
+    7   5 0.50 0.020820
+    8   5 0.63 0.018970
+    9   5 0.75 0.017280
+    10  5 0.86 0.015750
+    11  5 0.95 0.014350
+    12  5 1.02 0.013070
+    13  4 1.08 0.011910
+    14  4 1.13 0.010850
+    15  5 1.16 0.009889
+    16  5 1.29 0.009010
+    17  6 1.40 0.008210
+    18  7 1.50 0.007481
+    19  8 1.58 0.006816
+    20  8 1.65 0.006210
+    21  9 1.72 0.005659
+    22 10 1.79 0.005156
+    23 10 1.86 0.004698
+    24 10 1.91 0.004281
+    25 10 1.96 0.003900
+    26 10 2.00 0.003554
+    27 10 2.04 0.003238
+    28 10 2.06 0.002950
+    29 10 2.09 0.002688
+    30 10 2.11 0.002450
+    31 10 2.12 0.002232
+    32 11 2.14 0.002034
+    33 11 2.16 0.001853
+    34 11 2.18 0.001688
+    35 11 2.19 0.001538
+    36 11 2.20 0.001402
+    37 11 2.21 0.001277
+    38 11 2.22 0.001164
+    39 11 2.22 0.001060
+    40 11 2.23 0.000966
+    41 11 2.23 0.000880
+    42 12 2.24 0.000802
+    43 12 2.24 0.000731
+    44 12 2.24 0.000666
+    45 12 2.24 0.000607
+    46 13 2.25 0.000553
 
     ...
     and 6 more lines.
@@ -738,22 +754,22 @@ disc2 |>
     # A tibble: 2 × 4
       .sample  .metric .estimator .estimate
       <fct>    <chr>   <chr>          <dbl>
-    1 training roc_auc binary           0.5
-    2 testing  roc_auc binary           0.5
+    1 training roc_auc binary         0.601
+    2 testing  roc_auc binary         0.475
 
     $pmse
     # A tibble: 2 × 4
-      .source     .pmse .null_pmse .pmse_ratio
-      <fct>       <dbl>      <dbl>       <dbl>
-    1 training 1.23e-32   1.23e-32           1
-    2 testing  1.23e-32   1.23e-32           1
+      .source    .pmse .null_pmse .pmse_ratio
+      <fct>      <dbl>      <dbl>       <dbl>
+    1 training 0.00732    0.00736       0.996
+    2 testing  0.00829    0.00745       1.11 
 
     $specks
     # A tibble: 2 × 2
-      .source   .specks
-      <fct>       <dbl>
-    1 training 4.86e-17
-    2 testing  6.94e-17
+      .source  .specks
+      <fct>      <dbl>
+    1 training   0.157
+    2 testing    0.167
 
     attr(,"class")
     [1] "discrimination"
