@@ -30,9 +30,9 @@ cells in the correlation matrix.
 Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
-Other utility metrics: 
-\code{\link{util_moments}()},
-\code{\link{util_percentiles}()},
-\code{\link{util_totals}()}
+Other utility metrics:
+\code{\link[=util_moments]{util_moments()}},
+\code{\link[=util_percentiles]{util_percentiles()}},
+\code{\link[=util_totals]{util_totals()}}
 }
 \concept{utility metrics}

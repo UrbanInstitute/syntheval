@@ -48,6 +48,11 @@ test_that("Three recipe methods return identical results" , {
       formula = .source_label ~ .
     )
   
+  # remove elapsed element
+  approach_custom$discriminator$fit$fit$elapsed$elapsed <- NULL
+  approach_default$discriminator$fit$fit$elapsed$elapsed <- NULL
+  approach_formula$discriminator$fit$fit$elapsed$elapsed <- NULL
+  
   expect_equal(approach_custom, approach_default)
   expect_equal(approach_custom, approach_formula)
   

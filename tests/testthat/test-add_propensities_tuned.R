@@ -1,6 +1,5 @@
 test_that("add_propensities_tuned returns propensities and fitted workflow", {
 
-  skip_if_not_installed("tune")
   skip_if_not_installed("glmnet")
 
   logistic_mod <- parsnip::logistic_reg(penalty = tune::tune()) |>
