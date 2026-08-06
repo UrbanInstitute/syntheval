@@ -36,10 +36,9 @@ A \code{tibble} of summary statistics.
 Calculate summary statistics for original and synthetic data.
 }
 \seealso{
-Other utility metrics: 
-\code{\link{util_corr_fit}()},
-\code{\link{util_percentiles}()},
-\code{\link{util_tails}()},
-\code{\link{util_totals}()}
+Other utility metrics:
+\code{\link[=util_corr_fit]{util_corr_fit()}},
+\code{\link[=util_percentiles]{util_percentiles()}},
+\code{\link[=util_totals]{util_totals()}}
 }
 \concept{utility metrics}

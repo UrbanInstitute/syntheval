@@ -2,6 +2,11 @@
 
 * Add optional parallelization to the bootstrapped null pMSEs in `add_pmse_ratio()` via `furrr`; enable it with `future::plan()`. Results for a given seed change relative to earlier versions because bootstrap iterations now use parallel-safe L'Ecuyer-CMRG streams.
 
+# syntheval 0.0.5
+
+* Remove `util_tails()`
+* Remove deprecated dplyr code. 
+
 # syntheval 0.0.4
 
 * Add empirical disclosure risk metrics.

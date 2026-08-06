@@ -34,8 +34,6 @@ weighted_sd <- function(x, w, na.rm = FALSE) {
 #'
 #' @return A numeric vector of length 1.
 #'
-#' @export
-#'
 weighted_skewness <- function(x, w, na.rm = FALSE) {
   # https://www.gnu.org/software/gsl/doc/html/statistics.html#weighted-samples
  
