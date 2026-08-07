@@ -127,6 +127,8 @@ Hard coding of values should be avoided in functions. When possible, values shou
 
 The project uses `.Rproj` to manage directory paths. `setwd()` and absolute file paths should never be used.
 
+Always use `|>` instead of `%>%`.
+
 ### Naming Conventions
 
 ### roxygen2
