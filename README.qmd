@@ -4,14 +4,24 @@ editor_options:
   chunk_output_type: console
 ---
 
-# syntheval
+# `syntheval`
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-syntheval makes it simple to evaluate the utility and disclosure risks of synthetic data. The package is designed to work with `postsynth` objects from `library(tidysynthesis)` but also works well with any data frame in R. 
+`syntheval` makes it simple to evaluate the utility and disclosure risks of synthetic data. The package is designed to work any `data.frame` objects or `postsynth` objects from `tidysynthesis`.
 
-**Note:** `library(tidysynthesis)` is currently under private development but will be made public in the future. 
+# Package Status and Documentation
+
+This package is still under active development before we release our first major version, 0.1.0. This will involve API changes and new functionality. You can keep track of our work in the following issues:
+
+* [Version 0.0.5](https://github.com/UrbanInstitute/syntheval/issues/77)
+* [Version 0.0.6](https://github.com/UrbanInstitute/syntheval/issues/78)
+* [Version 0.1.0](https://github.com/UrbanInstitute/syntheval/issues/107)
+
+For detailed documentation, you can see our [documentation website](https://ui-research.github.io/tidysynthesis-documentation/). 
+
+**Note:** `library(tidysynthesis)` is currently under private development but will be made public in Q1 of 2025. 
 
 ## Navigation
 

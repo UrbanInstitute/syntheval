@@ -50,15 +50,15 @@ util_ci_overlap(
 
 }
 \seealso{
-Other Utility metrics: 
-\code{\link{add_pmse}()},
-\code{\link{add_pmse_ratio}()},
-\code{\link{add_propensities}()},
-\code{\link{add_propensities_tuned}()},
-\code{\link{add_specks}()},
-\code{\link{discrimination}()},
-\code{\link{util_co_occurrence}()},
-\code{\link{util_ks_distance}()},
-\code{\link{util_proportions}()}
+Other Utility metrics:
+\code{\link[=add_pmse]{add_pmse()}},
+\code{\link[=add_pmse_ratio]{add_pmse_ratio()}},
+\code{\link[=add_propensities]{add_propensities()}},
+\code{\link[=add_propensities_tuned]{add_propensities_tuned()}},
+\code{\link[=add_specks]{add_specks()}},
+\code{\link[=discrimination]{discrimination()}},
+\code{\link[=util_co_occurrence]{util_co_occurrence()}},
+\code{\link[=util_ks_distance]{util_ks_distance()}},
+\code{\link[=util_proportions]{util_proportions()}}
 }
 \concept{Utility metrics}

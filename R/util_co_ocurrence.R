@@ -21,8 +21,8 @@
 #' 
 .util_co_occurrence <- function(synth_data, conf_data, na.rm = FALSE) {
   
-  synth_data <- dplyr::select_if(synth_data, is.numeric)
-  conf_data <- dplyr::select_if(conf_data, is.numeric)
+  synth_data <- dplyr::select(synth_data, tidyselect::where(is.numeric))
+  conf_data <- dplyr::select(conf_data, tidyselect::where(is.numeric))
 
   # reorder data names
   conf_data <- dplyr::select(conf_data, names(synth_data))
@@ -33,7 +33,7 @@
     # find the linear co-occurrence matrix of numeric variables from a data set
     co_occurrence_matrix <-
       x %>%
-      dplyr::select_if(is.numeric) %>%
+      dplyr::select(tidyselect::where(is.numeric)) %>%
       co_occurrence(na.rm = na.rm)
     
     # set the values in the upper triangle to zero to avoid double counting
