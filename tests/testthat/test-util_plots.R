@@ -70,10 +70,18 @@ test_that("create_cormat_plot creates the right ggplot", {
   
 })
 
+test_that("plot_cormat throws expected errors", {
+
+  expect_error(
+    plot_cormat(conf_df)
+  )
+
+})
+
 test_that("plot_cormat creates the right ggplot", {
-  
-  plot <- plot_cormat(conf_df, synth_df)
-  
+
+  plot <- plot_cormat(ed)
+
   expect_equal(length(plot$grobs), 2)
-  
+
 })
