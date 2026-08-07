@@ -138,11 +138,12 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
   # calculate the null pMSE for each bootstrap sample, in parallel when a
   # non-sequential future::plan() is set
   # seed = TRUE assigns every iteration its own random seed up front, so
-  # results are reproducible and identical across plans for a given seed
+  # results are reproducible and identical across plans for a given seed;
+  # packages = "workflows" loads the fit.workflow method on parallel workers
   pmse_null <- furrr::future_map(
     .x = seq_len(times),
     .f = calc_null_pmse,
-    .options = furrr::furrr_options(seed = TRUE)
+    .options = furrr::furrr_options(seed = TRUE, packages = "workflows")
   )
 
   # find the mean of the bootstrapped pMSEs
