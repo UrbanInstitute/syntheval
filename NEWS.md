@@ -1,7 +1,8 @@
 # syntheval 0.0.5
 
 * Remove `util_tails()`
-* Remove deprecated dplyr code. 
+* Update deprecated dplyr code. 
+* Move all functions to use `eval_data`.
 
 # syntheval 0.0.4
 
