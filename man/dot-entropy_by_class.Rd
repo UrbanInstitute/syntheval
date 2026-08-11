@@ -14,7 +14,8 @@ in an \code{attribute_scan} object (see \code{.conditional_distributions()}).}
 }
 \value{
 A tibble with columns \code{key_id}, the quasi-identifying key columns,
-\code{target_var}, and \code{entropy} (base-2 Shannon entropy).
+\code{target_var}, \code{entropy} (base-2 Shannon entropy), and \code{max_entropy} (the
+maximum possible entropy for that target variable's number of levels).
 }
 \description{
 Compute per-equivalence-class Shannon entropy from a conditional distributions tibble

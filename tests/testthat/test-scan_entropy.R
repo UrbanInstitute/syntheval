@@ -27,11 +27,12 @@ test_that("scan_entropy basic functionality", {
   
   expect_identical(
     names(res),
-    c("source", "target_var", "key_id", "q", "entropy")
+    c("source", "target_var", "key_id", "q", "entropy", "max_entropy")
   )
   
   expect_true(all(res$entropy >= 0))
   expect_true(all(res$entropy <= log2(2)))
+  expect_equal(res$max_entropy, rep(log2(2), nrow(res)))
   
   conf_res <- res |>
     dplyr::filter(source == "confidential") |>

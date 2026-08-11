@@ -11,9 +11,10 @@ scan_entropy(attribute_scan)
 }
 \value{
 A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{target_var}, \code{key_id}, the quasi-identifying key columns, and \code{entropy} (the
+\code{target_var}, \code{key_id}, the quasi-identifying key columns, \code{entropy} (the
 base-2 Shannon entropy of the conditional target distribution within that
-equivalence class).
+equivalence class), and \code{max_entropy} (the maximum possible entropy for that
+target variable's number of levels, for comparison across target variables).
 }
 \description{
 Quantify uncertainty about a target variable within equivalence classes

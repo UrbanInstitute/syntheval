@@ -4,9 +4,10 @@
 #' @param attribute_scan An `attribute_scan` object.
 #' 
 #' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, `key_id`, the quasi-identifying key columns, and `entropy` (the 
+#' `target_var`, `key_id`, the quasi-identifying key columns, `entropy` (the 
 #' base-2 Shannon entropy of the conditional target distribution within that 
-#' equivalence class).
+#' equivalence class), and `max_entropy` (the maximum possible entropy for that 
+#' target variable's number of levels, for comparison across target variables).
 #' 
 #' @export
 #' 
@@ -28,7 +29,9 @@ scan_entropy <- function(attribute_scan) {
   
   result <- dplyr::bind_rows(conf_entropy, synth_entropy) |>
     dplyr::relocate(
-      dplyr::all_of(c("source", "target_var", "key_id", attribute_scan$qid_keys, "entropy"))
+      dplyr::all_of(
+        c("source", "target_var", "key_id", attribute_scan$qid_keys, "entropy", "max_entropy")
+      )
     )
   
   return(result)
@@ -43,11 +46,12 @@ scan_entropy <- function(attribute_scan) {
 #' @param qid_keys A character vector of quasi-identifying column names.
 #' 
 #' @return A tibble with columns `key_id`, the quasi-identifying key columns,
-#' `target_var`, and `entropy` (base-2 Shannon entropy).
+#' `target_var`, `entropy` (base-2 Shannon entropy), and `max_entropy` (the 
+#' maximum possible entropy for that target variable's number of levels).
 #' 
 .entropy_by_class <- function(distributions, qid_keys) {
   
-  distributions |>
+  class_entropy <- distributions |>
     dplyr::filter(!is.na(.data$prob)) |>
     dplyr::group_by(
       dplyr::across(dplyr::all_of(c("key_id", qid_keys, "target_var")))
@@ -58,5 +62,16 @@ scan_entropy <- function(attribute_scan) {
       ),
       .groups = "drop"
     )
+  
+  # .drop = FALSE completes distributions against every declared target level, 
+  # so n_distinct(target_level) reflects the target variable's full level count
+  max_entropy <- distributions |>
+    dplyr::group_by(dplyr::across(dplyr::all_of("target_var"))) |>
+    dplyr::summarize(
+      max_entropy = log2(dplyr::n_distinct(.data$target_level)),
+      .groups = "drop"
+    )
+  
+  return(dplyr::left_join(class_entropy, max_entropy, by = "target_var"))
   
 }
