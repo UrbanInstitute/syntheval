@@ -15,6 +15,17 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_scan_holdout <- attribute_scan(
+  eval_data(conf_data = toy_conf, synth_data = toy_synth, holdout_data = toy_holdout),
+  qid_keys = "q",
+  target_keys = "t"
+)
+
 test_that("scan_k_anonymity input errors", {
   
   expect_error(scan_k_anonymity("not an attribute_scan object"))
@@ -53,5 +64,24 @@ test_that("scan_k_anonymity matches manual .aggregate_qid computation", {
     res$k[res$source == "confidential"],
     manual_conf
   )
+  
+})
+
+test_that("scan_k_anonymity omits holdout when eval_data$holdout_data is not supplied", {
+  
+  res <- scan_k_anonymity(toy_scan)
+  
+  expect_false("holdout" %in% res$source)
+  
+})
+
+test_that("scan_k_anonymity includes holdout when eval_data$holdout_data is supplied", {
+  
+  res <- scan_k_anonymity(toy_scan_holdout)
+  
+  expect_identical(res$source, c("confidential", "synthetic", "holdout"))
+  
+  # holdout: class A n=1, class B n=4 -> min 1
+  expect_equal(res$k[res$source == "holdout"], 1)
   
 })

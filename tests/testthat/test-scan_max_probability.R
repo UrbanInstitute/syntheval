@@ -15,6 +15,17 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_scan_holdout <- attribute_scan(
+  eval_data(conf_data = toy_conf, synth_data = toy_synth, holdout_data = toy_holdout),
+  qid_keys = "q",
+  target_keys = "t"
+)
+
 test_that("scan_max_probability input errors", {
   
   expect_error(scan_max_probability("not an attribute_scan object"))
@@ -43,5 +54,24 @@ test_that("scan_max_probability basic functionality", {
   
   # class A: 1 X, 1 Y -> max prob 0.5; class B: 2 X, 1 Y -> max prob 2/3
   expect_equal(synth_res$max_probability, c(0.5, 2 / 3))
+  
+})
+
+test_that("scan_max_probability omits holdout when eval_data$holdout_data is not supplied", {
+  
+  res <- scan_max_probability(toy_scan)
+  
+  expect_false("holdout" %in% res$source)
+  
+})
+
+test_that("scan_max_probability includes holdout when eval_data$holdout_data is supplied", {
+  
+  holdout_res <- scan_max_probability(toy_scan_holdout) |>
+    dplyr::filter(source == "holdout") |>
+    dplyr::arrange(q)
+  
+  # class A: all X -> max prob 1; class B: 2 X, 2 Y -> max prob 0.5
+  expect_equal(holdout_res$max_probability, c(1, 0.5))
   
 })

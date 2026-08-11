@@ -10,9 +10,10 @@ scan_l_diversity(attribute_scan)
 \item{attribute_scan}{An \code{attribute_scan} object.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{target_var}, \code{key_id}, the quasi-identifying key columns, and \code{l_diversity}
-(the count of distinct target levels observed within that equivalence class).
+A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
+\code{"holdout"} when holdout data is available), \code{target_var}, \code{key_id}, the
+quasi-identifying key columns, and \code{l_diversity} (the count of distinct
+target levels observed within that equivalence class).
 }
 \description{
 Measure the diversity of target values within equivalence classes

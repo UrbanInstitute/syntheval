@@ -3,11 +3,12 @@
 #' 
 #' @param attribute_scan An `attribute_scan` object.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, `key_id`, the quasi-identifying key columns, `entropy` (the 
-#' base-2 Shannon entropy of the conditional target distribution within that 
-#' equivalence class), and `max_entropy` (the maximum possible entropy for that 
-#' target variable's number of levels, for comparison across target variables).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `target_var`, `key_id`, the 
+#' quasi-identifying key columns, `entropy` (the base-2 Shannon entropy of the 
+#' conditional target distribution within that equivalence class), and `max_entropy` 
+#' (the maximum possible entropy for that target variable's number of levels, 
+#' for comparison across target variables).
 #' 
 #' @export
 #' 
@@ -27,7 +28,22 @@ scan_entropy <- function(attribute_scan) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_entropy, synth_entropy) |>
+  result_list <- list(conf_entropy, synth_entropy)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_entropy <- .entropy_by_class(
+      distributions = attribute_scan$holdout$distributions,
+      qid_keys = attribute_scan$qid_keys
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_entropy))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(
       dplyr::all_of(
         c("source", "target_var", "key_id", attribute_scan$qid_keys, "entropy", "max_entropy")

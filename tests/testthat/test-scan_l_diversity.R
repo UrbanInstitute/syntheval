@@ -15,6 +15,17 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_scan_holdout <- attribute_scan(
+  eval_data(conf_data = toy_conf, synth_data = toy_synth, holdout_data = toy_holdout),
+  qid_keys = "q",
+  target_keys = "t"
+)
+
 test_that("scan_l_diversity input errors", {
   
   expect_error(scan_l_diversity("not an attribute_scan object"))
@@ -69,5 +80,24 @@ test_that("scan_l_diversity ignores unobserved target levels", {
   # confidential class A only ever observes "X" (never "Y"), so l-diversity is 1
   expect_equal(res$l_diversity[res$source == "confidential"], 1)
   expect_equal(res$l_diversity[res$source == "synthetic"], 2)
+  
+})
+
+test_that("scan_l_diversity omits holdout when eval_data$holdout_data is not supplied", {
+  
+  res <- scan_l_diversity(toy_scan)
+  
+  expect_false("holdout" %in% res$source)
+  
+})
+
+test_that("scan_l_diversity includes holdout when eval_data$holdout_data is supplied", {
+  
+  res <- scan_l_diversity(toy_scan_holdout) |>
+    dplyr::filter(source == "holdout") |>
+    dplyr::arrange(q)
+  
+  # class A: only X observed -> 1 distinct level; class B: 2 X, 2 Y -> 2 distinct levels
+  expect_equal(res$l_diversity, c(1, 2))
   
 })

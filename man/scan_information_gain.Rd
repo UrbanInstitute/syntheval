@@ -11,10 +11,11 @@ scan_information_gain(attribute_scan)
 \item{attribute_scan}{An \code{attribute_scan} object.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{target_var}, and \code{information_gain} (the reduction, in base-2 Shannon
-entropy, from the overall target distribution to the class-size-weighted
-average conditional target distribution within equivalence classes).
+A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
+\code{"holdout"} when holdout data is available), \code{target_var}, and
+\code{information_gain} (the reduction, in base-2 Shannon entropy, from the
+overall target distribution to the class-size-weighted average conditional
+target distribution within equivalence classes).
 }
 \description{
 Measure how much information the quasi-identifiers reveal about a target

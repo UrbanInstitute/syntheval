@@ -4,10 +4,11 @@
 #' 
 #' @param attribute_scan An `attribute_scan` object.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, and `weighted_probability` (the average, across equivalence 
-#' classes and weighted by class size, of the highest conditional probability 
-#' observed for that target variable within each class).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `target_var`, and 
+#' `weighted_probability` (the average, across equivalence classes and 
+#' weighted by class size, of the highest conditional probability observed for 
+#' that target variable within each class).
 #' 
 #' @export
 #' 
@@ -27,7 +28,22 @@ scan_weighted_probability <- function(attribute_scan) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_weighted_prob, synth_weighted_prob) |>
+  result_list <- list(conf_weighted_prob, synth_weighted_prob)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_weighted_prob <- .weighted_probability_by_target(
+      distributions = attribute_scan$holdout$distributions,
+      qid_keys = attribute_scan$qid_keys
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_weighted_prob))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(dplyr::all_of(c("source", "target_var", "weighted_probability")))
   
   return(result)

@@ -15,9 +15,10 @@ class and overall target distributions. One of \code{"linf"} (L-infinity distanc
 \code{"l1"} (L1 distance), or \code{"l2"} (L2 distance), defaults to \code{"linf"}.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{target_var}, \code{key_id}, the quasi-identifying key columns, and \code{t_closeness}
-(the distance between the equivalence class and overall target distributions).
+A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
+\code{"holdout"} when holdout data is available), \code{target_var}, \code{key_id}, the
+quasi-identifying key columns, and \code{t_closeness} (the distance between the
+equivalence class and overall target distributions).
 }
 \description{
 Measure how closely each equivalence class target distribution matches the

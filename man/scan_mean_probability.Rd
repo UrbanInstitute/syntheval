@@ -10,10 +10,11 @@ scan_mean_probability(attribute_scan)
 \item{attribute_scan}{An \code{attribute_scan} object.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{target_var}, and \code{mean_probability} (the unweighted average, across
-equivalence classes, of the highest conditional probability observed for
-that target variable within each class).
+A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
+\code{"holdout"} when holdout data is available), \code{target_var}, and
+\code{mean_probability} (the unweighted average, across equivalence classes, of
+the highest conditional probability observed for that target variable
+within each class).
 }
 \description{
 Return the average conditional probability across equivalence classes

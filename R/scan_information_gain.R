@@ -4,10 +4,11 @@
 #' 
 #' @param attribute_scan An `attribute_scan` object.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, and `information_gain` (the reduction, in base-2 Shannon 
-#' entropy, from the overall target distribution to the class-size-weighted 
-#' average conditional target distribution within equivalence classes).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `target_var`, and 
+#' `information_gain` (the reduction, in base-2 Shannon entropy, from the 
+#' overall target distribution to the class-size-weighted average conditional 
+#' target distribution within equivalence classes).
 #' 
 #' @export
 #' 
@@ -27,7 +28,22 @@ scan_information_gain <- function(attribute_scan) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_info_gain, synth_info_gain) |>
+  result_list <- list(conf_info_gain, synth_info_gain)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_info_gain <- .information_gain_by_target(
+      distributions = attribute_scan$holdout$distributions,
+      qid_keys = attribute_scan$qid_keys
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_info_gain))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(dplyr::all_of(c("source", "target_var", "information_gain")))
   
   return(result)

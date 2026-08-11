@@ -3,10 +3,10 @@
 #' 
 #' @param attribute_scan An `attribute_scan` object.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `n_classes` (the number of observed equivalence classes), `min_size`, 
-#' `mean_size`, `median_size`, and `max_size` (summary statistics of the 
-#' observed equivalence class sizes).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `n_classes` (the number of 
+#' observed equivalence classes), `min_size`, `mean_size`, `median_size`, and 
+#' `max_size` (summary statistics of the observed equivalence class sizes).
 #' 
 #' @export
 #' 
@@ -24,7 +24,21 @@ scan_equivalence_class_size <- function(attribute_scan) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_size, synth_size) |>
+  result_list <- list(conf_size, synth_size)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_size <- .class_size_summary(
+      attribute_scan$holdout$equivalence_classes
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_size))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(
       dplyr::all_of(c("source", "n_classes", "min_size", "mean_size", "median_size", "max_size"))
     )

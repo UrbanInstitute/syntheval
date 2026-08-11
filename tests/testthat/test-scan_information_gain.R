@@ -15,6 +15,17 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_scan_holdout <- attribute_scan(
+  eval_data(conf_data = toy_conf, synth_data = toy_synth, holdout_data = toy_holdout),
+  qid_keys = "q",
+  target_keys = "t"
+)
+
 test_that("scan_information_gain input errors", {
   
   expect_error(scan_information_gain("not an attribute_scan object"))
@@ -67,5 +78,30 @@ test_that("scan_information_gain is zero when qid_keys reveal nothing about the 
   res <- scan_information_gain(scan)
   
   expect_equal(res$information_gain[res$source == "confidential"], 0)
+  
+})
+
+test_that("scan_information_gain omits holdout when eval_data$holdout_data is not supplied", {
+  
+  res <- scan_information_gain(toy_scan)
+  
+  expect_false("holdout" %in% res$source)
+  
+})
+
+test_that("scan_information_gain includes holdout when eval_data$holdout_data is supplied", {
+  
+  res <- scan_information_gain(toy_scan_holdout)
+  
+  # holdout: overall t distribution X = 3/5, Y = 2/5
+  # conditional entropy: class A (n=1, entropy 0) + class B (n=4, entropy 1),
+  # weighted by class size -> (0 * 1 + 1 * 4) / 5
+  holdout_overall_entropy <- -(0.6 * log2(0.6) + 0.4 * log2(0.4))
+  holdout_conditional_entropy <- (0 * 1 + 1 * 4) / 5
+  
+  expect_equal(
+    res$information_gain[res$source == "holdout"],
+    holdout_overall_entropy - holdout_conditional_entropy
+  )
   
 })

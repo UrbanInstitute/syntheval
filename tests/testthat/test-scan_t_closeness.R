@@ -15,6 +15,17 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_scan_holdout <- attribute_scan(
+  eval_data(conf_data = toy_conf, synth_data = toy_synth, holdout_data = toy_holdout),
+  qid_keys = "q",
+  target_keys = "t"
+)
+
 test_that("scan_t_closeness input errors", {
   
   expect_error(scan_t_closeness("not an attribute_scan object"))
@@ -79,5 +90,26 @@ test_that("scan_t_closeness is zero when a class matches the overall distributio
   res <- scan_t_closeness(scan)
   
   expect_equal(res$t_closeness[res$source == "confidential"], c(0, 0))
+  
+})
+
+test_that("scan_t_closeness omits holdout when eval_data$holdout_data is not supplied", {
+  
+  res <- scan_t_closeness(toy_scan)
+  
+  expect_false("holdout" %in% res$source)
+  
+})
+
+test_that("scan_t_closeness includes holdout when eval_data$holdout_data is supplied", {
+  
+  res <- scan_t_closeness(toy_scan_holdout) |>
+    dplyr::filter(source == "holdout") |>
+    dplyr::arrange(q)
+  
+  # overall holdout distribution: X = 3/5, Y = 2/5
+  # class A: X = 1, Y = 0 -> max(|1 - 0.6|, |0 - 0.4|) = 0.4
+  # class B: X = 0.5, Y = 0.5 -> max(|0.5 - 0.6|, |0.5 - 0.4|) = 0.1
+  expect_equal(res$t_closeness, c(0.4, 0.1))
   
 })

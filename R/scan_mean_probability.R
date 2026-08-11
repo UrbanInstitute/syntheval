@@ -3,10 +3,11 @@
 #' 
 #' @param attribute_scan An `attribute_scan` object.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, and `mean_probability` (the unweighted average, across 
-#' equivalence classes, of the highest conditional probability observed for 
-#' that target variable within each class).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `target_var`, and 
+#' `mean_probability` (the unweighted average, across equivalence classes, of 
+#' the highest conditional probability observed for that target variable 
+#' within each class).
 #' 
 #' @export
 #' 
@@ -26,7 +27,22 @@ scan_mean_probability <- function(attribute_scan) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_mean_prob, synth_mean_prob) |>
+  result_list <- list(conf_mean_prob, synth_mean_prob)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_mean_prob <- .mean_probability_by_target(
+      distributions = attribute_scan$holdout$distributions,
+      qid_keys = attribute_scan$qid_keys
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_mean_prob))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(dplyr::all_of(c("source", "target_var", "mean_probability")))
   
   return(result)

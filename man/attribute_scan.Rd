@@ -17,7 +17,9 @@ Must be disjoint from \code{qid_keys} and \code{factor} type. Defaults to the co
 of \code{qid_keys} among the factor columns of \code{eval_data$conf_data}.}
 }
 \value{
-An \code{attribute_scan} object.
+An \code{attribute_scan} object. If \code{eval_data$holdout_data} is supplied,
+the object also includes a \code{holdout} element with the same structure as
+\code{confidential} and \code{synthetic}.
 }
 \description{
 Create an attribute_scan object for non-parametric discovery attack metrics

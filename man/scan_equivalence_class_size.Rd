@@ -10,10 +10,10 @@ scan_equivalence_class_size(attribute_scan)
 \item{attribute_scan}{An \code{attribute_scan} object.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{n_classes} (the number of observed equivalence classes), \code{min_size},
-\code{mean_size}, \code{median_size}, and \code{max_size} (summary statistics of the
-observed equivalence class sizes).
+A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
+\code{"holdout"} when holdout data is available), \code{n_classes} (the number of
+observed equivalence classes), \code{min_size}, \code{mean_size}, \code{median_size}, and
+\code{max_size} (summary statistics of the observed equivalence class sizes).
 }
 \description{
 Summarize the size distribution of equivalence classes

@@ -10,10 +10,10 @@ scan_max_probability(attribute_scan)
 \item{attribute_scan}{An \code{attribute_scan} object.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{target_var}, \code{key_id}, the quasi-identifying key columns, and
-\code{max_probability} (the highest conditional probability of any target level
-within that equivalence class).
+A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
+\code{"holdout"} when holdout data is available), \code{target_var}, \code{key_id}, the
+quasi-identifying key columns, and \code{max_probability} (the highest conditional
+probability of any target level within that equivalence class).
 }
 \description{
 Return the highest conditional probability observed within each equivalence class

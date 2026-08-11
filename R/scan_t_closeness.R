@@ -7,9 +7,10 @@
 #' class and overall target distributions. One of `"linf"` (L-infinity distance), 
 #' `"l1"` (L1 distance), or `"l2"` (L2 distance), defaults to `"linf"`.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, `key_id`, the quasi-identifying key columns, and `t_closeness` 
-#' (the distance between the equivalence class and overall target distributions).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `target_var`, `key_id`, the 
+#' quasi-identifying key columns, and `t_closeness` (the distance between the 
+#' equivalence class and overall target distributions).
 #' 
 #' @export
 #' 
@@ -32,7 +33,23 @@ scan_t_closeness <- function(attribute_scan, metric = c("linf", "l1", "l2")) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_t_closeness, synth_t_closeness) |>
+  result_list <- list(conf_t_closeness, synth_t_closeness)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_t_closeness <- .t_closeness_by_class(
+      distributions = attribute_scan$holdout$distributions,
+      qid_keys = attribute_scan$qid_keys,
+      metric = metric
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_t_closeness))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(
       dplyr::all_of(c("source", "target_var", "key_id", attribute_scan$qid_keys, "t_closeness"))
     )

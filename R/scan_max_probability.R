@@ -3,10 +3,10 @@
 #' 
 #' @param attribute_scan An `attribute_scan` object.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, `key_id`, the quasi-identifying key columns, and 
-#' `max_probability` (the highest conditional probability of any target level 
-#' within that equivalence class).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `target_var`, `key_id`, the 
+#' quasi-identifying key columns, and `max_probability` (the highest conditional 
+#' probability of any target level within that equivalence class).
 #' 
 #' @export
 #' 
@@ -26,7 +26,22 @@ scan_max_probability <- function(attribute_scan) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_max_prob, synth_max_prob) |>
+  result_list <- list(conf_max_prob, synth_max_prob)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_max_prob <- .max_probability_by_class(
+      distributions = attribute_scan$holdout$distributions,
+      qid_keys = attribute_scan$qid_keys
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_max_prob))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(
       dplyr::all_of(c("source", "target_var", "key_id", attribute_scan$qid_keys, "max_probability"))
     )

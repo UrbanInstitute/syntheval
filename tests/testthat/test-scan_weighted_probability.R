@@ -15,6 +15,17 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_scan_holdout <- attribute_scan(
+  eval_data(conf_data = toy_conf, synth_data = toy_synth, holdout_data = toy_holdout),
+  qid_keys = "q",
+  target_keys = "t"
+)
+
 test_that("scan_weighted_probability input errors", {
   
   expect_error(scan_weighted_probability("not an attribute_scan object"))
@@ -46,5 +57,23 @@ test_that("scan_weighted_probability differs from scan_mean_probability with une
     res_weighted$weighted_probability,
     res_mean$mean_probability
   )))
+  
+})
+
+test_that("scan_weighted_probability omits holdout when eval_data$holdout_data is not supplied", {
+  
+  res <- scan_weighted_probability(toy_scan)
+  
+  expect_false("holdout" %in% res$source)
+  
+})
+
+test_that("scan_weighted_probability includes holdout when eval_data$holdout_data is supplied", {
+  
+  res <- scan_weighted_probability(toy_scan_holdout)
+  
+  # holdout: class A (n=1, max prob 1), class B (n=4, max prob 0.5)
+  # weighted = (1 * 1 + 0.5 * 4) / 5 = 0.6
+  expect_equal(res$weighted_probability[res$source == "holdout"], 0.6)
   
 })

@@ -13,6 +13,17 @@ toy_synth <- data.frame(
 
 toy_ed <- eval_data(conf_data = toy_conf, synth_data = toy_synth)
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_ed_holdout <- eval_data(
+  conf_data = toy_conf,
+  synth_data = toy_synth,
+  holdout_data = toy_holdout
+)
+
 # attribute_scan input errors ---------------------------------------
 
 test_that("attribute_scan input errors", {
@@ -94,6 +105,9 @@ test_that("attribute_scan object structure", {
     c("qid_keys", "target_keys", "synthetic", "confidential", "call")
   )
   
+  # no holdout element when eval_data$holdout_data is not supplied
+  expect_null(scan$holdout)
+  
   for (source in c("confidential", "synthetic")) {
     
     expect_identical(
@@ -131,6 +145,63 @@ test_that("attribute_scan object structure", {
     scan$synthetic$equivalence_classes,
     .aggregate_qid(toy_synth, keys = "q")
   )
+  
+})
+
+test_that("attribute_scan includes holdout when eval_data$holdout_data is supplied", {
+  
+  scan <- attribute_scan(toy_ed_holdout, qid_keys = "q", target_keys = "t")
+  
+  expect_identical(
+    names(scan),
+    c("qid_keys", "target_keys", "synthetic", "confidential", "holdout", "call")
+  )
+  
+  expect_identical(
+    names(scan$holdout),
+    c("equivalence_classes", "distributions")
+  )
+  
+  expect_identical(
+    names(scan$holdout$equivalence_classes),
+    c("key_id", "q", "raw_n", "prop")
+  )
+  
+  expect_identical(
+    names(scan$holdout$distributions),
+    c("key_id", "q", "target_var", "target_level", "n", "prob")
+  )
+  
+  # probabilities sum to 1 within each equivalence class / target variable
+  prob_sums <- scan$holdout$distributions |>
+    dplyr::group_by(key_id, target_var) |>
+    dplyr::summarize(total = sum(prob), .groups = "drop") |>
+    dplyr::pull(total)
+  
+  expect_equal(prob_sums, rep(1, length(prob_sums)))
+  
+  # equivalence class row counts match a direct .aggregate_qid call
+  expect_identical(
+    scan$holdout$equivalence_classes,
+    .aggregate_qid(toy_holdout, keys = "q")
+  )
+  
+  # class A: all X (prob 1, 0); class B: 2 X, 2 Y (prob 0.5, 0.5)
+  holdout_probs <- scan$holdout$distributions |>
+    dplyr::arrange(q, target_level) |>
+    dplyr::pull(prob)
+  
+  expect_equal(holdout_probs, c(1, 0, 0.5, 0.5))
+  
+})
+
+test_that("print.attribute_scan reports holdout equivalence classes only when supplied", {
+  
+  scan <- attribute_scan(toy_ed, qid_keys = "q", target_keys = "t")
+  scan_holdout <- attribute_scan(toy_ed_holdout, qid_keys = "q", target_keys = "t")
+  
+  expect_false(any(grepl("Holdout", utils::capture.output(print(scan)))))
+  expect_true(any(grepl("Holdout", utils::capture.output(print(scan_holdout)))))
   
 })
 

@@ -3,9 +3,10 @@
 #' 
 #' @param attribute_scan An `attribute_scan` object.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`), 
-#' `target_var`, `key_id`, the quasi-identifying key columns, and `l_diversity` 
-#' (the count of distinct target levels observed within that equivalence class).
+#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
+#' `"holdout"` when holdout data is available), `target_var`, `key_id`, the 
+#' quasi-identifying key columns, and `l_diversity` (the count of distinct 
+#' target levels observed within that equivalence class).
 #' 
 #' @export
 #' 
@@ -25,7 +26,22 @@ scan_l_diversity <- function(attribute_scan) {
   ) |>
     dplyr::mutate(source = "synthetic")
   
-  result <- dplyr::bind_rows(conf_l_diversity, synth_l_diversity) |>
+  result_list <- list(conf_l_diversity, synth_l_diversity)
+  
+  # holdout data is optional; only add holdout results when available
+  if (!is.null(attribute_scan$holdout)) {
+    
+    holdout_l_diversity <- .l_diversity_by_class(
+      distributions = attribute_scan$holdout$distributions,
+      qid_keys = attribute_scan$qid_keys
+    ) |>
+      dplyr::mutate(source = "holdout")
+    
+    result_list <- c(result_list, list(holdout_l_diversity))
+    
+  }
+  
+  result <- dplyr::bind_rows(result_list) |>
     dplyr::relocate(
       dplyr::all_of(c("source", "target_var", "key_id", attribute_scan$qid_keys, "l_diversity"))
     )

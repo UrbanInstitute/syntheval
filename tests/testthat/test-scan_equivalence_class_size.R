@@ -15,6 +15,17 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
+toy_holdout <- data.frame(
+  q = factor(c("A", "B", "B", "B", "B"), levels = c("A", "B")),
+  t = factor(c("X", "X", "X", "Y", "Y"), levels = c("X", "Y"))
+)
+
+toy_scan_holdout <- attribute_scan(
+  eval_data(conf_data = toy_conf, synth_data = toy_synth, holdout_data = toy_holdout),
+  qid_keys = "q",
+  target_keys = "t"
+)
+
 test_that("scan_equivalence_class_size input errors", {
   
   expect_error(scan_equivalence_class_size("not an attribute_scan object"))
@@ -68,5 +79,27 @@ test_that("scan_equivalence_class_size ignores unobserved classes", {
   # 3 observed classes: q = A (n=2), q = B (n=2), q = NA (n=1)
   expect_equal(res$n_classes[res$source == "confidential"], 3)
   expect_equal(res$min_size[res$source == "confidential"], 1)
+  
+})
+
+test_that("scan_equivalence_class_size omits holdout when eval_data$holdout_data is not supplied", {
+  
+  res <- scan_equivalence_class_size(toy_scan)
+  
+  expect_false("holdout" %in% res$source)
+  
+})
+
+test_that("scan_equivalence_class_size includes holdout when eval_data$holdout_data is supplied", {
+  
+  res <- scan_equivalence_class_size(toy_scan_holdout) |>
+    dplyr::filter(source == "holdout")
+  
+  # holdout: class A n=1, class B n=4
+  expect_equal(res$n_classes, 2)
+  expect_equal(res$min_size, 1)
+  expect_equal(res$mean_size, 2.5)
+  expect_equal(res$median_size, 2.5)
+  expect_equal(res$max_size, 4)
   
 })

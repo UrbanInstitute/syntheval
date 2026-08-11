@@ -8,7 +8,9 @@
 #' Must be disjoint from `qid_keys` and `factor` type. Defaults to the complement 
 #' of `qid_keys` among the factor columns of `eval_data$conf_data`.
 #' 
-#' @returns An `attribute_scan` object.
+#' @returns An `attribute_scan` object. If `eval_data$holdout_data` is supplied, 
+#' the object also includes a `holdout` element with the same structure as 
+#' `confidential` and `synthetic`.
 #' 
 #' @export
 #' 
@@ -72,9 +74,27 @@ attribute_scan <- function(eval_data, qid_keys, target_keys = NULL) {
         qid_keys = qid_keys, 
         target_keys = target_keys
       )
-    ),
-    call = match.call()
+    )
   )
+  
+  # holdout data is optional; only compute equivalence classes/distributions 
+  # when eval_data$holdout_data is supplied
+  if (!is.null(eval_data$holdout_data)) {
+    
+    holdout_data <- eval_data$holdout_data
+    
+    result$holdout <- list(
+      equivalence_classes = .aggregate_qid(holdout_data, keys = qid_keys),
+      distributions = .conditional_distributions(
+        holdout_data, 
+        qid_keys = qid_keys, 
+        target_keys = target_keys
+      )
+    )
+    
+  }
+  
+  result$call <- match.call()
   
   result <- structure(result, class = "attribute_scan")
   
@@ -113,6 +133,16 @@ print.attribute_scan <- function(x, ...) {
     nrow(x$synthetic$equivalence_classes), 
     "\n"
   )
+  
+  if (!is.null(x$holdout)) {
+    
+    cat(
+      "Holdout Equivalence Classes: ", 
+      nrow(x$holdout$equivalence_classes), 
+      "\n"
+    )
+    
+  }
   
   invisible(x)
   
