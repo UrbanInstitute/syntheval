@@ -1,3 +1,7 @@
+# syntheval 0.1.0
+
+- Add `attribute_scan()` functionality for discovery attribute inference metrics.
+
 # syntheval 0.0.5
 
 * Remove `util_tails()`
