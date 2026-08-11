@@ -1,12 +1,8 @@
-# syntheval (development version)
-
-* `plot_cormat()` now takes an `eval_data` object instead of separate `conf_data` and `synth_data` arguments, completing the refactor of metric and plot functions to the `eval_data` interface (#106).
-
 # syntheval 0.0.5
 
 * Remove `util_tails()`
 * Update deprecated dplyr code. 
-* Move all functions to use `eval_data`.
+* Move all functions to use `eval_data` (#106).
 
 # syntheval 0.0.4
 
