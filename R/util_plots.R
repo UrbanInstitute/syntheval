@@ -219,20 +219,23 @@ create_cormat_plot <- function(data, cor_method = "pearson") {
 
 #' Create side-by-side correlation heatmaps for numeric random variables.
 #'
-#' @param conf_data Confidential data
-#' @param synth_data Synthetic data
+#' @param eval_data An `eval_data` object.
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
-#' 
+#'
 #' @return A `ggplot2` plot
-#' 
+#'
 #' @export
-plot_cormat <- function(conf_data, synth_data, cor_method = "pearson") {
-  
-  p1 <- create_cormat_plot(conf_data, cor_method = cor_method) + 
+plot_cormat <- function(eval_data, cor_method = "pearson") {
+
+  stopifnot(is_eval_data(eval_data))
+
+  p1 <- create_cormat_plot(eval_data[["conf_data"]], cor_method = cor_method) +
     ggplot2::ggtitle("Confidential data")
-  p2 <- create_cormat_plot(synth_data, cor_method = cor_method) + 
+  p2 <- create_cormat_plot(eval_data[["synth_data"]], cor_method = cor_method) +
     ggplot2::ggtitle("Synthetic data")
-  
-  gridExtra::grid.arrange(p1, p2, nrow=1)
-  
+
+  plot <- gridExtra::grid.arrange(p1, p2, nrow = 1)
+
+  return(plot)
+
 }
