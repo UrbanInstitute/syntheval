@@ -14,7 +14,7 @@
         dplyr::across(dplyr::all_of(keys)), 
         .drop=FALSE
       ) |>
-      dplyr::summarise(raw_n = dplyr::n()) |>
+      dplyr::summarize(raw_n = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::mutate(prop = .data$raw_n / nrow(df)) |>
       dplyr::arrange(!!!rlang::syms(keys)) |>

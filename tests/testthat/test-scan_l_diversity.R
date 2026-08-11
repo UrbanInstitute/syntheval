@@ -15,63 +15,59 @@ toy_scan <- attribute_scan(
   target_keys = "t"
 )
 
-test_that("scan_entropy input errors", {
+test_that("scan_l_diversity input errors", {
   
-  expect_error(scan_entropy("not an attribute_scan object"))
+  expect_error(scan_l_diversity("not an attribute_scan object"))
   
 })
 
-test_that("scan_entropy basic functionality", {
+test_that("scan_l_diversity basic functionality", {
   
-  res <- scan_entropy(toy_scan)
+  res <- scan_l_diversity(toy_scan)
   
   expect_identical(
     names(res),
-    c("source", "target_var", "key_id", "q", "entropy")
+    c("source", "target_var", "key_id", "q", "l_diversity")
   )
-  
-  expect_true(all(res$entropy >= 0))
-  expect_true(all(res$entropy <= log2(2)))
   
   conf_res <- res |>
     dplyr::filter(source == "confidential") |>
     dplyr::arrange(q)
   
-  # class A: all X -> entropy 0; class B: 1 X, 1 Y -> entropy 1
-  expect_equal(conf_res$entropy, c(0, 1))
+  # class A: all X -> 1 distinct level; class B: 1 X, 1 Y -> 2 distinct levels
+  expect_equal(conf_res$l_diversity, c(1, 2))
   
   synth_res <- res |>
     dplyr::filter(source == "synthetic") |>
     dplyr::arrange(q)
   
-  # class A: 1 X, 1 Y -> entropy 1
-  # class B: 2 X, 1 Y -> entropy = -(2/3 log2(2/3) + 1/3 log2(1/3))
-  expected_b <- -(2 / 3 * log2(2 / 3) + 1 / 3 * log2(1 / 3))
-  expect_equal(synth_res$entropy, c(1, expected_b))
+  # class A: 1 X, 1 Y -> 2 distinct levels; class B: 2 X, 1 Y -> 2 distinct levels
+  expect_equal(synth_res$l_diversity, c(2, 2))
   
 })
 
-test_that("scan_entropy handles perfectly uniform and degenerate cases", {
+test_that("scan_l_diversity ignores unobserved target levels", {
   
   degenerate_conf <- data.frame(
     q = factor(c("A", "A"), levels = c("A")),
     t = factor(c("X", "X"), levels = c("X", "Y"))
   )
   
-  uniform_synth <- data.frame(
+  degenerate_synth <- data.frame(
     q = factor(c("A", "A"), levels = c("A")),
     t = factor(c("X", "Y"), levels = c("X", "Y"))
   )
   
   scan <- attribute_scan(
-    eval_data(conf_data = degenerate_conf, synth_data = uniform_synth),
+    eval_data(conf_data = degenerate_conf, synth_data = degenerate_synth),
     qid_keys = "q",
     target_keys = "t"
   )
   
-  res <- scan_entropy(scan)
+  res <- scan_l_diversity(scan)
   
-  expect_equal(res$entropy[res$source == "confidential"], 0)
-  expect_equal(res$entropy[res$source == "synthetic"], 1)
+  # confidential class A only ever observes "X" (never "Y"), so l-diversity is 1
+  expect_equal(res$l_diversity[res$source == "confidential"], 1)
+  expect_equal(res$l_diversity[res$source == "synthetic"], 2)
   
 })

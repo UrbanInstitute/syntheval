@@ -114,7 +114,7 @@ test_that("attribute_scan object structure", {
     # probabilities sum to 1 within each equivalence class / target variable
     prob_sums <- scan[[source]]$distributions |>
       dplyr::group_by(key_id, target_var) |>
-      dplyr::summarise(total = sum(prob), .groups = "drop") |>
+      dplyr::summarize(total = sum(prob), .groups = "drop") |>
       dplyr::pull(total)
     
     expect_equal(prob_sums, rep(1, length(prob_sums)))

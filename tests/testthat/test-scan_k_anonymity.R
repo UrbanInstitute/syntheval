@@ -25,12 +25,12 @@ test_that("scan_k_anonymity basic functionality", {
   
   res <- scan_k_anonymity(toy_scan)
   
-  expect_identical(names(res), c("source", "value"))
+  expect_identical(names(res), c("source", "k"))
   expect_identical(res$source, c("confidential", "synthetic"))
   
   # confidential: class A n=3, class B n=2 -> min 2
   # synthetic: class A n=2, class B n=3 -> min 2
-  expect_equal(res$value, c(2, 2))
+  expect_equal(res$k, c(2, 2))
   
 })
 
@@ -50,7 +50,7 @@ test_that("scan_k_anonymity matches manual .aggregate_qid computation", {
   )
   
   expect_equal(
-    res$value[res$source == "confidential"],
+    res$k[res$source == "confidential"],
     manual_conf
   )
   

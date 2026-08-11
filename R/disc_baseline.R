@@ -138,7 +138,7 @@ disc_baseline <- function(
     
     # calculate distinct l-diversity across each sensitive key column
     l_div <- gdf %>%
-      dplyr::summarise(
+      dplyr::summarize(
         dplyr::across(dplyr::all_of(sens_keys), dplyr::n_distinct)
       )
     
@@ -201,7 +201,7 @@ disc_baseline <- function(
     
     # calculate t-closeness according to the specified metric
     t_close <- gdf %>%
-      dplyr::summarise(
+      dplyr::summarize(
         dplyr::across(dplyr::all_of(sens_keys), t_closeness_func))
     
     return(

@@ -4,7 +4,7 @@
 #' @param attribute_scan An `attribute_scan` object.
 #' 
 #' @returns A tibble with columns `source` (`"confidential"` or `"synthetic"`) and 
-#' `value` (the minimum observed equivalence class size).
+#' `k` (the minimum observed equivalence class size).
 #' 
 #' @export
 #' 
@@ -17,7 +17,7 @@ scan_k_anonymity <- function(attribute_scan) {
   
   result <- tibble::tibble(
     source = c("confidential", "synthetic"),
-    value = c(
+    k = c(
       min(conf_eq_classes$raw_n[conf_eq_classes$raw_n > 0]),
       min(synth_eq_classes$raw_n[synth_eq_classes$raw_n > 0])
     )

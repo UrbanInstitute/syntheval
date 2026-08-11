@@ -11,7 +11,7 @@ scan_entropy(attribute_scan)
 }
 \value{
 A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}),
-\code{target_var}, \code{key_id}, the quasi-identifying key columns, and \code{value} (the
+\code{target_var}, \code{key_id}, the quasi-identifying key columns, and \code{entropy} (the
 base-2 Shannon entropy of the conditional target distribution within that
 equivalence class).
 }

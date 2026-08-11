@@ -11,7 +11,7 @@ scan_k_anonymity(attribute_scan)
 }
 \value{
 A tibble with columns \code{source} (\code{"confidential"} or \code{"synthetic"}) and
-\code{value} (the minimum observed equivalence class size).
+\code{k} (the minimum observed equivalence class size).
 }
 \description{
 Calculate the minimum equivalence class size defined by the quasi-identifiers
