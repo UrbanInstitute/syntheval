@@ -10,7 +10,8 @@ util_k_marginals(
   keep_marginals = Inf,
   keep_cells = Inf,
   n_marginals = Inf,
-  priority_vars = NULL
+  priority_vars = NULL,
+  weight_var = NULL
 )
 }
 \arguments{
@@ -35,6 +36,12 @@ combination containing at least one of these variables is always evaluated;
 sampling under \code{n_marginals} only applies to the remaining combinations. If
 the priority combinations alone exceed \code{n_marginals}, all of them are still
 evaluated. Defaults to \code{NULL}.}
+
+\item{weight_var}{Optional character name of a numeric sample-weight
+column present in both datasets. When set, cell proportions are weight
+shares instead of row shares, and the weight column is excluded from the
+marginals. Weights must be finite and non-negative with a positive total.
+Defaults to \code{NULL} (unweighted).}
 }
 \value{
 A \code{k_marginals} object with three elements: \code{score}, a value in

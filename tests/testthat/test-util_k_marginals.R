@@ -603,3 +603,148 @@ test_that("priority_vars applies to k = 3 combinations", {
   )
 
 })
+
+test_that("weighted proportions match hand-computed values", {
+
+  # conf: weight shares x = 3/4, y = 1/4; synth: x = 1/2, y = 1/2
+  # MabsDD = mean(0.25, 0.25) = 0.25 -> score 750
+  conf_w <- tibble::tibble(a = c("x", "y"), w = c(3, 1))
+  synth_w <- tibble::tibble(a = c("x", "y"), w = c(1, 1))
+
+  result <- .util_k_marginals(
+    synth_data = synth_w, conf_data = conf_w, k = 1, weight_var = "w"
+  )
+
+  expect_equal(result$score, 750)
+  expect_equal(
+    dplyr::filter(result$cells, .data$cell == "x")$prop_conf,
+    0.75
+  )
+
+})
+
+test_that("unit weights reproduce the unweighted result", {
+
+  conf_w <- dplyr::mutate(conf, w = 1)
+  synth_w <- dplyr::mutate(synth, w = 1)
+
+  weighted <- .util_k_marginals(
+    synth_data = synth_w, conf_data = conf_w, k = 1, weight_var = "w"
+  )
+
+  unweighted <- .util_k_marginals(synth_data = synth, conf_data = conf, k = 1)
+
+  expect_equal(weighted, unweighted)
+
+})
+
+test_that("the weight column is never a marginal", {
+
+  conf_w <- dplyr::mutate(conf, w = 1)
+  synth_w <- dplyr::mutate(synth, w = 1)
+
+  result <- .util_k_marginals(
+    synth_data = synth_w, conf_data = conf_w, k = 1, weight_var = "w"
+  )
+
+  expect_equal(sort(result$marginals$variables), c("a", "b"))
+
+})
+
+test_that("invalid weight_var throws an error", {
+
+  conf_w <- dplyr::mutate(conf, w = 1)
+  synth_w <- dplyr::mutate(synth, w = 1)
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_w, conf_data = conf_w, k = 1, weight_var = 1
+    ),
+    regexp = "`weight_var` must be a single character string"
+  )
+
+  # column missing from one dataset
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth, conf_data = conf_w, k = 1, weight_var = "w"
+    ),
+    regexp = "`weight_var` must be a column in both datasets"
+  )
+
+  # non-numeric weight column
+  conf_chr <- dplyr::mutate(conf, w = "1")
+  synth_chr <- dplyr::mutate(synth, w = "1")
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_chr, conf_data = conf_chr, k = 1, weight_var = "w"
+    ),
+    regexp = "`weight_var` must be a numeric column in both datasets"
+  )
+
+})
+
+test_that("util_k_marginals passes weight_var through", {
+
+  conf_w <- tibble::tibble(a = c("x", "y"), w = c(3, 1))
+  synth_w <- tibble::tibble(a = c("x", "y"), w = c(1, 1))
+
+  ed <- eval_data(conf_data = conf_w, synth_data = synth_w)
+
+  expect_equal(
+    util_k_marginals(eval_data = ed, k = 1, weight_var = "w")$score,
+    750
+  )
+
+})
+
+test_that("invalid weight values throw an error", {
+
+  synth_w <- dplyr::mutate(synth, w = 1)
+
+  bad_weights <- list(
+    c(1, 1, 1, -1),   # negative
+    c(1, 1, 1, NA),   # missing
+    c(1, 1, 1, Inf),  # non-finite
+    c(0, 0, 0, 0)     # zero total
+  )
+
+  for (bad_w in bad_weights) {
+
+    conf_bad <- dplyr::mutate(conf, w = bad_w)
+
+    expect_error(
+      .util_k_marginals(
+        synth_data = synth_w, conf_data = conf_bad, k = 1, weight_var = "w"
+      ),
+      regexp = "finite and non-negative with a positive total"
+    )
+
+    # symmetric: same weights are rejected on the synthetic side
+    synth_bad <- dplyr::mutate(synth, w = bad_w)
+    conf_w <- dplyr::mutate(conf, w = 1)
+
+    expect_error(
+      .util_k_marginals(
+        synth_data = synth_bad, conf_data = conf_w, k = 1, weight_var = "w"
+      ),
+      regexp = "finite and non-negative with a positive total"
+    )
+
+  }
+
+})
+
+test_that("zero weights are valid when the total is positive", {
+
+  # zero-weight rows drop out: conf weight shares x = 1, y = 0
+  conf_w <- tibble::tibble(a = c("x", "y"), w = c(2, 0))
+  synth_w <- tibble::tibble(a = c("x", "y"), w = c(1, 1))
+
+  result <- .util_k_marginals(
+    synth_data = synth_w, conf_data = conf_w, k = 1, weight_var = "w"
+  )
+
+  expect_equal(result$score, 500)
+
+})

@@ -26,6 +26,11 @@
 #' sampling under `n_marginals` only applies to the remaining combinations. If
 #' the priority combinations alone exceed `n_marginals`, all of them are still
 #' evaluated. Defaults to `NULL`.
+#' @param weight_var Optional character name of a numeric sample-weight
+#' column present in both datasets. When set, cell proportions are weight
+#' shares instead of row shares, and the weight column is excluded from the
+#' marginals. Weights must be finite and non-negative with a positive total.
+#' Defaults to `NULL` (unweighted).
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
 #' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
@@ -43,7 +48,8 @@
     keep_marginals = Inf,
     keep_cells = Inf,
     n_marginals = Inf,
-    priority_vars = NULL) {
+    priority_vars = NULL,
+    weight_var = NULL) {
 
   for (keep in list(keep_marginals, keep_cells, n_marginals)) {
 
@@ -74,8 +80,51 @@
 
   }
 
-  # only variables present in both datasets contribute marginals
-  shared_vars <- intersect(names(synth_data), names(conf_data))
+  if (!is.null(weight_var)) {
+
+    if (!(is.character(weight_var) && length(weight_var) == 1)) {
+
+      stop("`weight_var` must be a single character string")
+
+    }
+
+    if (!(weight_var %in% names(synth_data) &&
+          weight_var %in% names(conf_data))) {
+
+      stop("`weight_var` must be a column in both datasets")
+
+    }
+
+    if (!(is.numeric(synth_data[[weight_var]]) &&
+          is.numeric(conf_data[[weight_var]]))) {
+
+      stop("`weight_var` must be a numeric column in both datasets")
+
+    }
+
+    # invalid weights break the probability interpretation of proportions
+    for (weights in list(synth_data[[weight_var]], conf_data[[weight_var]])) {
+
+      if (!all(is.finite(weights)) || any(weights < 0) ||
+          sum(weights) <= 0) {
+
+        stop(
+          "`weight_var` values must be finite and non-negative with a ",
+          "positive total in both datasets"
+        )
+
+      }
+
+    }
+
+  }
+
+  # only variables present in both datasets contribute marginals; the weight
+  # column is never itself a marginal
+  shared_vars <- setdiff(
+    intersect(names(synth_data), names(conf_data)),
+    weight_var
+  )
 
   if (length(shared_vars) < k) {
 
@@ -119,14 +168,25 @@
 
   }
 
-  # cell proportions for one dataset over one set of variables
+  # cell proportions for one dataset over one set of variables; weighted
+  # proportions are weight shares instead of row shares
   process_data <- function(data, vars, prop_name) {
 
-    props <- data |>
-      dplyr::select(dplyr::all_of(vars)) |>
-      dplyr::group_by_all() |>
-      dplyr::count() |>
-      dplyr::ungroup() |>
+    if (is.null(weight_var)) {
+
+      counts <- dplyr::count(data, dplyr::across(dplyr::all_of(vars)))
+
+    } else {
+
+      counts <- dplyr::count(
+        data,
+        dplyr::across(dplyr::all_of(vars)),
+        wt = .data[[weight_var]]
+      )
+
+    }
+
+    props <- counts |>
       dplyr::mutate("{prop_name}" := .data$n / sum(.data$n)) |>
       dplyr::select(-"n")
 
@@ -233,6 +293,11 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' sampling under `n_marginals` only applies to the remaining combinations. If
 #' the priority combinations alone exceed `n_marginals`, all of them are still
 #' evaluated. Defaults to `NULL`.
+#' @param weight_var Optional character name of a numeric sample-weight
+#' column present in both datasets. When set, cell proportions are weight
+#' shares instead of row shares, and the weight column is excluded from the
+#' marginals. Weights must be finite and non-negative with a positive total.
+#' Defaults to `NULL` (unweighted).
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
 #' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
@@ -252,7 +317,8 @@ util_k_marginals <- function(
     keep_marginals = Inf,
     keep_cells = Inf,
     n_marginals = Inf,
-    priority_vars = NULL) {
+    priority_vars = NULL,
+    weight_var = NULL) {
 
   stopifnot(is_eval_data(eval_data))
 
@@ -266,7 +332,8 @@ util_k_marginals <- function(
         keep_marginals = keep_marginals,
         keep_cells = keep_cells,
         n_marginals = n_marginals,
-        priority_vars = priority_vars
+        priority_vars = priority_vars,
+        weight_var = weight_var
       )
     )
 
@@ -283,7 +350,8 @@ util_k_marginals <- function(
           keep_marginals = keep_marginals,
           keep_cells = keep_cells,
           n_marginals = n_marginals,
-          priority_vars = priority_vars
+          priority_vars = priority_vars,
+          weight_var = weight_var
         )
 
       }
