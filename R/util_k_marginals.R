@@ -31,6 +31,16 @@
 #' shares instead of row shares, and the weight column is excluded from the
 #' marginals. Weights must be finite and non-negative with a positive total.
 #' Defaults to `NULL` (unweighted).
+#' @param bins Optional single integer >= 2. When set, every numeric shared
+#' variable is discretized into this many bins (fewer, with a warning, if
+#' tied quantile cut points collapse) with breaks derived from the
+#' confidential data and applied to both datasets; the outer bins extend to
+#' +/-Inf so synthetic values outside the confidential range land in edge
+#' bins. Defaults to `NULL` (no discretization).
+#' @param discretize_method Method used to place bin breaks when `bins` is
+#' set: "width" for fixed binwidths, "ntile" for quantile bins, or "cluster"
+#' for univariate k-means clustering (set a seed before calling for
+#' reproducible clusters). Defaults to "width".
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
 #' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
@@ -49,7 +59,11 @@
     keep_cells = Inf,
     n_marginals = Inf,
     priority_vars = NULL,
-    weight_var = NULL) {
+    weight_var = NULL,
+    bins = NULL,
+    discretize_method = c("width", "ntile", "cluster")) {
+
+  discretize_method <- match.arg(discretize_method)
 
   for (keep in list(keep_marginals, keep_cells, n_marginals)) {
 
@@ -125,6 +139,85 @@
     intersect(names(synth_data), names(conf_data)),
     weight_var
   )
+
+  if (!is.null(bins)) {
+
+    if (!(is.numeric(bins) && length(bins) == 1 && !is.na(bins) &&
+          bins >= 2 && bins == floor(bins))) {
+
+      stop("`bins` must be a single integer >= 2")
+
+    }
+
+    numeric_vars <- shared_vars[
+      purrr::map_lgl(.x = shared_vars, .f = \(v) is.numeric(conf_data[[v]]))
+    ]
+
+    for (var in numeric_vars) {
+
+      conf_values <- conf_data[[var]]
+
+      if (!all(is.finite(conf_values))) {
+
+        stop(
+          "numeric variables must be finite to discretize; `", var,
+          "` is not"
+        )
+
+      }
+
+      if (dplyr::n_distinct(conf_values) < bins) {
+
+        stop(
+          "`", var, "` has fewer distinct confidential values than `bins`"
+        )
+
+      }
+
+      # interior cut points always derive from the confidential data; each
+      # method yields bins - 1 of them
+      cut_points <- switch(
+        EXPR = discretize_method,
+        width = seq(
+          from = min(conf_values),
+          to = max(conf_values),
+          length.out = bins + 1
+        )[2:bins],
+        ntile = stats::quantile(
+          x = conf_values,
+          probs = seq(from = 0, to = 1, length.out = bins + 1),
+          names = FALSE
+        )[2:bins],
+        cluster = {
+
+          centers <- sort(
+            stats::kmeans(x = conf_values, centers = bins)$centers[, 1]
+          )
+
+          (centers[-1] + centers[-length(centers)]) / 2
+
+        }
+      )
+
+      # outer bins extend to +/-Inf so out-of-range synthetic values land in
+      # edge bins; unique() collapses ties from skewed quantiles
+      breaks <- unique(c(-Inf, cut_points, Inf))
+
+      if (length(breaks) - 1 < bins) {
+
+        warning(
+          "`", var, "` was discretized into ", length(breaks) - 1,
+          " bins instead of ", bins, " because of tied cut points"
+        )
+
+      }
+
+      synth_data[[var]] <- cut(x = synth_data[[var]], breaks = breaks)
+      conf_data[[var]] <- cut(x = conf_values, breaks = breaks)
+
+    }
+
+  }
 
   if (length(shared_vars) < k) {
 
@@ -298,6 +391,16 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' shares instead of row shares, and the weight column is excluded from the
 #' marginals. Weights must be finite and non-negative with a positive total.
 #' Defaults to `NULL` (unweighted).
+#' @param bins Optional single integer >= 2. When set, every numeric shared
+#' variable is discretized into this many bins (fewer, with a warning, if
+#' tied quantile cut points collapse) with breaks derived from the
+#' confidential data and applied to both datasets; the outer bins extend to
+#' +/-Inf so synthetic values outside the confidential range land in edge
+#' bins. Defaults to `NULL` (no discretization).
+#' @param discretize_method Method used to place bin breaks when `bins` is
+#' set: "width" for fixed binwidths, "ntile" for quantile bins, or "cluster"
+#' for univariate k-means clustering (set a seed before calling for
+#' reproducible clusters). Defaults to "width".
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
 #' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
@@ -318,9 +421,23 @@ util_k_marginals <- function(
     keep_cells = Inf,
     n_marginals = Inf,
     priority_vars = NULL,
-    weight_var = NULL) {
+    weight_var = NULL,
+    bins = NULL,
+    discretize_method = c("width", "ntile", "cluster")) {
 
   stopifnot(is_eval_data(eval_data))
+
+  discretize_method <- match.arg(discretize_method)
+
+  # surface the resolved method so a forgotten discretize_method is visible
+  if (!is.null(bins)) {
+
+    message(
+      "Discretizing numeric variables into ", bins,
+      " bins using the '", discretize_method, "' method"
+    )
+
+  }
 
   if (eval_data$n_rep == 1) {
 
@@ -333,7 +450,9 @@ util_k_marginals <- function(
         keep_cells = keep_cells,
         n_marginals = n_marginals,
         priority_vars = priority_vars,
-        weight_var = weight_var
+        weight_var = weight_var,
+        bins = bins,
+        discretize_method = discretize_method
       )
     )
 
@@ -351,7 +470,9 @@ util_k_marginals <- function(
           keep_cells = keep_cells,
           n_marginals = n_marginals,
           priority_vars = priority_vars,
-          weight_var = weight_var
+          weight_var = weight_var,
+          bins = bins,
+          discretize_method = discretize_method
         )
 
       }

@@ -748,3 +748,216 @@ test_that("zero weights are valid when the total is positive", {
   expect_equal(result$score, 500)
 
 })
+
+test_that("width discretization matches hand-computed values", {
+
+  # conf 1:4 with 2 bins: interior cut at 2.5, so low = {1, 2}, high = {3, 4}
+  # conf shares (0.5, 0.5); synth c(1, 1, 1, 4) shares (0.75, 0.25)
+  # MabsDD = mean(0.25, 0.25) = 0.25 -> score 750
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
+  synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
+
+  result <- .util_k_marginals(
+    synth_data = synth_num, conf_data = conf_num, k = 1, bins = 2
+  )
+
+  expect_equal(result$score, 750)
+  expect_equal(nrow(result$cells), 2)
+
+})
+
+test_that("ntile discretization uses confidential quantiles", {
+
+  # conf quartile cut points at 25/50/75th percentiles of 1:8
+  # 4 bins of 2 values each: conf shares 0.25 apiece
+  # synth all in the lowest bin: shares (1, 0, 0, 0)
+  # MabsDD = mean(0.75, 0.25, 0.25, 0.25) = 0.375 -> score 625
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4, 5, 6, 7, 8))
+  synth_num <- tibble::tibble(v = c(1, 1, 1, 1, 1, 1, 1, 1))
+
+  result <- .util_k_marginals(
+    synth_data = synth_num,
+    conf_data = conf_num,
+    k = 1,
+    bins = 4,
+    discretize_method = "ntile"
+  )
+
+  expect_equal(result$score, 625)
+
+})
+
+test_that("cluster discretization separates well-separated groups", {
+
+  # two tight clusters around 1 and 10: the midpoint break lands between
+  # them, so conf shares (0.5, 0.5) and synth (1, 0) -> score 500
+  conf_num <- tibble::tibble(v = c(1, 1.1, 10, 10.1))
+  synth_num <- tibble::tibble(v = c(1, 1, 1.1, 1.1))
+
+  set.seed(20250813)
+
+  result <- .util_k_marginals(
+    synth_data = synth_num,
+    conf_data = conf_num,
+    k = 1,
+    bins = 2,
+    discretize_method = "cluster"
+  )
+
+  expect_equal(result$score, 500)
+
+})
+
+test_that("synthetic values outside the confidential range land in edge bins", {
+
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
+  synth_num <- tibble::tibble(v = c(-100, -100, 100, 100))
+
+  result <- .util_k_marginals(
+    synth_data = synth_num, conf_data = conf_num, k = 1, bins = 2
+  )
+
+  # extremes split evenly across the two edge bins, matching conf shares
+  expect_equal(result$score, 1000)
+
+})
+
+test_that("non-numeric variables are untouched by discretization", {
+
+  conf_mix <- dplyr::mutate(conf, v = c(1, 2, 3, 4))
+  synth_mix <- dplyr::mutate(synth, v = c(1, 2, 3, 4))
+
+  result <- .util_k_marginals(
+    synth_data = synth_mix, conf_data = conf_mix, k = 1, bins = 2
+  )
+
+  # categorical marginals a and b keep their original levels
+  a_cells <- dplyr::filter(result$cells, .data$variables == "a")
+  expect_equal(sort(a_cells$cell), c("x", "y"))
+
+})
+
+test_that("bins = NULL leaves numeric variables as-is", {
+
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
+  synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
+
+  result <- .util_k_marginals(
+    synth_data = synth_num, conf_data = conf_num, k = 1
+  )
+
+  # every distinct value is its own cell
+  expect_equal(nrow(result$cells), 4)
+
+})
+
+test_that("invalid discretization arguments throw an error", {
+
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
+  synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
+
+  for (bad_bins in list(1, 2.5, "2", NA_real_, c(2, 3))) {
+
+    expect_error(
+      .util_k_marginals(
+        synth_data = synth_num, conf_data = conf_num, k = 1, bins = bad_bins
+      ),
+      regexp = "`bins` must be a single integer >= 2"
+    )
+
+  }
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_num, conf_data = conf_num, k = 1, bins = 2,
+      discretize_method = "magic"
+    )
+  )
+
+  # non-finite confidential values cannot be discretized
+  conf_inf <- tibble::tibble(v = c(1, 2, 3, Inf))
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_num, conf_data = conf_inf, k = 1, bins = 2
+    ),
+    regexp = "must be finite to discretize"
+  )
+
+})
+
+test_that("util_k_marginals passes discretization arguments through", {
+
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
+  synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
+
+  ed <- eval_data(conf_data = conf_num, synth_data = synth_num)
+
+  expect_equal(
+    suppressMessages(util_k_marginals(eval_data = ed, k = 1, bins = 2))$score,
+    750
+  )
+
+})
+
+test_that("util_k_marginals messages the resolved discretization method", {
+
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
+  synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
+
+  ed <- eval_data(conf_data = conf_num, synth_data = synth_num)
+
+  expect_message(
+    util_k_marginals(eval_data = ed, k = 1, bins = 2),
+    regexp = "2 bins using the 'width' method"
+  )
+
+  expect_message(
+    util_k_marginals(
+      eval_data = ed, k = 1, bins = 2, discretize_method = "ntile"
+    ),
+    regexp = "2 bins using the 'ntile' method"
+  )
+
+  # no discretization, no message
+  expect_no_message(util_k_marginals(eval_data = ed, k = 1))
+
+})
+
+test_that("too few distinct confidential values throw an error", {
+
+  conf_const <- tibble::tibble(v = c(2, 2, 2, 2))
+  synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
+
+  for (method in c("width", "ntile", "cluster")) {
+
+    expect_error(
+      .util_k_marginals(
+        synth_data = synth_num, conf_data = conf_const, k = 1, bins = 2,
+        discretize_method = method
+      ),
+      regexp = "fewer distinct confidential values than `bins`"
+    )
+
+  }
+
+})
+
+test_that("tied quantile cut points collapse bins with a warning", {
+
+  # heavily tied data passes the distinct-value pre-check, but the 25th and
+  # 50th percentiles coincide at 1, collapsing a quantile bin
+  conf_ties <- tibble::tibble(v = c(1, 1, 1, 1, 1, 1, 2, 3, 4, 5))
+  synth_num <- tibble::tibble(v = c(1, 2, 3, 4, 5))
+
+  expect_warning(
+    result <- .util_k_marginals(
+      synth_data = synth_num, conf_data = conf_ties, k = 1, bins = 4,
+      discretize_method = "ntile"
+    ),
+    regexp = "bins instead of 4 because of tied cut points"
+  )
+
+  expect_lt(nrow(result$cells), 5)
+
+})

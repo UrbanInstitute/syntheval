@@ -12,7 +12,9 @@
   keep_cells = Inf,
   n_marginals = Inf,
   priority_vars = NULL,
-  weight_var = NULL
+  weight_var = NULL,
+  bins = NULL,
+  discretize_method = c("width", "ntile", "cluster")
 )
 }
 \arguments{
@@ -45,6 +47,18 @@ column present in both datasets. When set, cell proportions are weight
 shares instead of row shares, and the weight column is excluded from the
 marginals. Weights must be finite and non-negative with a positive total.
 Defaults to \code{NULL} (unweighted).}
+
+\item{bins}{Optional single integer >= 2. When set, every numeric shared
+variable is discretized into this many bins (fewer, with a warning, if
+tied quantile cut points collapse) with breaks derived from the
+confidential data and applied to both datasets; the outer bins extend to
++/-Inf so synthetic values outside the confidential range land in edge
+bins. Defaults to \code{NULL} (no discretization).}
+
+\item{discretize_method}{Method used to place bin breaks when \code{bins} is
+set: "width" for fixed binwidths, "ntile" for quantile bins, or "cluster"
+for univariate k-means clustering (set a seed before calling for
+reproducible clusters). Defaults to "width".}
 }
 \value{
 A \code{k_marginals} object with three elements: \code{score}, a value in
