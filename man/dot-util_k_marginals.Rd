@@ -4,7 +4,13 @@
 \alias{.util_k_marginals}
 \title{Worker function for the k-marginals metric}
 \usage{
-.util_k_marginals(synth_data, conf_data, k)
+.util_k_marginals(
+  synth_data,
+  conf_data,
+  k,
+  keep_marginals = Inf,
+  keep_cells = Inf
+)
 }
 \arguments{
 \item{synth_data}{A tibble with synthetic data.}
@@ -12,10 +18,23 @@
 \item{conf_data}{A tibble with confidential data.}
 
 \item{k}{Scalar order of the k-marginal (valid range = 1:3).}
+
+\item{keep_marginals}{Single integer number of worst marginals to retain
+in the output.
+Defaults to \code{Inf}, which retains all of them.}
+
+\item{keep_cells}{Single integer number of worst cells to retain in the
+output. Defaults to \code{Inf}, which retains all of them.}
 }
 \value{
-A value in range \link{0, 1000} where a higher value denotes lower MabsDDs
-and consequently greater similarity between confidential and synthetic data.
+A \code{k_marginals} object with three elements: \code{score}, a value in
+range \link{0, 1000} where a higher value denotes lower MabsDDs and consequently
+greater similarity between confidential and synthetic data; \code{marginals}, a
+tibble with the MabsDD for each combination of variables, worst first; and
+\code{cells}, a tibble with the synthetic and confidential proportions and their
+absolute difference for every cell, worst first. \code{score} is always computed
+from all marginals, even when \code{keep_marginals} or \code{keep_cells} truncate the
+detail tables.
 }
 \description{
 This worker function takes a specified k-marginal and calculates

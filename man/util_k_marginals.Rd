@@ -4,17 +4,30 @@
 \alias{util_k_marginals}
 \title{Calculate the k-marginals metric}
 \usage{
-util_k_marginals(eval_data, k = 3)
+util_k_marginals(eval_data, k = 3, keep_marginals = Inf, keep_cells = Inf)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}
 
 \item{k}{Scalar order of the k-marginal (valid range = 1:3).}
+
+\item{keep_marginals}{Single integer number of worst marginals to retain
+in the output.
+Defaults to \code{Inf}, which retains all of them.}
+
+\item{keep_cells}{Single integer number of worst cells to retain in the
+output. Defaults to \code{Inf}, which retains all of them.}
 }
 \value{
-A value in range \link{0, 1000} where a higher value denotes lower MabsDDs
-and consequently greater similarity between confidential and synthetic data.
-For multiple replicates, a list of such values, one per replicate.
+A \code{k_marginals} object with three elements: \code{score}, a value in
+range \link{0, 1000} where a higher value denotes lower MabsDDs and consequently
+greater similarity between confidential and synthetic data; \code{marginals}, a
+tibble with the MabsDD for each combination of variables, worst first; and
+\code{cells}, a tibble with the synthetic and confidential proportions and their
+absolute difference for every cell, worst first. \code{score} is always computed
+from all marginals, even when \code{keep_marginals} or \code{keep_cells} truncate the
+detail tables. For multiple replicates, a list of such objects, one per
+replicate.
 }
 \description{
 For each unique k-combination of variables shared by the
