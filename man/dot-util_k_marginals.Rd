@@ -9,7 +9,9 @@
   conf_data,
   k,
   keep_marginals = Inf,
-  keep_cells = Inf
+  keep_cells = Inf,
+  n_marginals = Inf,
+  priority_vars = NULL
 )
 }
 \arguments{
@@ -25,6 +27,17 @@ Defaults to \code{Inf}, which retains all of them.}
 
 \item{keep_cells}{Single integer number of worst cells to retain in the
 output. Defaults to \code{Inf}, which retains all of them.}
+
+\item{n_marginals}{Single integer cap on the number of variable
+combinations to evaluate. When the number of possible combinations exceeds
+the cap, a random subset is sampled; set a seed before calling for
+reproducible results. Defaults to \code{Inf}, which evaluates all combinations.}
+
+\item{priority_vars}{Optional character vector of variable names. Every
+combination containing at least one of these variables is always evaluated;
+sampling under \code{n_marginals} only applies to the remaining combinations. If
+the priority combinations alone exceed \code{n_marginals}, all of them are still
+evaluated. Defaults to \code{NULL}.}
 }
 \value{
 A \code{k_marginals} object with three elements: \code{score}, a value in
@@ -33,8 +46,8 @@ greater similarity between confidential and synthetic data; \code{marginals}, a
 tibble with the MabsDD for each combination of variables, worst first; and
 \code{cells}, a tibble with the synthetic and confidential proportions and their
 absolute difference for every cell, worst first. \code{score} is always computed
-from all marginals, even when \code{keep_marginals} or \code{keep_cells} truncate the
-detail tables.
+from all evaluated marginals, even when \code{keep_marginals} or \code{keep_cells}
+truncate the detail tables.
 }
 \description{
 This worker function takes a specified k-marginal and calculates

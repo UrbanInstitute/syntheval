@@ -17,6 +17,15 @@
 #' Defaults to `Inf`, which retains all of them.
 #' @param keep_cells Single integer number of worst cells to retain in the
 #' output. Defaults to `Inf`, which retains all of them.
+#' @param n_marginals Single integer cap on the number of variable
+#' combinations to evaluate. When the number of possible combinations exceeds
+#' the cap, a random subset is sampled; set a seed before calling for
+#' reproducible results. Defaults to `Inf`, which evaluates all combinations.
+#' @param priority_vars Optional character vector of variable names. Every
+#' combination containing at least one of these variables is always evaluated;
+#' sampling under `n_marginals` only applies to the remaining combinations. If
+#' the priority combinations alone exceed `n_marginals`, all of them are still
+#' evaluated. Defaults to `NULL`.
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
 #' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
@@ -24,23 +33,26 @@
 #' tibble with the MabsDD for each combination of variables, worst first; and
 #' `cells`, a tibble with the synthetic and confidential proportions and their
 #' absolute difference for every cell, worst first. `score` is always computed
-#' from all marginals, even when `keep_marginals` or `keep_cells` truncate the
-#' detail tables.
+#' from all evaluated marginals, even when `keep_marginals` or `keep_cells`
+#' truncate the detail tables.
 #'
 .util_k_marginals <- function(
     synth_data,
     conf_data,
     k,
     keep_marginals = Inf,
-    keep_cells = Inf) {
+    keep_cells = Inf,
+    n_marginals = Inf,
+    priority_vars = NULL) {
 
-  for (keep in list(keep_marginals, keep_cells)) {
+  for (keep in list(keep_marginals, keep_cells, n_marginals)) {
 
     if (!(is.numeric(keep) && length(keep) == 1 && !is.na(keep) &&
           keep >= 1 && keep == floor(keep))) {
 
       stop(
-        "`keep_marginals` and `keep_cells` must be single integers >= 1 or Inf"
+        "`keep_marginals`, `keep_cells`, and `n_marginals` must be single ",
+        "integers >= 1 or Inf"
       )
 
     }
@@ -71,7 +83,41 @@
 
   }
 
+  if (!is.null(priority_vars)) {
+
+    if (!(is.character(priority_vars) &&
+          all(priority_vars %in% shared_vars))) {
+
+      stop(
+        "`priority_vars` must be a character vector of variables shared by ",
+        "both datasets"
+      )
+
+    }
+
+  }
+
   kmarginals_vars <- t(utils::combn(x = shared_vars, m = k))
+
+  # sample combinations down to n_marginals, always keeping combinations that
+  # contain a priority variable
+  if (nrow(kmarginals_vars) > n_marginals) {
+
+    is_priority <- apply(
+      X = kmarginals_vars,
+      MARGIN = 1,
+      FUN = \(vars) any(vars %in% priority_vars)
+    )
+
+    n_sampled <- min(max(n_marginals - sum(is_priority), 0), sum(!is_priority))
+
+    sampled_rows <- sample(x = which(!is_priority), size = n_sampled)
+
+    kmarginals_vars <- kmarginals_vars[
+      sort(c(which(is_priority), sampled_rows)), , drop = FALSE
+    ]
+
+  }
 
   # cell proportions for one dataset over one set of variables
   process_data <- function(data, vars, prop_name) {
@@ -178,6 +224,15 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' Defaults to `Inf`, which retains all of them.
 #' @param keep_cells Single integer number of worst cells to retain in the
 #' output. Defaults to `Inf`, which retains all of them.
+#' @param n_marginals Single integer cap on the number of variable
+#' combinations to evaluate. When the number of possible combinations exceeds
+#' the cap, a random subset is sampled; set a seed before calling for
+#' reproducible results. Defaults to `Inf`, which evaluates all combinations.
+#' @param priority_vars Optional character vector of variable names. Every
+#' combination containing at least one of these variables is always evaluated;
+#' sampling under `n_marginals` only applies to the remaining combinations. If
+#' the priority combinations alone exceed `n_marginals`, all of them are still
+#' evaluated. Defaults to `NULL`.
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
 #' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
@@ -185,9 +240,9 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' tibble with the MabsDD for each combination of variables, worst first; and
 #' `cells`, a tibble with the synthetic and confidential proportions and their
 #' absolute difference for every cell, worst first. `score` is always computed
-#' from all marginals, even when `keep_marginals` or `keep_cells` truncate the
-#' detail tables. For multiple replicates, a list of such objects, one per
-#' replicate.
+#' from all evaluated marginals, even when `keep_marginals` or `keep_cells`
+#' truncate the detail tables. For multiple replicates, a list of such
+#' objects, one per replicate.
 #'
 #' @export
 #'
@@ -195,7 +250,9 @@ util_k_marginals <- function(
     eval_data,
     k = 3,
     keep_marginals = Inf,
-    keep_cells = Inf) {
+    keep_cells = Inf,
+    n_marginals = Inf,
+    priority_vars = NULL) {
 
   stopifnot(is_eval_data(eval_data))
 
@@ -207,7 +264,9 @@ util_k_marginals <- function(
         conf_data = eval_data$conf_data,
         k = k,
         keep_marginals = keep_marginals,
-        keep_cells = keep_cells
+        keep_cells = keep_cells,
+        n_marginals = n_marginals,
+        priority_vars = priority_vars
       )
     )
 
@@ -222,7 +281,9 @@ util_k_marginals <- function(
           conf_data = eval_data$conf_data,
           k = k,
           keep_marginals = keep_marginals,
-          keep_cells = keep_cells
+          keep_cells = keep_cells,
+          n_marginals = n_marginals,
+          priority_vars = priority_vars
         )
 
       }

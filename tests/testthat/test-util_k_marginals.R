@@ -399,3 +399,207 @@ test_that("print truncates the marginals display to n rows", {
   expect_false(any(grepl("^2 ", out)))
 
 })
+
+test_that("n_marginals caps the number of evaluated combinations", {
+
+  conf_3 <- dplyr::mutate(conf, c = c("m", "m", "n", "n"))
+  synth_3 <- dplyr::mutate(synth, c = c("m", "n", "n", "n"))
+
+  set.seed(20250813)
+
+  result <- .util_k_marginals(
+    synth_data = synth_3, conf_data = conf_3, k = 2, n_marginals = 2
+  )
+
+  expect_equal(nrow(result$marginals), 2)
+  expect_true(result$score >= 0 && result$score <= 1000)
+
+})
+
+test_that("sampling is reproducible given a seed", {
+
+  conf_3 <- dplyr::mutate(conf, c = c("m", "m", "n", "n"))
+  synth_3 <- dplyr::mutate(synth, c = c("m", "n", "n", "n"))
+
+  set.seed(1)
+  first <- .util_k_marginals(
+    synth_data = synth_3, conf_data = conf_3, k = 2, n_marginals = 1
+  )
+
+  set.seed(1)
+  second <- .util_k_marginals(
+    synth_data = synth_3, conf_data = conf_3, k = 2, n_marginals = 1
+  )
+
+  expect_equal(first, second)
+
+})
+
+test_that("priority_vars combinations are always evaluated", {
+
+  conf_3 <- dplyr::mutate(conf, c = c("m", "m", "n", "n"))
+  synth_3 <- dplyr::mutate(synth, c = c("m", "n", "n", "n"))
+
+  # the two combinations containing a fill the cap exactly, so the
+  # selection is deterministic despite sampling
+  result <- .util_k_marginals(
+    synth_data = synth_3,
+    conf_data = conf_3,
+    k = 2,
+    n_marginals = 2,
+    priority_vars = "a"
+  )
+
+  expect_equal(sort(result$marginals$variables), c("a, b", "a, c"))
+
+})
+
+test_that("priority combinations exceeding n_marginals are all kept", {
+
+  conf_3 <- dplyr::mutate(conf, c = c("m", "m", "n", "n"))
+  synth_3 <- dplyr::mutate(synth, c = c("m", "n", "n", "n"))
+
+  result <- .util_k_marginals(
+    synth_data = synth_3,
+    conf_data = conf_3,
+    k = 2,
+    n_marginals = 1,
+    priority_vars = "a"
+  )
+
+  expect_equal(sort(result$marginals$variables), c("a, b", "a, c"))
+
+})
+
+test_that("n_marginals at or above the combination count changes nothing", {
+
+  conf_3 <- dplyr::mutate(conf, c = c("m", "m", "n", "n"))
+  synth_3 <- dplyr::mutate(synth, c = c("m", "n", "n", "n"))
+
+  full <- .util_k_marginals(synth_data = synth_3, conf_data = conf_3, k = 2)
+
+  capped <- .util_k_marginals(
+    synth_data = synth_3, conf_data = conf_3, k = 2, n_marginals = 3
+  )
+
+  expect_equal(capped, full)
+
+})
+
+test_that("invalid sampling arguments throw an error", {
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth, conf_data = conf, k = 1, n_marginals = 1.5
+    ),
+    regexp = "must be single integers >= 1 or Inf"
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth, conf_data = conf, k = 1, priority_vars = "zzz"
+    ),
+    regexp = "`priority_vars` must be a character vector"
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth, conf_data = conf, k = 1, priority_vars = 1
+    ),
+    regexp = "`priority_vars` must be a character vector"
+  )
+
+})
+
+test_that("util_k_marginals passes sampling arguments through", {
+
+  conf_3 <- dplyr::mutate(conf, c = c("m", "m", "n", "n"))
+  synth_3 <- dplyr::mutate(synth, c = c("m", "n", "n", "n"))
+
+  ed <- eval_data(conf_data = conf_3, synth_data = synth_3)
+
+  result <- util_k_marginals(
+    eval_data = ed, k = 2, n_marginals = 2, priority_vars = "a"
+  )
+
+  expect_equal(sort(result$marginals$variables), c("a, b", "a, c"))
+
+})
+
+test_that("sampling fills remaining slots after priority combinations", {
+
+  # 4 shared variables, k = 2: 6 combinations, 3 containing a
+  conf_4 <- dplyr::mutate(
+    conf, c = c("m", "m", "n", "n"), d = c("u", "v", "u", "v")
+  )
+  synth_4 <- dplyr::mutate(
+    synth, c = c("m", "n", "n", "n"), d = c("v", "v", "u", "u")
+  )
+
+  set.seed(20250813)
+
+  result <- .util_k_marginals(
+    synth_data = synth_4,
+    conf_data = conf_4,
+    k = 2,
+    n_marginals = 4,
+    priority_vars = "a"
+  )
+
+  # cap respected exactly: all 3 priority combos plus 1 sampled non-priority
+  expect_equal(nrow(result$marginals), 4)
+
+  has_a <- grepl("a", result$marginals$variables)
+  expect_equal(sum(has_a), 3)
+  expect_equal(sum(!has_a), 1)
+  expect_true(
+    all(result$marginals$variables[!has_a] %in% c("b, c", "b, d", "c, d"))
+  )
+
+})
+
+test_that("n_marginals caps k = 3 combinations", {
+
+  # 4 shared variables, k = 3: 4 combinations
+  conf_4 <- dplyr::mutate(
+    conf, c = c("m", "m", "n", "n"), d = c("u", "v", "u", "v")
+  )
+  synth_4 <- dplyr::mutate(
+    synth, c = c("m", "n", "n", "n"), d = c("v", "v", "u", "u")
+  )
+
+  set.seed(20250813)
+
+  result <- .util_k_marginals(
+    synth_data = synth_4, conf_data = conf_4, k = 3, n_marginals = 2
+  )
+
+  expect_equal(nrow(result$marginals), 2)
+  expect_true(result$score >= 0 && result$score <= 1000)
+
+})
+
+test_that("priority_vars applies to k = 3 combinations", {
+
+  # priority a appears in 3 of the 4 triples; cap of 3 keeps exactly those
+  conf_4 <- dplyr::mutate(
+    conf, c = c("m", "m", "n", "n"), d = c("u", "v", "u", "v")
+  )
+  synth_4 <- dplyr::mutate(
+    synth, c = c("m", "n", "n", "n"), d = c("v", "v", "u", "u")
+  )
+
+  result <- .util_k_marginals(
+    synth_data = synth_4,
+    conf_data = conf_4,
+    k = 3,
+    n_marginals = 3,
+    priority_vars = "a"
+  )
+
+  expect_equal(
+    sort(result$marginals$variables),
+    c("a, b, c", "a, b, d", "a, c, d")
+  )
+
+})
