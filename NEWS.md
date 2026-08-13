@@ -1,3 +1,7 @@
+# syntheval 0.1.0
+
+* Add `util_k_marginals()` to calculate the k-marginals metric for 1-, 2-, and 3-way marginals.
+
 # syntheval 0.0.5
 
 * Remove `util_tails()`
