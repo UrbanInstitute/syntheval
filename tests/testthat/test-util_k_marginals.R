@@ -127,7 +127,7 @@ test_that("k exceeding the number of shared variables throws an error", {
 
   expect_error(
     .util_k_marginals(synth_data = synth, conf_data = conf, k = 3),
-    regexp = "shared by both datasets"
+    regexp = "`k` cannot exceed the number of variables available"
   )
 
 })
@@ -1184,7 +1184,7 @@ test_that("synth_varnames with no shared variables errors informatively", {
       k = 1,
       synth_varnames = "zzz"
     ),
-    regexp = "shares no variables with both datasets"
+    regexp = "`synth_varnames` matches no variables available"
   )
 
 })
@@ -1575,6 +1575,524 @@ test_that("infinite confidential values still refuse to discretize", {
       synth_data = synth_num, conf_data = conf_inf, k = 1, bins = 2
     ),
     regexp = "must be finite to discretize"
+  )
+
+})
+
+# group_by stratification
+#
+# conf_g             synth_g
+#   g  a               g  a
+#   A  x               A  x
+#   A  y               A  x
+#   B  x               B  x
+#   B  y               B  y
+#
+# universe = {a}; g stratifies and never marginalizes
+# stratum A (conf share 0.5): conf (x = 0.5, y = 0.5), synth (x = 1)
+#   MabsDD = mean(0.5, 0.5) = 0.5 -> score 500
+# stratum B (conf share 0.5): identical -> MabsDD = 0 -> score 1000
+# overall = 0.5 * 500 + 0.5 * 1000 = 750
+
+conf_g <- tibble::tibble(
+  g = c("A", "A", "B", "B"),
+  a = c("x", "y", "x", "y")
+)
+
+synth_g <- tibble::tibble(
+  g = c("A", "A", "B", "B"),
+  a = c("x", "x", "x", "y")
+)
+
+test_that("group_by stratifies the score by confidential shares", {
+
+  result <- .util_k_marginals(
+    synth_data = synth_g, conf_data = conf_g, k = 1, group_by = "g"
+  )
+
+  expect_equal(result$score, 750)
+
+})
+
+test_that("grouped output gains group columns and group_scores", {
+
+  result <- .util_k_marginals(
+    synth_data = synth_g, conf_data = conf_g, k = 1, group_by = "g"
+  )
+
+  expect_named(result$group_scores, c("g", "share", "score"))
+
+  # worst stratum first
+  expect_equal(result$group_scores$g, c("A", "B"))
+  expect_equal(result$group_scores$share, c(0.5, 0.5))
+  expect_equal(result$group_scores$score, c(500, 1000))
+
+  expect_true("g" %in% names(result$marginals))
+  expect_true("g" %in% names(result$cells))
+
+  # worst-first ordering across strata
+  expect_equal(result$marginals$g[1], "A")
+
+  # ungrouped results carry no group_scores element
+  ungrouped <- .util_k_marginals(synth_data = synth_g, conf_data = conf_g, k = 1)
+
+  expect_null(ungrouped$group_scores)
+
+})
+
+test_that("an empty synthetic stratum scores against zero proportions", {
+
+  # synth has no B rows: stratum B conf cells (x = 0.5, y = 0.5) face
+  # synthetic proportions of 0 -> MabsDD = 0.5 -> score 500
+  # stratum A: conf (x = 0.5, y = 0.5), synth (x = 0.5, y = 0.5) -> 1000
+  # overall = 0.5 * 1000 + 0.5 * 500 = 750
+  synth_a_only <- tibble::tibble(
+    g = c("A", "A", "A", "A"),
+    a = c("x", "x", "y", "y")
+  )
+
+  result <- .util_k_marginals(
+    synth_data = synth_a_only, conf_data = conf_g, k = 1, group_by = "g"
+  )
+
+  expect_equal(result$score, 750)
+
+})
+
+test_that("group shares use weights when weight_var is set", {
+
+  # conf weight shares: A = 2/4, B = 2/4 (row shares would be 2/3, 1/3)
+  # stratum A: conf (x = 0.5, y = 0.5), synth (x = 1) -> score 500
+  # stratum B: conf (x = 1), synth (x = 1) -> score 1000
+  # overall = 0.5 * 500 + 0.5 * 1000 = 750; row shares would give 2000/3
+  conf_gw <- tibble::tibble(
+    g = c("A", "A", "B"),
+    a = c("x", "y", "x"),
+    w = c(1, 1, 2)
+  )
+
+  synth_gw <- tibble::tibble(
+    g = c("A", "A", "B"),
+    a = c("x", "x", "x"),
+    w = c(1, 1, 1)
+  )
+
+  result <- .util_k_marginals(
+    synth_data = synth_gw,
+    conf_data = conf_gw,
+    k = 1,
+    group_by = "g",
+    weight_var = "w"
+  )
+
+  expect_equal(result$score, 750)
+
+})
+
+test_that("invalid group_by values error", {
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_g, conf_data = conf_g, k = 1, group_by = 1
+    ),
+    regexp = "`group_by` must be a character vector"
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_g, conf_data = conf_g, k = 1, group_by = "zzz"
+    ),
+    regexp = "`group_by` must be a character vector"
+  )
+
+  conf_w <- dplyr::mutate(conf_g, w = 1)
+  synth_w <- dplyr::mutate(synth_g, w = 1)
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_w, conf_data = conf_w, k = 1,
+      group_by = "w", weight_var = "w"
+    ),
+    regexp = "`group_by` cannot include `weight_var`"
+  )
+
+})
+
+test_that("group variables are excluded from the marginal universe", {
+
+  result <- .util_k_marginals(
+    synth_data = synth_g, conf_data = conf_g, k = 1, group_by = "g"
+  )
+
+  expect_false(any(result$marginals$variables == "g"))
+
+  # k is checked against the universe without the group variables
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_g, conf_data = conf_g, k = 2, group_by = "g"
+    ),
+    regexp = "`k` cannot exceed"
+  )
+
+})
+
+test_that("grouped print shows group scores", {
+
+  result <- .util_k_marginals(
+    synth_data = synth_g, conf_data = conf_g, k = 1, group_by = "g"
+  )
+
+  expect_output(print(result), regexp = "Worst groups:")
+
+})
+
+test_that("util_k_marginals passes group_by through", {
+
+  ed <- eval_data(conf_data = conf_g, synth_data = synth_g)
+
+  expect_equal(
+    util_k_marginals(eval_data = ed, k = 1, group_by = "g")$score,
+    750
+  )
+
+})
+
+test_that("missing group values follow na.rm", {
+
+  conf_gna <- tibble::tibble(
+    g = c("A", "A", NA, NA),
+    a = c("x", "y", "x", "y")
+  )
+
+  synth_gna <- tibble::tibble(
+    g = c("A", "A", NA, NA),
+    a = c("x", "x", "x", "y")
+  )
+
+  # na.rm = FALSE: NA forms its own stratum (perfect match -> 1000);
+  # stratum A scores 500 -> overall 750
+  kept <- suppressMessages(
+    .util_k_marginals(
+      synth_data = synth_gna, conf_data = conf_gna, k = 1, group_by = "g"
+    )
+  )
+
+  expect_equal(kept$score, 750)
+  expect_true("NA" %in% kept$group_scores$g)
+
+  # na.rm = TRUE: NA-group rows drop entirely, leaving only stratum A
+  dropped <- .util_k_marginals(
+    synth_data = synth_gna, conf_data = conf_gna, k = 1, group_by = "g",
+    na.rm = TRUE
+  )
+
+  expect_equal(dropped$score, 500)
+  expect_equal(nrow(dropped$group_scores), 1)
+
+})
+
+test_that("multi-column group_by stratifies by joint combinations", {
+
+  # four joint strata of two rows each; only stratum (A, p) diverges:
+  #   conf (x = 0.5, y = 0.5), synth (x = 1) -> MabsDD = 0.5 -> score 500
+  # the other three strata are identical -> 1000
+  # overall = 0.25 * 500 + 0.75 * 1000 = 875
+  conf_g2 <- tibble::tibble(
+    g1 = c("A", "A", "A", "A", "B", "B", "B", "B"),
+    g2 = c("p", "p", "q", "q", "p", "p", "q", "q"),
+    a = c("x", "y", "x", "y", "x", "y", "x", "y")
+  )
+
+  synth_g2 <- dplyr::mutate(
+    conf_g2,
+    a = c("x", "x", "x", "y", "x", "y", "x", "y")
+  )
+
+  result <- .util_k_marginals(
+    synth_data = synth_g2, conf_data = conf_g2, k = 1,
+    group_by = c("g1", "g2")
+  )
+
+  expect_equal(result$score, 875)
+
+  # both grouping columns ride along in every output
+  expect_named(result$group_scores, c("g1", "g2", "share", "score"))
+  expect_true(all(c("g1", "g2") %in% names(result$marginals)))
+  expect_true(all(c("g1", "g2") %in% names(result$cells)))
+
+  expect_equal(result$group_scores$share, rep(0.25, 4))
+
+  # worst joint stratum first
+  expect_equal(result$group_scores$g1[1], "A")
+  expect_equal(result$group_scores$g2[1], "p")
+
+  # neither grouping variable enters the marginal universe
+  expect_false(any(result$marginals$variables %in% c("g1", "g2")))
+
+})
+
+test_that("partially missing joint strata follow na.rm", {
+
+  # g2 is missing on rows 3-4; only the (A, NA) stratum diverges:
+  #   conf (x = 0.5, y = 0.5), synth (x = 1) -> score 500
+  conf_gpart <- tibble::tibble(
+    g1 = c("A", "A", "A", "A"),
+    g2 = c("p", "p", NA, NA),
+    a = c("x", "y", "x", "y")
+  )
+
+  synth_gpart <- dplyr::mutate(conf_gpart, a = c("x", "y", "x", "x"))
+
+  # na.rm = FALSE: the partial combination becomes an (A, "NA") stratum
+  # overall = 0.5 * 1000 + 0.5 * 500 = 750
+  kept <- suppressMessages(
+    .util_k_marginals(
+      synth_data = synth_gpart, conf_data = conf_gpart, k = 1,
+      group_by = c("g1", "g2")
+    )
+  )
+
+  expect_equal(kept$score, 750)
+  expect_true("NA" %in% kept$group_scores$g2)
+
+  # na.rm = TRUE: rows missing any grouping value drop, leaving (A, p) only
+  dropped <- .util_k_marginals(
+    synth_data = synth_gpart, conf_data = conf_gpart, k = 1,
+    group_by = c("g1", "g2"), na.rm = TRUE
+  )
+
+  expect_equal(dropped$score, 1000)
+  expect_equal(nrow(dropped$group_scores), 1)
+
+})
+
+test_that("empty, missing, and duplicate group_by values error", {
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_g, conf_data = conf_g, k = 1,
+      group_by = character(0)
+    ),
+    regexp = "`group_by` must be a character vector"
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_g, conf_data = conf_g, k = 1,
+      group_by = c("g", NA)
+    ),
+    regexp = "`group_by` must be a character vector"
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_g, conf_data = conf_g, k = 1,
+      group_by = c("g", "g")
+    ),
+    regexp = "must not contain duplicate"
+  )
+
+})
+
+test_that("group_by composes with synth_varnames", {
+
+  # b is shared but unsynthesized; g stratifies; the universe is {a} only
+  conf_gsv <- tibble::tibble(
+    g = c("A", "A", "B", "B"),
+    a = c("x", "y", "x", "y"),
+    b = c("m", "m", "n", "n")
+  )
+
+  synth_gsv <- dplyr::mutate(conf_gsv, a = c("x", "x", "x", "y"))
+
+  result <- .util_k_marginals(
+    synth_data = synth_gsv, conf_data = conf_gsv, k = 1,
+    group_by = "g", synth_varnames = "a"
+  )
+
+  expect_equal(result$score, 750)
+  expect_equal(unique(result$marginals$variables), "a")
+
+  # a grouping variable named in synth_varnames still stratifies rather
+  # than marginalizing
+  result_gname <- .util_k_marginals(
+    synth_data = synth_gsv, conf_data = conf_gsv, k = 1,
+    group_by = "g", synth_varnames = c("g", "a")
+  )
+
+  expect_equal(unique(result_gname$marginals$variables), "a")
+
+})
+
+test_that("literal 'NA' strings in grouping columns collide with true NA", {
+
+  # single grouping column carrying both a literal "NA" level and a true NA
+  conf_collide <- tibble::tibble(
+    g = c("NA", "A", NA),
+    a = c("x", "x", "x")
+  )
+
+  synth_ok <- tibble::tibble(
+    g = c("A", "A", "A"),
+    a = c("x", "x", "x")
+  )
+
+  expect_error(
+    suppressMessages(
+      .util_k_marginals(
+        synth_data = synth_ok, conf_data = conf_collide, k = 1,
+        group_by = "g"
+      )
+    ),
+    regexp = "'NA' already exists"
+  )
+
+  # multi-column grouping where only one key collides
+  conf_multi <- tibble::tibble(
+    g1 = c("A", "A", "A"),
+    g2 = c("NA", "p", NA),
+    a = c("x", "x", "x")
+  )
+
+  synth_multi <- tibble::tibble(
+    g1 = c("A", "A", "A"),
+    g2 = c("p", "p", "p"),
+    a = c("x", "x", "x")
+  )
+
+  expect_error(
+    suppressMessages(
+      .util_k_marginals(
+        synth_data = synth_multi, conf_data = conf_multi, k = 1,
+        group_by = c("g1", "g2")
+      )
+    ),
+    regexp = "'NA' already exists"
+  )
+
+  # convert_na_to_level() rejects a literal "NA" level even without true
+  # missing values, so such data must be scored with na.rm = TRUE
+  conf_legit <- tibble::tibble(
+    g = c("NA", "NA", "A", "A"),
+    a = c("x", "y", "x", "y")
+  )
+
+  synth_legit <- dplyr::mutate(conf_legit, a = c("x", "x", "x", "y"))
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_legit, conf_data = conf_legit, k = 1, group_by = "g"
+    ),
+    regexp = "'NA' already exists"
+  )
+
+  # na.rm = TRUE bypasses the conversion, so the "NA" stratum scores
+  # normally: stratum "NA" diverges (500), stratum A matches (1000)
+  result <- .util_k_marginals(
+    synth_data = synth_legit, conf_data = conf_legit, k = 1, group_by = "g",
+    na.rm = TRUE
+  )
+
+  expect_equal(result$score, 750)
+
+})
+
+test_that("grouped results map over replicates with the same structure", {
+
+  ed <- eval_data(
+    conf_data = conf_g,
+    synth_data = list(synth_g, conf_g)
+  )
+
+  result <- util_k_marginals(
+    eval_data = ed, k = 1, group_by = "g"
+  )
+
+  expect_length(result, 2)
+
+  for (rep in result) {
+
+    expect_s3_class(rep, "k_marginals")
+    expect_named(rep$group_scores, c("g", "share", "score"))
+    expect_true("g" %in% names(rep$marginals))
+    expect_true("g" %in% names(rep$cells))
+
+  }
+
+  # first replicate diverges in stratum A, second is identical data
+  expect_equal(purrr::map_dbl(result, "score"), c(750, 1000))
+
+})
+
+test_that("a confidential stratum emptied by na.rm errors instead of NaN", {
+
+  # stratum B's confidential rows are all missing on a, so per-marginal NA
+  # removal leaves nothing to score against
+  conf_gna2 <- tibble::tibble(
+    g = c("A", "A", "B", "B"),
+    a = c("x", "y", NA, NA)
+  )
+
+  synth_gna2 <- tibble::tibble(
+    g = c("A", "A", "B", "B"),
+    a = c("x", "y", "x", "y")
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_gna2, conf_data = conf_gna2, k = 1, group_by = "g",
+      na.rm = TRUE
+    ),
+    regexp = "no rows remain"
+  )
+
+  # the synthetic side emptying in a stratum is still allowed
+  conf_swap <- synth_gna2
+  synth_swap <- conf_gna2
+
+  result <- .util_k_marginals(
+    synth_data = synth_swap, conf_data = conf_swap, k = 1, group_by = "g",
+    na.rm = TRUE
+  )
+
+  # stratum B scores conf (x = 0.5, y = 0.5) against zero synth -> 500
+  expect_equal(result$score, 750)
+
+})
+
+test_that("priority_vars with NA entries hits the intended error", {
+
+  # %in% never propagates NA, so the membership test is FALSE, not NA, and
+  # the package error fires rather than a base R condition failure
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth, conf_data = conf, k = 1,
+      priority_vars = NA_character_
+    ),
+    regexp = "`priority_vars` must be a character vector of variables available"
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth, conf_data = conf, k = 1,
+      priority_vars = c("a", NA)
+    ),
+    regexp = "`priority_vars` must be a character vector of variables available"
+  )
+
+})
+
+test_that("priority_vars = character(0) behaves like NULL", {
+
+  # an empty priority set passes validation and simply guarantees nothing
+  result <- .util_k_marginals(
+    synth_data = synth, conf_data = conf, k = 1,
+    priority_vars = character(0)
+  )
+
+  expect_equal(
+    result$score,
+    .util_k_marginals(synth_data = synth, conf_data = conf, k = 1)$score
   )
 
 })

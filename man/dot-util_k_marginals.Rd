@@ -13,6 +13,7 @@
   n_marginals = Inf,
   priority_vars = NULL,
   weight_var = NULL,
+  group_by = NULL,
   synth_varnames = NULL,
   na.rm = FALSE,
   bins = NULL,
@@ -50,6 +51,13 @@ shares instead of row shares, and the weight column is excluded from the
 marginals. Weights must be finite and non-negative with a positive total.
 Defaults to \code{NULL} (unweighted).}
 
+\item{group_by}{Optional character vector of grouping variable names
+present in both datasets. When set, the grouping variables are excluded
+from the marginals and the metric is computed within each stratum observed
+in the confidential data; the headline score is the mean of the per-stratum
+scores weighted by each stratum's confidential share (weight share when
+\code{weight_var} is set). Defaults to \code{NULL} (no stratification).}
+
 \item{synth_varnames}{Optional character vector of synthesized variable
 names. When set, only these variables (intersected with the variables
 shared by both datasets) contribute marginals. Defaults to \code{NULL}, which
@@ -83,7 +91,9 @@ tibble with the MabsDD for each combination of variables, worst first; and
 \code{cells}, a tibble with the synthetic and confidential proportions and their
 absolute difference for every cell, worst first. \code{score} is always computed
 from all evaluated marginals, even when \code{keep_marginals} or \code{keep_cells}
-truncate the detail tables.
+truncate the detail tables. When \code{group_by} is set, \code{marginals} and
+\code{cells} gain the grouping columns and a fourth element \code{group_scores}
+reports each stratum's share and score, worst first.
 }
 \description{
 This worker function takes a specified k-marginal and calculates
