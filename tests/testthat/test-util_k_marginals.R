@@ -499,14 +499,14 @@ test_that("invalid sampling arguments throw an error", {
     .util_k_marginals(
       synth_data = synth, conf_data = conf, k = 1, priority_vars = "zzz"
     ),
-    regexp = "`priority_vars` must be a character vector"
+    regexp = "`priority_vars` must be a character vector of variables available"
   )
 
   expect_error(
     .util_k_marginals(
       synth_data = synth, conf_data = conf, k = 1, priority_vars = 1
     ),
-    regexp = "`priority_vars` must be a character vector"
+    regexp = "`priority_vars` must be a character vector of variables available"
   )
 
 })
@@ -959,5 +959,288 @@ test_that("tied quantile cut points collapse bins with a warning", {
   )
 
   expect_lt(nrow(result$cells), 5)
+
+})
+
+test_that("synth_varnames restricts the worker's variable universe", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q"),
+    c = c("m", "n", "m", "n")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p"),
+    c = c("m", "n", "m", "n")
+  )
+
+  result <- .util_k_marginals(
+    synth_data = synth_sv,
+    conf_data = conf_sv,
+    k = 2,
+    synth_varnames = c("a", "b")
+  )
+
+  expect_equal(result$marginals$variables, "a, b")
+
+  # NULL means no restriction
+  result_all <- .util_k_marginals(
+    synth_data = synth_sv,
+    conf_data = conf_sv,
+    k = 2,
+    synth_varnames = NULL
+  )
+
+  expect_setequal(
+    result_all$marginals$variables,
+    c("a, b", "a, c", "b, c")
+  )
+
+})
+
+test_that("synth_vars = TRUE keeps only synthesized variables for postsynth", {
+
+  ed <- eval_data(
+    conf_data = penguins_conf,
+    synth_data = penguins_postsynth
+  )
+
+  result <- util_k_marginals(eval_data = ed, k = 1, synth_vars = TRUE)
+
+  # species and island are carried over from start_data, not synthesized
+  expect_setequal(result$marginals$variables, ed$synth_vars)
+
+})
+
+test_that("synth_vars = FALSE includes carried-over variables", {
+
+  ed <- eval_data(
+    conf_data = penguins_conf,
+    synth_data = penguins_postsynth
+  )
+
+  result <- util_k_marginals(eval_data = ed, k = 1, synth_vars = FALSE)
+
+  expect_setequal(
+    result$marginals$variables,
+    intersect(names(ed$conf_data), names(ed$synth_data))
+  )
+
+  # penguins_postsynth's start data was sampled, so the carried-over
+  # variables have their own discrepancies; including them must change the
+  # score, guarding against the flag being silently ignored
+  result_synth_only <- util_k_marginals(
+    eval_data = ed, k = 1, synth_vars = TRUE
+  )
+
+  expect_false(isTRUE(all.equal(result$score, result_synth_only$score)))
+
+})
+
+test_that("synth_vars = TRUE is a no-op for plain data frame eval_data", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p")
+  )
+
+  ed <- eval_data(conf_data = conf_sv, synth_data = synth_sv)
+
+  result <- util_k_marginals(eval_data = ed, k = 1, synth_vars = TRUE)
+
+  expect_setequal(result$marginals$variables, c("a", "b"))
+
+})
+
+test_that("priority_vars excluded by synth_varnames error informatively", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q"),
+    c = c("m", "n", "m", "n")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p"),
+    c = c("m", "n", "m", "n")
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_sv,
+      conf_data = conf_sv,
+      k = 1,
+      priority_vars = "c",
+      synth_varnames = c("a", "b")
+    ),
+    regexp = "`priority_vars` must be a character vector of variables available"
+  )
+
+})
+
+test_that("k is validated against the restricted variable universe", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q"),
+    c = c("m", "n", "m", "n")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p"),
+    c = c("m", "n", "m", "n")
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_sv,
+      conf_data = conf_sv,
+      k = 3,
+      synth_varnames = c("a", "b")
+    ),
+    regexp = "`k` cannot exceed"
+  )
+
+})
+
+test_that("invalid synth_vars values error", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p")
+  )
+
+  ed <- eval_data(conf_data = conf_sv, synth_data = synth_sv)
+
+  for (bad in list("x", c(TRUE, FALSE), NA, 1)) {
+
+    expect_error(
+      util_k_marginals(eval_data = ed, k = 1, synth_vars = bad),
+      regexp = "`synth_vars` must be a single TRUE or FALSE"
+    )
+
+  }
+
+})
+
+test_that("invalid synth_varnames values error", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p")
+  )
+
+  for (bad in list(character(0), NA_character_, c("a", NA), 1)) {
+
+    expect_error(
+      .util_k_marginals(
+        synth_data = synth_sv,
+        conf_data = conf_sv,
+        k = 1,
+        synth_varnames = bad
+      ),
+      regexp = "`synth_varnames` must be a non-empty character vector"
+    )
+
+  }
+
+})
+
+test_that("synth_varnames with no shared variables errors informatively", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p")
+  )
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_sv,
+      conf_data = conf_sv,
+      k = 1,
+      synth_varnames = "zzz"
+    ),
+    regexp = "shares no variables with both datasets"
+  )
+
+})
+
+test_that("empty synthesized-variable metadata errors informatively", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p")
+  )
+
+  ed <- eval_data(
+    conf_data = conf_sv,
+    synth_data = synth_sv,
+    synth_vars = character(0)
+  )
+
+  expect_error(
+    util_k_marginals(eval_data = ed, k = 1, synth_vars = TRUE),
+    regexp = "records no synthesized variables"
+  )
+
+  # synth_vars = FALSE ignores the empty metadata
+  expect_no_error(util_k_marginals(eval_data = ed, k = 1, synth_vars = FALSE))
+
+})
+
+test_that("wrapper restriction bounds k by the synthesized-variable set", {
+
+  conf_sv <- tibble::tibble(
+    a = c("x", "x", "y", "y"),
+    b = c("p", "p", "p", "q")
+  )
+
+  synth_sv <- tibble::tibble(
+    a = c("x", "y", "y", "y"),
+    b = c("p", "q", "q", "p")
+  )
+
+  ed <- eval_data(
+    conf_data = conf_sv,
+    synth_data = synth_sv,
+    synth_vars = "a"
+  )
+
+  expect_error(
+    util_k_marginals(eval_data = ed, k = 2, synth_vars = TRUE),
+    regexp = "`k` cannot exceed"
+  )
+
+  # the same call succeeds once the restriction is lifted
+  expect_no_error(util_k_marginals(eval_data = ed, k = 2, synth_vars = FALSE))
 
 })

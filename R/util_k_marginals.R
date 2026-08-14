@@ -31,6 +31,10 @@
 #' shares instead of row shares, and the weight column is excluded from the
 #' marginals. Weights must be finite and non-negative with a positive total.
 #' Defaults to `NULL` (unweighted).
+#' @param synth_varnames Optional character vector of synthesized variable
+#' names. When set, only these variables (intersected with the variables
+#' shared by both datasets) contribute marginals. Defaults to `NULL`, which
+#' places no restriction on the shared variables.
 #' @param bins Optional single integer >= 2. When set, every numeric shared
 #' variable is discretized into this many bins (fewer, with a warning, if
 #' tied quantile cut points collapse) with breaks derived from the
@@ -60,6 +64,7 @@
     n_marginals = Inf,
     priority_vars = NULL,
     weight_var = NULL,
+    synth_varnames = NULL,
     bins = NULL,
     discretize_method = c("width", "ntile", "cluster")) {
 
@@ -139,6 +144,33 @@
     intersect(names(synth_data), names(conf_data)),
     weight_var
   )
+
+  if (!is.null(synth_varnames)) {
+
+    if (!(is.character(synth_varnames) && length(synth_varnames) >= 1 &&
+          !anyNA(synth_varnames))) {
+
+      stop(
+        "`synth_varnames` must be a non-empty character vector without ",
+        "missing values, or NULL"
+      )
+
+    }
+
+    shared_vars <- intersect(shared_vars, synth_varnames)
+
+    # fail here rather than at the later k check, whose message would point
+    # away from the real problem
+    if (length(shared_vars) == 0) {
+
+      stop(
+        "`synth_varnames` shares no variables with both datasets; no ",
+        "marginals can be computed"
+      )
+
+    }
+
+  }
 
   if (!is.null(bins)) {
 
@@ -231,8 +263,9 @@
           all(priority_vars %in% shared_vars))) {
 
       stop(
-        "`priority_vars` must be a character vector of variables shared by ",
-        "both datasets"
+        "`priority_vars` must be a character vector of variables available ",
+        "for marginals after applying shared-variable and `synth_varnames` ",
+        "filtering"
       )
 
     }
@@ -391,6 +424,10 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' shares instead of row shares, and the weight column is excluded from the
 #' marginals. Weights must be finite and non-negative with a positive total.
 #' Defaults to `NULL` (unweighted).
+#' @param synth_vars A logical for if only synthesized variables should
+#' contribute marginals. Only meaningful when the `eval_data` records which
+#' variables were synthesized (i.e., was built from a `postsynth`); for plain
+#' data frames all shared variables are used regardless. Defaults to `TRUE`.
 #' @param bins Optional single integer >= 2. When set, every numeric shared
 #' variable is discretized into this many bins (fewer, with a warning, if
 #' tied quantile cut points collapse) with breaks derived from the
@@ -422,12 +459,42 @@ util_k_marginals <- function(
     n_marginals = Inf,
     priority_vars = NULL,
     weight_var = NULL,
+    synth_vars = TRUE,
     bins = NULL,
     discretize_method = c("width", "ntile", "cluster")) {
 
   stopifnot(is_eval_data(eval_data))
 
   discretize_method <- match.arg(discretize_method)
+
+  if (!(is.logical(synth_vars) && length(synth_vars) == 1 &&
+        !is.na(synth_vars))) {
+
+    stop("`synth_vars` must be a single TRUE or FALSE")
+
+  }
+
+  # NULL for plain data frame eval_data, so the worker applies no restriction
+  synth_varnames <- if (synth_vars) {
+
+    eval_data$synth_vars
+
+  } else {
+
+    NULL
+
+  }
+
+  # empty metadata can only come from a user-supplied eval_data(synth_vars =)
+  # argument; fail with a message in terms of this function's arguments
+  if (!is.null(synth_varnames) && length(synth_varnames) == 0) {
+
+    stop(
+      "`eval_data` records no synthesized variables; use `synth_vars = ",
+      "FALSE` to evaluate all shared variables"
+    )
+
+  }
 
   # surface the resolved method so a forgotten discretize_method is visible
   if (!is.null(bins)) {
@@ -451,6 +518,7 @@ util_k_marginals <- function(
         n_marginals = n_marginals,
         priority_vars = priority_vars,
         weight_var = weight_var,
+        synth_varnames = synth_varnames,
         bins = bins,
         discretize_method = discretize_method
       )
@@ -471,6 +539,7 @@ util_k_marginals <- function(
           n_marginals = n_marginals,
           priority_vars = priority_vars,
           weight_var = weight_var,
+          synth_varnames = synth_varnames,
           bins = bins,
           discretize_method = discretize_method
         )

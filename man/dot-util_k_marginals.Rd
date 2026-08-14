@@ -13,6 +13,7 @@
   n_marginals = Inf,
   priority_vars = NULL,
   weight_var = NULL,
+  synth_varnames = NULL,
   bins = NULL,
   discretize_method = c("width", "ntile", "cluster")
 )
@@ -47,6 +48,11 @@ column present in both datasets. When set, cell proportions are weight
 shares instead of row shares, and the weight column is excluded from the
 marginals. Weights must be finite and non-negative with a positive total.
 Defaults to \code{NULL} (unweighted).}
+
+\item{synth_varnames}{Optional character vector of synthesized variable
+names. When set, only these variables (intersected with the variables
+shared by both datasets) contribute marginals. Defaults to \code{NULL}, which
+places no restriction on the shared variables.}
 
 \item{bins}{Optional single integer >= 2. When set, every numeric shared
 variable is discretized into this many bins (fewer, with a warning, if
