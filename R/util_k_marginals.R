@@ -188,70 +188,16 @@
   }
 
   if (!is.null(bins)) {
-    if (!(is.numeric(bins) && length(bins) == 1 && !is.na(bins) &&
-      bins >= 2 && bins == floor(bins))) {
-      stop("`bins` must be a single integer >= 2")
-    }
+    discretized <- .discretize_k_marginal_vars(
+      synth_data = synth_data,
+      conf_data = conf_data,
+      vars = shared_vars,
+      bins = bins,
+      discretize_method = discretize_method
+    )
 
-    numeric_vars <- shared_vars[
-      purrr::map_lgl(.x = shared_vars, .f = \(v) is.numeric(conf_data[[v]]))
-    ]
-
-    for (var in numeric_vars) {
-      # cut points derive from observed values; missing values follow na.rm
-      # like every other variable, becoming an NA bin or dropped rows
-      conf_values <- conf_data[[var]][!is.na(conf_data[[var]])]
-
-      if (!all(is.finite(conf_values)) || length(conf_values) == 0) {
-        stop(
-          "observed numeric values must be finite to discretize; `", var,
-          "` is not"
-        )
-      }
-
-      if (dplyr::n_distinct(conf_values) < bins) {
-        stop(
-          "`", var, "` has fewer distinct confidential values than `bins`"
-        )
-      }
-
-      # interior cut points always derive from the confidential data; each
-      # method yields bins - 1 of them
-      cut_points <- switch(
-        EXPR = discretize_method,
-        width = seq(
-          from = min(conf_values),
-          to = max(conf_values),
-          length.out = bins + 1
-        )[2:bins],
-        ntile = stats::quantile(
-          x = conf_values,
-          probs = seq(from = 0, to = 1, length.out = bins + 1),
-          names = FALSE
-        )[2:bins],
-        cluster = {
-          centers <- sort(
-            stats::kmeans(x = conf_values, centers = bins)$centers[, 1]
-          )
-
-          (centers[-1] + centers[-length(centers)]) / 2
-        }
-      )
-
-      # outer bins extend to +/-Inf so out-of-range synthetic values land in
-      # edge bins; unique() collapses ties from skewed quantiles
-      breaks <- unique(c(-Inf, cut_points, Inf))
-
-      if (length(breaks) - 1 < bins) {
-        warning(
-          "`", var, "` was discretized into ", length(breaks) - 1,
-          " bins instead of ", bins, " because of tied cut points"
-        )
-      }
-
-      synth_data[[var]] <- cut(x = synth_data[[var]], breaks = breaks)
-      conf_data[[var]] <- cut(x = conf_data[[var]], breaks = breaks)
-    }
+    synth_data <- discretized$synth_data
+    conf_data <- discretized$conf_data
   }
 
   if (length(shared_vars) < k) {
@@ -316,113 +262,21 @@
     }
   }
 
-  kmarginals_vars <- t(utils::combn(x = shared_vars, m = k))
-
-  # sample combinations down to n_marginals, always keeping combinations that
-  # contain a priority variable
-  if (nrow(kmarginals_vars) > n_marginals) {
-    is_priority <- apply(
-      X = kmarginals_vars,
-      MARGIN = 1,
-      FUN = \(vars) any(vars %in% priority_vars)
-    )
-
-    n_sampled <- min(max(n_marginals - sum(is_priority), 0), sum(!is_priority))
-
-    sampled_rows <- sample(x = which(!is_priority), size = n_sampled)
-
-    kmarginals_vars <- kmarginals_vars[
-      sort(c(which(is_priority), sampled_rows)), ,
-      drop = FALSE
-    ]
-  }
-
-  # cell proportions for one dataset over one set of variables; weighted
-  # proportions are weight shares instead of row shares
-  process_data <- function(data, vars, prop_name, allow_empty) {
-    if (na.rm) {
-      data <- dplyr::filter(
-        data,
-        !dplyr::if_any(.cols = dplyr::all_of(vars), .fns = is.na)
-      )
-
-      if (nrow(data) == 0 && !allow_empty) {
-        stop(
-          "no rows remain for the marginal over ",
-          paste(vars, collapse = ", "),
-          " after removing missing values"
-        )
-      }
-    }
-
-    if (is.null(weight_var)) {
-      counts <- dplyr::count(data, dplyr::across(dplyr::all_of(vars)))
-    } else {
-      counts <- dplyr::count(
-        data,
-        dplyr::across(dplyr::all_of(vars)),
-        wt = .data[[weight_var]]
-      )
-    }
-
-    props <- counts |>
-      dplyr::mutate("{prop_name}" := .data$n / sum(.data$n)) |>
-      dplyr::select(-"n")
-
-    return(props)
-  }
-
-  # per-cell differences for one set of variables; cells absent from one
-  # dataset count as 0
-  marginal_cells <- function(vars, synth_d, conf_d, allow_empty_synth) {
-    # only the synthetic side may be empty (a stratum the synthesis never
-    # produced); a confidential marginal with no rows has nothing to score
-    # against and errors inside process_data
-    cells <- dplyr::full_join(
-      process_data(
-        data = synth_d, vars = vars, prop_name = "prop_synth",
-        allow_empty = allow_empty_synth
-      ),
-      process_data(
-        data = conf_d, vars = vars, prop_name = "prop_conf",
-        allow_empty = FALSE
-      ),
-      by = vars
-    ) |>
-      tidyr::replace_na(replace = list(prop_synth = 0, prop_conf = 0)) |>
-      tidyr::unite(col = "cell", dplyr::all_of(vars), sep = ", ") |>
-      dplyr::mutate(
-        variables = paste(vars, collapse = ", "),
-        abs_diff = abs(.data$prop_synth - .data$prop_conf)
-      ) |>
-      dplyr::select(
-        "variables", "cell", "prop_synth", "prop_conf", "abs_diff"
-      )
-    # variables disambiguates cells across combinations and drives the
-    # per-combination summary; the prop columns show the direction of the
-    # discrepancy, not just its size
-    return(cells)
-  }
-
-  # all per-cell differences for one (synth, conf) pair of datasets
-  compute_cells <- function(synth_d, conf_d, allow_empty_synth) {
-    cells <- purrr::map(
-      .x = seq_len(nrow(kmarginals_vars)),
-      .f = \(i) marginal_cells(
-        vars = kmarginals_vars[i, ],
-        synth_d = synth_d,
-        conf_d = conf_d,
-        allow_empty_synth = allow_empty_synth
-      )
-    ) |>
-      purrr::list_rbind()
-
-    return(cells)
-  }
+  kmarginals_vars <- .select_k_marginal_combos(
+    shared_vars = shared_vars,
+    k = k,
+    n_marginals = n_marginals,
+    priority_vars = priority_vars
+  )
 
   if (is.null(group_by)) {
-    cells <- compute_cells(
-      synth_d = synth_data, conf_d = conf_data, allow_empty_synth = FALSE
+    cells <- .compute_marginal_cells(
+      synth_data = synth_data,
+      conf_data = conf_data,
+      combos = kmarginals_vars,
+      weight_var = weight_var,
+      na.rm = na.rm,
+      allow_empty_synth = FALSE
     ) |>
       dplyr::arrange(dplyr::desc(.data$abs_diff))
 
@@ -433,11 +287,9 @@
 
     # mean of the MabsDDs, rescaled to an ascending measure on [0, 1000];
     # computed from all marginals before any truncation
-    score <- (1 - mean(marginals$madd)) * 1000
-
     result <- structure(
       list(
-        score = score,
+        score = (1 - mean(marginals$madd)) * 1000,
         marginals = utils::head(marginals, n = keep_marginals),
         cells = utils::head(cells, n = keep_cells)
       ),
@@ -447,73 +299,21 @@
     return(result)
   }
 
-  # strata are defined by the confidential data; a stratum with no synthetic
-  # rows scores against all-zero synthetic proportions. Shares are the
-  # confidential row (or weight) share of each stratum, computed once
-  conf_totals <- if (is.null(weight_var)) {
-    rep(1, nrow(conf_data))
-  } else {
-    conf_data[[weight_var]]
-  }
-
-  strata <- conf_data |>
-    dplyr::mutate(.stratum_total = conf_totals) |>
-    dplyr::summarize(
-      .share = sum(.data$.stratum_total),
-      .by = dplyr::all_of(group_by)
-    ) |>
-    dplyr::mutate(.share = .data$.share / sum(.data$.share))
-
-  per_stratum <- purrr::map(
-    .x = seq_len(nrow(strata)),
-    .f = \(i) {
-      stratum <- strata[i, group_by, drop = FALSE]
-
-      synth_g <- dplyr::semi_join(synth_data, stratum, by = group_by)
-      conf_g <- dplyr::semi_join(conf_data, stratum, by = group_by)
-
-      cells_g <- compute_cells(
-        synth_d = synth_g, conf_d = conf_g, allow_empty_synth = TRUE
-      )
-
-      marginals_g <- cells_g |>
-        dplyr::summarize(madd = mean(.data$abs_diff), .by = "variables")
-
-      list(
-        cells = dplyr::bind_cols(stratum, cells_g),
-        marginals = dplyr::bind_cols(stratum, marginals_g),
-        group_scores = dplyr::bind_cols(
-          stratum,
-          tibble::tibble(
-            share = strata$.share[i],
-            score = (1 - mean(marginals_g$madd)) * 1000
-          )
-        )
-      )
-    }
+  stratified <- .stratify_k_marginals(
+    synth_data = synth_data,
+    conf_data = conf_data,
+    combos = kmarginals_vars,
+    group_by = group_by,
+    weight_var = weight_var,
+    na.rm = na.rm
   )
-
-  cells <- purrr::list_rbind(purrr::map(per_stratum, "cells")) |>
-    dplyr::arrange(dplyr::desc(.data$abs_diff))
-
-  marginals <- purrr::list_rbind(purrr::map(per_stratum, "marginals")) |>
-    dplyr::arrange(dplyr::desc(.data$madd))
-
-  group_scores <- purrr::list_rbind(
-    purrr::map(per_stratum, "group_scores")
-  ) |>
-    dplyr::arrange(.data$score)
-
-  # per-stratum scores roll up weighted by confidential shares, so small
-  # strata surface in group_scores without dominating the headline
-  score <- sum(group_scores$share * group_scores$score)
 
   result <- structure(
     list(
-      score = score,
-      marginals = utils::head(marginals, n = keep_marginals),
-      cells = utils::head(cells, n = keep_cells),
-      group_scores = group_scores
+      score = stratified$score,
+      marginals = utils::head(stratified$marginals, n = keep_marginals),
+      cells = utils::head(stratified$cells, n = keep_cells),
+      group_scores = stratified$group_scores
     ),
     class = "k_marginals"
   )
