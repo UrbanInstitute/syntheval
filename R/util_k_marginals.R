@@ -60,7 +60,7 @@
 #' reproducible clusters). Defaults to "width".
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
-#' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
+#' range 0 to 1000 where a higher value denotes lower MabsDDs and consequently
 #' greater similarity between confidential and synthetic data; `marginals`, a
 #' tibble with the MabsDD for each combination of variables, worst first; and
 #' `cells`, a tibble with the synthetic and confidential proportions and their
@@ -402,7 +402,7 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' reproducible clusters). Defaults to "width".
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
-#' range [0, 1000] where a higher value denotes lower MabsDDs and consequently
+#' range 0 to 1000 where a higher value denotes lower MabsDDs and consequently
 #' greater similarity between confidential and synthetic data; `marginals`, a
 #' tibble with the MabsDD for each combination of variables, worst first; and
 #' `cells`, a tibble with the synthetic and confidential proportions and their
