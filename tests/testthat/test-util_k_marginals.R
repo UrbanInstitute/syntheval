@@ -1244,3 +1244,337 @@ test_that("wrapper restriction bounds k by the synthesized-variable set", {
   expect_no_error(util_k_marginals(eval_data = ed, k = 2, synth_vars = FALSE))
 
 })
+
+# NA handling
+#
+# conf_na            synth_na
+#   a   b              a   b
+#   x   p              x   p
+#   x   p              y   q
+#   y   p              y   q
+#   NA  q              NA  p
+#
+# na.rm = FALSE, k = 1 (NA is its own level)
+#   marginal a: conf (x = 0.50, y = 0.25, NA = 0.25),
+#               synth (x = 0.25, y = 0.50, NA = 0.25)
+#     MabsDD = mean(0.25, 0.25, 0) = 1/6
+#   marginal b: MabsDD = mean(0.25, 0.25) = 0.25
+#   score = (1 - mean(1/6, 1/4)) * 1000 = 19000/24
+#
+# na.rm = TRUE, k = 1 (rows dropped per marginal)
+#   marginal a (3 rows each): conf (x = 2/3, y = 1/3),
+#                             synth (x = 1/3, y = 2/3)
+#     MabsDD = mean(1/3, 1/3) = 1/3
+#   marginal b (all 4 rows): MabsDD = 0.25
+#   score = (1 - mean(1/3, 1/4)) * 1000 = 17000/24
+
+conf_na <- tibble::tibble(
+  a = c("x", "x", "y", NA),
+  b = c("p", "p", "p", "q")
+)
+
+synth_na <- tibble::tibble(
+  a = c("x", "y", "y", NA),
+  b = c("p", "q", "q", "p")
+)
+
+test_that("NA values form their own level by default", {
+
+  result <- suppressMessages(
+    .util_k_marginals(synth_data = synth_na, conf_data = conf_na, k = 1)
+  )
+
+  expect_equal(result$score, 19000 / 24)
+
+  expect_true("NA" %in% result$cells$cell)
+
+})
+
+test_that("na.rm = TRUE drops missing values per marginal", {
+
+  result <- .util_k_marginals(
+    synth_data = synth_na, conf_data = conf_na, k = 1, na.rm = TRUE
+  )
+
+  expect_equal(result$score, 17000 / 24)
+
+  expect_false("NA" %in% result$cells$cell)
+
+})
+
+test_that("missing data triggers a message when na.rm = FALSE", {
+
+  expect_message(
+    .util_k_marginals(synth_data = synth_na, conf_data = conf_na, k = 1),
+    regexp = "contain missing data: a"
+  )
+
+  expect_no_message(
+    .util_k_marginals(
+      synth_data = synth_na, conf_data = conf_na, k = 1, na.rm = TRUE
+    )
+  )
+
+})
+
+test_that("invalid na.rm values error", {
+
+  for (bad in list("x", c(TRUE, FALSE), NA, 1)) {
+
+    expect_error(
+      .util_k_marginals(
+        synth_data = synth_na, conf_data = conf_na, k = 1, na.rm = bad
+      ),
+      regexp = "`na.rm` must be a single TRUE or FALSE"
+    )
+
+  }
+
+})
+
+test_that("a literal 'NA' level alongside true NA values errors", {
+
+  conf_lit <- tibble::tibble(a = c("NA", "x", NA))
+  synth_lit <- tibble::tibble(a = c("x", "x", "x"))
+
+  expect_error(
+    suppressMessages(
+      .util_k_marginals(synth_data = synth_lit, conf_data = conf_lit, k = 1)
+    ),
+    regexp = "'NA' already exists"
+  )
+
+})
+
+test_that("numeric NA values land in an NA bin or are dropped", {
+
+  conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
+  synth_num <- tibble::tibble(v = c(1, 4, NA, NA))
+
+  kept <- suppressMessages(
+    .util_k_marginals(
+      synth_data = synth_num, conf_data = conf_num, k = 1, bins = 2
+    )
+  )
+
+  # cut() maps synthetic NAs to an NA bin that becomes its own level
+  expect_true("NA" %in% kept$cells$cell)
+
+  dropped <- .util_k_marginals(
+    synth_data = synth_num, conf_data = conf_num, k = 1, bins = 2,
+    na.rm = TRUE
+  )
+
+  expect_false("NA" %in% dropped$cells$cell)
+
+  # with the NAs dropped, the two synthetic values split evenly like the
+  # confidential data, so the marginal matches exactly
+  expect_equal(dropped$score, 1000)
+
+})
+
+test_that("a marginal with no complete rows errors under na.rm = TRUE", {
+
+  conf_all_na <- tibble::tibble(a = c(NA_character_, NA_character_))
+  synth_ok <- tibble::tibble(a = c("x", "y"))
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_ok, conf_data = conf_all_na, k = 1, na.rm = TRUE
+    ),
+    regexp = "no rows remain"
+  )
+
+})
+
+test_that("util_k_marginals passes na.rm through", {
+
+  ed <- eval_data(conf_data = conf_na, synth_data = synth_na)
+
+  expect_equal(
+    util_k_marginals(eval_data = ed, k = 1, na.rm = TRUE)$score,
+    17000 / 24
+  )
+
+})
+
+test_that("na.rm = TRUE drops rows per combination, not globally", {
+
+  # a's NA sits on a different row in each dataset; b and c are identical
+  # across datasets
+  #
+  # pairwise deletion, k = 2:
+  #   (b, c): all 4 rows, identical -> MabsDD = 0
+  #   (a, b): conf drops row 4 -> (x,p), (x,q), (y,p) each 1/3
+  #           synth drops row 3 -> (x,p), (x,q), (y,q) each 1/3
+  #           MabsDD = mean(0, 0, 1/3, 1/3) = 1/6
+  #   (a, c): conf -> (x,m) = 2/3, (y,n) = 1/3; synth identical -> MabsDD = 0
+  #   score = (1 - mean(0, 1/6, 0)) * 1000 = 17000/18
+  #
+  # global (listwise) deletion would filter different rows from each dataset
+  # and corrupt the complete (b, c) marginal, so madd = 0 for (b, c) is the
+  # discriminating assertion
+  conf_pair <- tibble::tibble(
+    a = c("x", "x", "y", NA),
+    b = c("p", "q", "p", "q"),
+    c = c("m", "m", "n", "n")
+  )
+
+  synth_pair <- tibble::tibble(
+    a = c("x", "x", NA, "y"),
+    b = c("p", "q", "p", "q"),
+    c = c("m", "m", "n", "n")
+  )
+
+  result <- .util_k_marginals(
+    synth_data = synth_pair, conf_data = conf_pair, k = 2, na.rm = TRUE
+  )
+
+  expect_equal(result$score, 17000 / 18)
+
+  bc <- dplyr::filter(result$marginals, .data$variables == "b, c")
+
+  expect_equal(bc$madd, 0)
+
+})
+
+test_that("the missing-data message lists every affected variable", {
+
+  conf_two <- tibble::tibble(
+    a = c("x", NA),
+    b = c(NA, "q"),
+    c = c("m", "n")
+  )
+
+  synth_two <- tibble::tibble(
+    a = c("x", "y"),
+    b = c("p", "q"),
+    c = c("m", "n")
+  )
+
+  expect_message(
+    .util_k_marginals(synth_data = synth_two, conf_data = conf_two, k = 1),
+    regexp = "contain missing data: a, b"
+  )
+
+})
+
+test_that("a literal 'NA' level in the synthetic data also errors", {
+
+  conf_lit <- tibble::tibble(a = c("x", "x", "x"))
+  synth_lit <- tibble::tibble(a = c("NA", "x", NA))
+
+  expect_error(
+    suppressMessages(
+      .util_k_marginals(synth_data = synth_lit, conf_data = conf_lit, k = 1)
+    ),
+    regexp = "'NA' already exists"
+  )
+
+  # both datasets carrying the collision still errors
+  expect_error(
+    suppressMessages(
+      .util_k_marginals(synth_data = synth_lit, conf_data = synth_lit, k = 1)
+    ),
+    regexp = "'NA' already exists"
+  )
+
+})
+
+test_that("variables excluded by synth_varnames do not drive NA handling", {
+
+  # a has missing values but is filtered out, so no message and no NA cells
+  conf_excl <- tibble::tibble(
+    a = c("x", NA),
+    b = c("p", "q")
+  )
+
+  synth_excl <- tibble::tibble(
+    a = c(NA, "y"),
+    b = c("p", "p")
+  )
+
+  expect_no_message(
+    result <- .util_k_marginals(
+      synth_data = synth_excl,
+      conf_data = conf_excl,
+      k = 1,
+      synth_varnames = "b"
+    )
+  )
+
+  expect_false("NA" %in% result$cells$cell)
+
+})
+
+test_that("weighted proportions drop missing rows before computing shares", {
+
+  # na.rm = TRUE drops each dataset's NA row, and weight shares are computed
+  # from the surviving rows' weights:
+  #   conf keeps weights 1, 1, 2 -> x = 2/4, y = 2/4
+  #   synth keeps weights 1, 3 -> x = 1/4, y = 3/4
+  #   MabsDD = mean(0.25, 0.25) = 0.25 -> score 750
+  # dividing by the full weight total (including the dropped 10s) would give
+  # a different score, so 750 pins down the recomputation
+  conf_w <- tibble::tibble(
+    a = c("x", "x", "y", NA),
+    w = c(1, 1, 2, 10)
+  )
+
+  synth_w <- tibble::tibble(
+    a = c("x", "y", NA),
+    w = c(1, 3, 10)
+  )
+
+  result <- .util_k_marginals(
+    synth_data = synth_w,
+    conf_data = conf_w,
+    k = 1,
+    weight_var = "w",
+    na.rm = TRUE
+  )
+
+  expect_equal(result$score, 750)
+
+})
+
+test_that("confidential numeric NA values discretize under both na.rm modes", {
+
+  # breaks derive from the observed confidential values (1:4, cut at 2.5)
+  conf_num_na <- tibble::tibble(v = c(1, 2, 3, 4, NA))
+  synth_num_na <- tibble::tibble(v = c(1, 2, 4, 4, NA))
+
+  # na.rm = FALSE: both datasets bin as low 2/5, high 2/5, NA 1/5
+  kept <- suppressMessages(
+    .util_k_marginals(
+      synth_data = synth_num_na, conf_data = conf_num_na, k = 1, bins = 2
+    )
+  )
+
+  expect_true("NA" %in% kept$cells$cell)
+  expect_equal(kept$score, 1000)
+
+  # na.rm = TRUE: observed values bin as low 2/4, high 2/4 in both datasets
+  dropped <- .util_k_marginals(
+    synth_data = synth_num_na, conf_data = conf_num_na, k = 1, bins = 2,
+    na.rm = TRUE
+  )
+
+  expect_false("NA" %in% dropped$cells$cell)
+  expect_equal(dropped$score, 1000)
+
+})
+
+test_that("infinite confidential values still refuse to discretize", {
+
+  conf_inf <- tibble::tibble(v = c(1, 2, 3, Inf))
+  synth_num <- tibble::tibble(v = c(1, 2, 3, 3))
+
+  expect_error(
+    .util_k_marginals(
+      synth_data = synth_num, conf_data = conf_inf, k = 1, bins = 2
+    ),
+    regexp = "must be finite to discretize"
+  )
+
+})

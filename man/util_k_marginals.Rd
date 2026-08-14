@@ -13,6 +13,7 @@ util_k_marginals(
   priority_vars = NULL,
   weight_var = NULL,
   synth_vars = TRUE,
+  na.rm = FALSE,
   bins = NULL,
   discretize_method = c("width", "ntile", "cluster")
 )
@@ -51,12 +52,20 @@ contribute marginals. Only meaningful when the \code{eval_data} records which
 variables were synthesized (i.e., was built from a \code{postsynth}); for plain
 data frames all shared variables are used regardless. Defaults to \code{TRUE}.}
 
+\item{na.rm}{A logical for ignoring \code{NA} values in proportion
+calculations. When \code{FALSE}, missing values form their own \code{"NA"} level in
+each marginal (and a message lists the affected variables); when \code{TRUE},
+rows with a missing value are dropped from each marginal that uses the
+affected variable, leaving marginals of complete variables untouched.
+Defaults to \code{FALSE}.}
+
 \item{bins}{Optional single integer >= 2. When set, every numeric shared
 variable is discretized into this many bins (fewer, with a warning, if
 tied quantile cut points collapse) with breaks derived from the
-confidential data and applied to both datasets; the outer bins extend to
-+/-Inf so synthetic values outside the confidential range land in edge
-bins. Defaults to \code{NULL} (no discretization).}
+observed (non-missing) confidential values and applied to both datasets;
+the outer bins extend to +/-Inf so synthetic values outside the
+confidential range land in edge bins, and missing values follow \code{na.rm}
+like any other variable. Defaults to \code{NULL} (no discretization).}
 
 \item{discretize_method}{Method used to place bin breaks when \code{bins} is
 set: "width" for fixed binwidths, "ntile" for quantile bins, or "cluster"

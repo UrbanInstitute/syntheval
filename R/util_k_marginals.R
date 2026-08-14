@@ -35,12 +35,19 @@
 #' names. When set, only these variables (intersected with the variables
 #' shared by both datasets) contribute marginals. Defaults to `NULL`, which
 #' places no restriction on the shared variables.
+#' @param na.rm A logical for ignoring `NA` values in proportion
+#' calculations. When `FALSE`, missing values form their own `"NA"` level in
+#' each marginal (and a message lists the affected variables); when `TRUE`,
+#' rows with a missing value are dropped from each marginal that uses the
+#' affected variable, leaving marginals of complete variables untouched.
+#' Defaults to `FALSE`.
 #' @param bins Optional single integer >= 2. When set, every numeric shared
 #' variable is discretized into this many bins (fewer, with a warning, if
 #' tied quantile cut points collapse) with breaks derived from the
-#' confidential data and applied to both datasets; the outer bins extend to
-#' +/-Inf so synthetic values outside the confidential range land in edge
-#' bins. Defaults to `NULL` (no discretization).
+#' observed (non-missing) confidential values and applied to both datasets;
+#' the outer bins extend to +/-Inf so synthetic values outside the
+#' confidential range land in edge bins, and missing values follow `na.rm`
+#' like any other variable. Defaults to `NULL` (no discretization).
 #' @param discretize_method Method used to place bin breaks when `bins` is
 #' set: "width" for fixed binwidths, "ntile" for quantile bins, or "cluster"
 #' for univariate k-means clustering (set a seed before calling for
@@ -65,10 +72,17 @@
     priority_vars = NULL,
     weight_var = NULL,
     synth_varnames = NULL,
+    na.rm = FALSE,
     bins = NULL,
     discretize_method = c("width", "ntile", "cluster")) {
 
   discretize_method <- match.arg(discretize_method)
+
+  if (!(is.logical(na.rm) && length(na.rm) == 1 && !is.na(na.rm))) {
+
+    stop("`na.rm` must be a single TRUE or FALSE")
+
+  }
 
   for (keep in list(keep_marginals, keep_cells, n_marginals)) {
 
@@ -187,12 +201,14 @@
 
     for (var in numeric_vars) {
 
-      conf_values <- conf_data[[var]]
+      # cut points derive from observed values; missing values follow na.rm
+      # like every other variable, becoming an NA bin or dropped rows
+      conf_values <- conf_data[[var]][!is.na(conf_data[[var]])]
 
-      if (!all(is.finite(conf_values))) {
+      if (!all(is.finite(conf_values)) || length(conf_values) == 0) {
 
         stop(
-          "numeric variables must be finite to discretize; `", var,
+          "observed numeric values must be finite to discretize; `", var,
           "` is not"
         )
 
@@ -245,7 +261,7 @@
       }
 
       synth_data[[var]] <- cut(x = synth_data[[var]], breaks = breaks)
-      conf_data[[var]] <- cut(x = conf_values, breaks = breaks)
+      conf_data[[var]] <- cut(x = conf_data[[var]], breaks = breaks)
 
     }
 
@@ -254,6 +270,32 @@
   if (length(shared_vars) < k) {
 
     stop("`k` cannot exceed the number of variables shared by both datasets")
+
+  }
+
+  if (!na.rm) {
+
+    na_vars <- shared_vars[
+      purrr::map_lgl(
+        .x = shared_vars,
+        .f = \(v) anyNA(synth_data[[v]]) || anyNA(conf_data[[v]])
+      )
+    ]
+
+    if (length(na_vars) > 0) {
+
+      message(
+        "Some variables contain missing data: ",
+        paste(na_vars, collapse = ", ")
+      )
+
+    }
+
+    # missing values become their own "NA" level so they participate in
+    # marginals; numeric variables without bins keep NA, which count() still
+    # groups separately
+    synth_data[shared_vars] <- convert_na_to_level(synth_data[shared_vars])
+    conf_data[shared_vars] <- convert_na_to_level(conf_data[shared_vars])
 
   }
 
@@ -297,6 +339,25 @@
   # cell proportions for one dataset over one set of variables; weighted
   # proportions are weight shares instead of row shares
   process_data <- function(data, vars, prop_name) {
+
+    if (na.rm) {
+
+      data <- dplyr::filter(
+        data,
+        !dplyr::if_any(.cols = dplyr::all_of(vars), .fns = is.na)
+      )
+
+      if (nrow(data) == 0) {
+
+        stop(
+          "no rows remain for the marginal over ",
+          paste(vars, collapse = ", "),
+          " after removing missing values"
+        )
+
+      }
+
+    }
 
     if (is.null(weight_var)) {
 
@@ -428,12 +489,19 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' contribute marginals. Only meaningful when the `eval_data` records which
 #' variables were synthesized (i.e., was built from a `postsynth`); for plain
 #' data frames all shared variables are used regardless. Defaults to `TRUE`.
+#' @param na.rm A logical for ignoring `NA` values in proportion
+#' calculations. When `FALSE`, missing values form their own `"NA"` level in
+#' each marginal (and a message lists the affected variables); when `TRUE`,
+#' rows with a missing value are dropped from each marginal that uses the
+#' affected variable, leaving marginals of complete variables untouched.
+#' Defaults to `FALSE`.
 #' @param bins Optional single integer >= 2. When set, every numeric shared
 #' variable is discretized into this many bins (fewer, with a warning, if
 #' tied quantile cut points collapse) with breaks derived from the
-#' confidential data and applied to both datasets; the outer bins extend to
-#' +/-Inf so synthetic values outside the confidential range land in edge
-#' bins. Defaults to `NULL` (no discretization).
+#' observed (non-missing) confidential values and applied to both datasets;
+#' the outer bins extend to +/-Inf so synthetic values outside the
+#' confidential range land in edge bins, and missing values follow `na.rm`
+#' like any other variable. Defaults to `NULL` (no discretization).
 #' @param discretize_method Method used to place bin breaks when `bins` is
 #' set: "width" for fixed binwidths, "ntile" for quantile bins, or "cluster"
 #' for univariate k-means clustering (set a seed before calling for
@@ -460,6 +528,7 @@ util_k_marginals <- function(
     priority_vars = NULL,
     weight_var = NULL,
     synth_vars = TRUE,
+    na.rm = FALSE,
     bins = NULL,
     discretize_method = c("width", "ntile", "cluster")) {
 
@@ -519,6 +588,7 @@ util_k_marginals <- function(
         priority_vars = priority_vars,
         weight_var = weight_var,
         synth_varnames = synth_varnames,
+        na.rm = na.rm,
         bins = bins,
         discretize_method = discretize_method
       )
@@ -540,6 +610,7 @@ util_k_marginals <- function(
           priority_vars = priority_vars,
           weight_var = weight_var,
           synth_varnames = synth_varnames,
+          na.rm = na.rm,
           bins = bins,
           discretize_method = discretize_method
         )
