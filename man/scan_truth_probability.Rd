@@ -15,7 +15,7 @@ A tibble with columns \code{source} (\code{"synthetic"} or \code{"holdout"} when
 holdout data is available), \code{target_var}, \code{key_id}, the quasi-identifying key
 columns, and \code{truth_probability} (the expected probability assigned by the
 source distribution to the true confidential value, computed as
-\eqn{\sum_v p_{conf}(v \mid class)\,p_{source}(v \mid class)}).
+\eqn{\sum_v p_{conf}(v \mid class)\,p_{source}(v \mid class)}.)
 }
 \description{
 Calculate the probability assigned to the true confidential value by a
