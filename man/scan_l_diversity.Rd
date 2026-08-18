@@ -4,16 +4,26 @@
 \alias{scan_l_diversity}
 \title{Measure the diversity of target values within equivalence classes}
 \usage{
-scan_l_diversity(attribute_scan)
+scan_l_diversity(attribute_scan, summarize = TRUE)
 }
 \arguments{
 \item{attribute_scan}{An \code{attribute_scan} object.}
+
+\item{summarize}{A logical. If \code{TRUE} (the default), collapses equivalence
+classes down to the worst-case (minimum) l-diversity per \code{source} and
+\code{target_var}, mirroring \code{scan_k_anonymity()}'s use of the minimum class size.
+If \code{FALSE}, returns l-diversity for every equivalence class.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
-\code{"holdout"} when holdout data is available), \code{target_var}, \code{key_id}, the
-quasi-identifying key columns, and \code{l_diversity} (the count of distinct
-target levels observed within that equivalence class).
+If \code{summarize = TRUE}, a tibble with columns \code{source}
+(\code{"confidential"}, \code{"synthetic"}, or \code{"holdout"} when holdout data is
+available), \code{target_var}, \code{key_id}, the quasi-identifying key columns,
+\code{class_n}, and \code{l_diversity}, filtered to the equivalence class with the
+minimum \code{l_diversity} for each \code{source}/\code{target_var}. If \code{summarize = FALSE},
+the same columns for every equivalence class: \code{source}, \code{target_var},
+\code{key_id}, the quasi-identifying key columns, \code{class_n} (the number of
+records in that equivalence class), and \code{l_diversity} (the count of
+distinct target levels observed within that equivalence class).
 }
 \description{
 Measure the diversity of target values within equivalence classes

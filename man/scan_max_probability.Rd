@@ -4,16 +4,27 @@
 \alias{scan_max_probability}
 \title{Return the highest conditional probability observed within each equivalence class}
 \usage{
-scan_max_probability(attribute_scan)
+scan_max_probability(attribute_scan, summarize = TRUE)
 }
 \arguments{
 \item{attribute_scan}{An \code{attribute_scan} object.}
+
+\item{summarize}{A logical. If \code{TRUE} (the default), collapses equivalence
+classes down to the worst-case (maximum) \code{max_probability} per \code{source} and
+\code{target_var}, since a higher probability indicates a more confident (riskier)
+inference. If \code{FALSE}, returns \code{max_probability} for every equivalence class.}
 }
 \value{
-A tibble with columns \code{source} (\code{"confidential"}, \code{"synthetic"}, or
-\code{"holdout"} when holdout data is available), \code{target_var}, \code{key_id}, the
-quasi-identifying key columns, and \code{max_probability} (the highest conditional
-probability of any target level within that equivalence class).
+If \code{summarize = TRUE}, a tibble with columns \code{source}
+(\code{"confidential"}, \code{"synthetic"}, or \code{"holdout"} when holdout data is
+available), \code{target_var}, \code{key_id}, the quasi-identifying key columns,
+\code{class_n}, and \code{max_probability}, filtered to the equivalence class with the
+maximum \code{max_probability} for each \code{source}/\code{target_var}. If
+\code{summarize = FALSE}, the same columns for every equivalence class: \code{source},
+\code{target_var}, \code{key_id}, the quasi-identifying key columns, \code{class_n} (the
+number of records in that equivalence class), and \code{max_probability} (the
+highest conditional probability of any target level within that equivalence
+class).
 }
 \description{
 Return the highest conditional probability observed within each equivalence class

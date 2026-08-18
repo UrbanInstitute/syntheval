@@ -44,6 +44,11 @@ scan_information_gain <- function(attribute_scan) {
   }
   
   result <- dplyr::bind_rows(result_list) |>
+    # group confidential/synthetic/holdout rows together within each target_var
+    dplyr::arrange(
+      .data$target_var,
+      match(.data$source, c("confidential", "synthetic", "holdout"))
+    ) |>
     dplyr::relocate(dplyr::all_of(c("source", "target_var", "information_gain")))
   
   return(result)
@@ -83,14 +88,7 @@ scan_information_gain <- function(attribute_scan) {
   # H(target | QIs) = sum_{classes} (class_n / total_n) * H(target | class)
   class_entropy <- .entropy_by_class(distributions, qid_keys)
   
-  class_totals <- distributions |>
-    dplyr::group_by(
-      dplyr::across(dplyr::all_of(c("key_id", qid_keys, "target_var")))
-    ) |>
-    dplyr::summarize(class_n = sum(.data$n), .groups = "drop")
-  
   conditional_entropy <- class_entropy |>
-    dplyr::inner_join(class_totals, by = c("key_id", qid_keys, "target_var")) |>
     dplyr::group_by(dplyr::across(dplyr::all_of("target_var"))) |>
     dplyr::summarize(
       entropy = sum(.data$entropy * .data$class_n) / sum(.data$class_n),

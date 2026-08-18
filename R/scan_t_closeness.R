@@ -6,15 +6,25 @@
 #' @param metric A string describing the distance metric between the equivalence 
 #' class and overall target distributions. One of `"linf"` (L-infinity distance), 
 #' `"l1"` (L1 distance), or `"l2"` (L2 distance), defaults to `"linf"`.
+#' @param summarize A logical. If `TRUE` (the default), collapses equivalence
+#' classes down to the worst-case (maximum) t-closeness per `source` and
+#' `target_var`, since higher t-closeness indicates greater divergence from the
+#' overall target distribution. If `FALSE`, returns t-closeness for every
+#' equivalence class.
 #' 
-#' @returns A tibble with columns `source` (`"confidential"`, `"synthetic"`, or 
-#' `"holdout"` when holdout data is available), `target_var`, `key_id`, the 
-#' quasi-identifying key columns, and `t_closeness` (the distance between the 
-#' equivalence class and overall target distributions).
+#' @returns If `summarize = TRUE`, a tibble with columns `source`
+#' (`"confidential"`, `"synthetic"`, or `"holdout"` when holdout data is
+#' available), `target_var`, `key_id`, the quasi-identifying key columns,
+#' `class_n`, and `t_closeness`, filtered to the equivalence class with the
+#' maximum `t_closeness` for each `source`/`target_var`. If `summarize = FALSE`,
+#' the same columns for every equivalence class: `source`, `target_var`,
+#' `key_id`, the quasi-identifying key columns, `class_n` (the number of
+#' records in that equivalence class), and `t_closeness` (the distance between
+#' the equivalence class and overall target distributions).
 #' 
 #' @export
 #' 
-scan_t_closeness <- function(attribute_scan, metric = c("linf", "l1", "l2")) {
+scan_t_closeness <- function(attribute_scan, metric = c("linf", "l1", "l2"), summarize = TRUE) {
   
   stopifnot(is_attribute_scan(attribute_scan))
   metric <- match.arg(metric)
@@ -49,9 +59,27 @@ scan_t_closeness <- function(attribute_scan, metric = c("linf", "l1", "l2")) {
     
   }
   
-  result <- dplyr::bind_rows(result_list) |>
+  result <- dplyr::bind_rows(result_list)
+  
+  # higher t_closeness is riskier, so the worst case is the maximum
+  if (summarize) {
+    
+    result <- result |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(c("source", "target_var")))) |>
+      dplyr::slice_max(order_by = .data$t_closeness, n = 1, with_ties = FALSE) |>
+      dplyr::ungroup()
+    
+  }
+  
+  result <- result |>
+    # group confidential/synthetic/holdout rows together within each target_var
+    dplyr::arrange(
+      .data$target_var,
+      match(.data$source, c("confidential", "synthetic", "holdout")),
+      .data$key_id
+    ) |>
     dplyr::relocate(
-      dplyr::all_of(c("source", "target_var", "key_id", attribute_scan$qid_keys, "t_closeness"))
+      dplyr::all_of(c("source", "target_var", "key_id", attribute_scan$qid_keys, "class_n", "t_closeness"))
     )
   
   return(result)
@@ -67,7 +95,8 @@ scan_t_closeness <- function(attribute_scan, metric = c("linf", "l1", "l2")) {
 #' @param metric A string, one of `"linf"`, `"l1"`, or `"l2"`.
 #' 
 #' @return A tibble with columns `key_id`, the quasi-identifying key columns,
-#' `target_var`, and `t_closeness` (distance from the overall target distribution).
+#' `target_var`, `class_n` (records in that equivalence class), and 
+#' `t_closeness` (distance from the overall target distribution).
 #' 
 .t_closeness_by_class <- function(distributions, qid_keys, metric) {
   
@@ -92,9 +121,9 @@ scan_t_closeness <- function(attribute_scan, metric = c("linf", "l1", "l2")) {
   
   result <- switch(
     metric,
-    "l1" = dplyr::summarize(by_class, t_closeness = sum(.data$abs_diff), .groups = "drop"),
-    "l2" = dplyr::summarize(by_class, t_closeness = sqrt(sum(.data$abs_diff ^ 2)), .groups = "drop"),
-    "linf" = dplyr::summarize(by_class, t_closeness = max(.data$abs_diff), .groups = "drop")
+    "l1" = dplyr::summarize(by_class, class_n = sum(.data$n), t_closeness = sum(.data$abs_diff), .groups = "drop"),
+    "l2" = dplyr::summarize(by_class, class_n = sum(.data$n), t_closeness = sqrt(sum(.data$abs_diff ^ 2)), .groups = "drop"),
+    "linf" = dplyr::summarize(by_class, class_n = sum(.data$n), t_closeness = max(.data$abs_diff), .groups = "drop")
   )
   
   return(result)
