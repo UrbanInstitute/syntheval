@@ -4,12 +4,10 @@
 \alias{plot_cormat}
 \title{Create side-by-side correlation heatmaps for numeric random variables.}
 \usage{
-plot_cormat(conf_data, synth_data, cor_method = "pearson")
+plot_cormat(eval_data, cor_method = "pearson")
 }
 \arguments{
-\item{conf_data}{Confidential data}
-
-\item{synth_data}{Synthetic data}
+\item{eval_data}{An \code{eval_data} object.}
 
 \item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}}
 }
