@@ -43,6 +43,11 @@ scan_mean_probability <- function(attribute_scan) {
   }
   
   result <- dplyr::bind_rows(result_list) |>
+    # group confidential/synthetic/holdout rows together within each target_var
+    dplyr::arrange(
+      .data$target_var,
+      match(.data$source, c("confidential", "synthetic", "holdout"))
+    ) |>
     dplyr::relocate(dplyr::all_of(c("source", "target_var", "mean_probability")))
   
   return(result)
