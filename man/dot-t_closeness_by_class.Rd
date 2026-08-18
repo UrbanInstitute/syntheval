@@ -16,7 +16,8 @@ in an \code{attribute_scan} object (see \code{.conditional_distributions()}).}
 }
 \value{
 A tibble with columns \code{key_id}, the quasi-identifying key columns,
-\code{target_var}, and \code{t_closeness} (distance from the overall target distribution).
+\code{target_var}, \code{class_n} (records in that equivalence class), and
+\code{t_closeness} (distance from the overall target distribution).
 }
 \description{
 Compute per-equivalence-class t-closeness from a conditional distributions tibble

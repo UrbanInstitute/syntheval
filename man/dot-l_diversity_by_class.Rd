@@ -14,7 +14,8 @@ in an \code{attribute_scan} object (see \code{.conditional_distributions()}).}
 }
 \value{
 A tibble with columns \code{key_id}, the quasi-identifying key columns,
-\code{target_var}, and \code{l_diversity} (count of distinct observed target levels).
+\code{target_var}, \code{class_n} (records in that equivalence class), and
+\code{l_diversity} (count of distinct observed target levels).
 }
 \description{
 Compute per-equivalence-class l-diversity from a conditional distributions tibble
