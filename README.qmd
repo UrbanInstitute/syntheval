@@ -68,25 +68,28 @@ The following examples demonstrate utility and disclosure risk metrics using syn
 
 Functions like `util_proportions()` and `util_moments()` have different behaviors for `postsynth` objects and data frames. By default, they only show synthesized variables for `postsynth` objects and show all common variables for data frames. The `common_vars` and `synth_vars` arguments can change this behavior. 
 
+### Evaluation Data
+
+`syntheval` functions expect `eval_data` as their main input object. 
+
+```{r}
+eval_data <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
+
+```
+
 ### Proportions
 
 `util_proportions()` compares the proportions of classes from categorical variables in the original data and synthetic data. 
 
 ```{r}
-util_proportions(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf
-)
+util_proportions(eval_data = eval_data)
 
 ```
 
 All common variables are shown when using a data frame.
 
 ```{r}
-util_proportions(
-  postsynth = penguins_syn_df, 
-  data = penguins_conf
-)
+util_proportions(eval_data = eval_data)
 
 ```
 
@@ -95,20 +98,14 @@ util_proportions(
 `util_moments()` compares the counts, means, standard deviations, skewnesses, and kurtoses of the original data and synthetic data. 
 
 ```{r}
-util_moments(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf
-)
+util_moments(eval_data = eval_data)
 
 ```
 
 `util_totals()` is similar to `util_moments()` but looks at counts and totals. 
 
 ```{r}
-util_totals(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf
-)
+util_totals(eval_data = eval_data)
 
 ```
 
@@ -118,8 +115,7 @@ util_totals(
 
 ```{r}
 util_percentiles(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf,
+  eval_data = eval_data,
   probs = c(0.5, 0.8)
 )
 
@@ -129,8 +125,7 @@ The functions are designed to work well with `library(ggplot2)`.
 
 ```{r}
 util_percentiles(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf,
+  eval_data = eval_data,
   probs = seq(0.01, 0.99, 0.01)
 ) |>
   pivot_longer(
@@ -149,10 +144,7 @@ util_percentiles(
 `util_ks_distance()` shows the Kolmogorov-Smirnov distance between the original distribution and synthetic distribution for numeric variables. The function also returns the point(s) of the maximum distance. 
 
 ```{r}
-util_ks_distance(
-  postsynth = penguins_syn_df, 
-  data = penguins_conf
-)
+util_ks_distance(eval_data = eval_data)
 
 ```
 
@@ -161,10 +153,7 @@ util_ks_distance(
 `util_co_occurrence()` differences the lower triangles of co-occurrence matrices calculated on numeric variables in the original data and synthetic data. 
 
 ```{r}
-co_occurrence <- util_co_occurrence(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf
-)
+co_occurrence <- util_co_occurrence(eval_data = eval_data)
 
 co_occurrence$co_occurrence_difference
 
@@ -186,10 +175,7 @@ All observations have non-zero `bill_length_mm`, `bill_depth_mm`, `flipper_lengt
 `util_corr_fit()` differences the lower triangles of correlation matrices calculated on numeric variables in the original data and synthetic data. 
 
 ```{r}
-corr_fit <- util_corr_fit(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf
-)
+corr_fit <- util_corr_fit(eval_data = eval_data)
 
 round(corr_fit$correlation_difference, digits = 3)
 
@@ -210,8 +196,7 @@ corr_fit$correlation_difference_rmse
 
 ```{r}
 ci_overlap <- util_ci_overlap(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf,
+  eval_data = eval_data,
   formula = body_mass_g ~ bill_length_mm  + sex
 )
 
@@ -253,7 +238,7 @@ Discriminant-based metrics build models to predict if an observation is original
 Discriminant-based metrics are built a `discrimination` object created by `discrimination()`. 
 
 ```{r}
-disc1 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
+disc1 <- discrimination(eval_data = eval_data)
 
 ```
 
@@ -325,7 +310,7 @@ Let's repeat the workflow from above with LASSO logistic regression and hyperpar
 
 ```{r}
 # create discrimination
-disc2 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
+disc2 <- discrimination(eval_data = eval_data)
 
 # create a recipe that includes 2nd-degree polynomials, dummy variables, and
 # standardization
@@ -380,8 +365,7 @@ Many utility metrics include a `group_by` argument to group the metrics by group
 
 ```{r}
 util_moments(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf,
+  eval_data = eval_data,
   group_by = species
 )
 
@@ -393,8 +377,7 @@ Many utility metrics include a `weight_var` argument to use weighted statistics 
 
 ```{r}
 util_moments(
-  postsynth = penguins_postsynth, 
-  data = penguins_conf,
+  eval_data = eval_data,
   weight_var = body_mass_g
 )
 
