@@ -117,6 +117,12 @@ scan_entropy <- function(attribute_scan, summarize = TRUE) {
       .groups = "drop"
     )
   
-  return(dplyr::left_join(class_entropy, max_entropy, by = "target_var"))
+  combined_data <- dplyr::left_join(
+    class_entropy, 
+    max_entropy, 
+    by = "target_var"
+  )
+  
+  return(combined_data)
   
 }

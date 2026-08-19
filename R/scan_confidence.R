@@ -45,7 +45,8 @@ scan_confidence <- function(attribute_scan) {
 .confidence_by_target <- function(source_distributions, conf_distributions, qid_keys) {
 
   # max probability per class from source
-  max_by_class <- .max_probability_by_class(distributions = source_distributions, qid_keys = qid_keys)
+  max_by_class <- .max_probability_by_class(distributions = source_distributions, qid_keys = qid_keys) |>
+    dplyr::select(-class_n)
 
   class_totals <- conf_distributions |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c("key_id", qid_keys, "target_var")))) |>
