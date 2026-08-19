@@ -1,11 +1,13 @@
-# syntheval 0.1.0
+# syntheval 0.1.0 (development)
 
-- Add `attribute_scan()` functionality for discovery attribute inference metrics.
+* Add `attribute_scan()` functionality for discovery attribute inference metrics.
+* Add optional parallelization to the bootstrapped null pMSEs in `add_pmse_ratio()` via `furrr`; enable it with `future::plan()`. Results for a given seed change relative to earlier versions because bootstrap iterations now use parallel-safe L'Ecuyer-CMRG streams.
 
 # syntheval 0.0.5
 
 * Remove `util_tails()`
-* Remove deprecated dplyr code. 
+* Update deprecated dplyr code. 
+* Move all functions to use `eval_data` (#106).
 
 # syntheval 0.0.4
 
