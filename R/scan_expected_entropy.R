@@ -45,7 +45,8 @@ scan_expected_entropy <- function(attribute_scan) {
 .expected_entropy_by_target <- function(source_distributions, conf_distributions, qid_keys) {
 
   # per-class entropy from source distribution
-  class_entropy <- .entropy_by_class(source_distributions, qid_keys)
+  class_entropy <- .entropy_by_class(source_distributions, qid_keys) |>
+    dplyr::select(-class_n)
 
   class_totals <- conf_distributions |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c("key_id", qid_keys, "target_var")))) |>
