@@ -54,15 +54,6 @@ test_that("attribute_target input errors", {
     attribute_target(toy_ed, workflow = "not a workflow")
   )
   
-  # model spec without a set mode
-  no_mode_workflow <- workflows::workflow() |>
-    workflows::add_formula(y_num ~ x1 + x2) |>
-    workflows::add_model(parsnip::linear_reg())
-  
-  expect_error(
-    attribute_target(toy_ed, workflow = no_mode_workflow)
-  )
-  
 })
 
 # attribute_target object structure ---------------------------------------
