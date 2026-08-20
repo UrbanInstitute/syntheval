@@ -48,7 +48,7 @@ test_that("aggregate_qid_eval expected behavior", {
       # ...times the number of levels in each factor...
       purrr::map(
         .x = qid_keys, 
-        .f = \(x) {length(levels(acs_conf[[x]]))}
+        .f = \(x) {length(levels(acs_conf[[x]])) + any(is.na(acs_conf[[x]]))}
       ), 
     `*`) # all multiplied together
     

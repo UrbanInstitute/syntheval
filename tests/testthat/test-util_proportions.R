@@ -292,7 +292,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
       all()
   )
   
-  # 221 rows = 221 levels in class variable
+  # 221 rows = 221 levels in name variable
   expect_equal(
     dim(
       util_proportions(
@@ -304,7 +304,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
     c(221, 5)
   )
   
-  # 50 rows = 10 common variables times 5 statistics
+  # 9 rows = 9 levels in class variable
   expect_equal(
     dim(
       util_proportions(
