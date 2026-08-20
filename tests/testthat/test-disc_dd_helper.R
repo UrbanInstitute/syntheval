@@ -37,7 +37,7 @@ test_that(".aggregate_qid basic functionality", {
   # check inclusion of missing keys
   res3 <- .aggregate_qid(
     df = acs_conf %>% 
-      dplyr::filter(county == "Douglas" & gq == "Household"),
+      dplyr::filter((county == "Douglas" | is.na(county)) & gq == "Household"),
     keys = c("county", "gq")
   )
   

@@ -83,7 +83,7 @@
         )) {
           
           stop(
-            "Key {key} has mismatched levels in confidential and synthetic data"
+            stringr::str_glue("Key {key} has mismatched levels in confidential and synthetic data")
           )
           
         }
@@ -98,7 +98,7 @@
       )) {
         
         stop(
-          "Key {key} has mismatched levels in confidential and synthetic data"
+          stringr::str_glue("Key {key} has mismatched levels in confidential and synthetic data")
         )
         
       }
@@ -113,7 +113,7 @@
       )) {
         
         stop(
-          "Key {key} has mismatched levels in confidential and holdout data"
+          stringr::str_glue("Key {key} has mismatched levels in confidential and holdout data")
         )
         
       }
