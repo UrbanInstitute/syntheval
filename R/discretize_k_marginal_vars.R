@@ -37,17 +37,23 @@
     # like every other variable, becoming an NA bin or dropped rows
     conf_values <- conf_data[[var]][!is.na(conf_data[[var]])]
 
+    # Discretization needs at least one finite value
     if (!all(is.finite(conf_values)) || length(conf_values) == 0) {
+
       stop(
         "observed numeric values must be finite to discretize; `", var,
         "` is not"
       )
+
     }
 
+    # There should be enough distinct values for the number of bins specified
     if (dplyr::n_distinct(conf_values) < bins) {
+
       stop(
         "`", var, "` has fewer distinct confidential values than `bins`"
       )
+
     }
 
     # interior cut points always derive from the confidential data; each
@@ -89,17 +95,21 @@
     breaks <- unique(c(-Inf, cut_points, Inf))
 
     if (length(breaks) - 1 < bins) {
+
       warning(
         "`", var, "` was discretized into ", length(breaks) - 1,
         " bins instead of ", bins, " because of tied cut points"
       )
+
     }
 
     synth_data[[var]] <- cut(x = synth_data[[var]], breaks = breaks)
     conf_data[[var]] <- cut(x = conf_data[[var]], breaks = breaks)
+
   }
 
   return(list(synth_data = synth_data, conf_data = conf_data))
+
 }
 
 #' @title Input validation for the number of bins in 
