@@ -35,21 +35,23 @@ test_that("invalid bins values error", {
   }
 })
 
-test_that("too few distinct confidential values throw an error", {
+test_that("too few distinct confidential values reduce bins with a warning", {
   conf_const <- tibble::tibble(v = c(2, 2, 2, 2))
   synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
 
   for (method in c("width", "ntile", "cluster")) {
-    expect_error(
-      .discretize_k_marginal_vars(
+    expect_warning(
+      result <- .discretize_k_marginal_vars(
         synth_data = synth_num,
         conf_data = conf_const,
         vars = "v",
         bins = 2,
         discretize_method = method
       ),
-      regexp = "fewer distinct confidential values than `bins`"
+      regexp = "has only 1 distinct confidential values"
     )
+
+    expect_equal(length(levels(result$conf_data$v)), 1)
   }
 })
 

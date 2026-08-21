@@ -37,21 +37,23 @@
     # like every other variable, becoming an NA bin or dropped rows
     conf_values <- conf_data[[var]][!is.na(conf_data[[var]])]
 
-    .validate_discretizable_values(values = conf_values, var = var, bins = bins)
+    .validate_discretizable_values(values = conf_values, var = var)
+
+    bins_var <- .resolve_bins(values = conf_values, var = var, bins = bins)
 
     cut_points <- .compute_cut_points(values = conf_values,
-                                      bins = bins,
+                                      bins = bins_var,
                                       discretize_method = discretize_method)
 
     # outer bins extend to +/-Inf so out-of-range synthetic values land in
     # edge bins; unique() collapses ties from skewed quantiles
     breaks <- unique(c(-Inf, cut_points, Inf))
 
-    if (length(breaks) - 1 < bins) {
+    if (length(breaks) - 1 < bins_var) {
 
       warning(
         "`", var, "` was discretized into ", length(breaks) - 1,
-        " bins instead of ", bins, " because of tied cut points"
+        " bins instead of ", bins_var, " because of tied cut points"
       )
 
     }
@@ -102,16 +104,14 @@
 #' @title Validate values for discretization into bins
 #'
 #' @description Validates that a numeric variable has finite observed values
-#' and enough distinct values to construct the requested number of bins.
+#' available for discretization.
 #'
 #' @param values Numeric vector of observed confidential values for one
 #' variable.
 #' @param var Character scalar naming the variable.
-#' @param bins Single integer >= 2 giving the requested number of bins.
-#'
 #' @return `TRUE` if validation passes; otherwise an error is thrown.
 #'
-.validate_discretizable_values <- function(values, var, bins) {
+.validate_discretizable_values <- function(values, var) {
 
   if (!all(is.finite(values)) || length(values) == 0) {
 
@@ -122,15 +122,43 @@
 
   }
 
-  if (dplyr::n_distinct(values) < bins) {
+  return(TRUE)
 
-    stop(
-      "`", var, "` has fewer distinct confidential values than `bins`"
+}
+
+#' @title Resolve the effective number of bins for one variable
+#'
+#' @description Resolves the number of bins to use for one numeric variable by
+#' comparing the requested bin count to the number of distinct confidential
+#' values. When a variable has fewer distinct confidential values than
+#' requested bins, the distinct-value count is used instead and a warning is
+#' issued.
+#'
+#' @param values Numeric vector of observed confidential values for one
+#' variable, typically after removing missing values.
+#' @param var Character scalar naming the variable.
+#' @param bins Single integer >= 2 giving the requested number of bins.
+#'
+#' @return A single integer giving the effective number of bins for the
+#' variable.
+#'
+.resolve_bins <- function(values, var, bins) {
+
+  distinct_values <- dplyr::n_distinct(values)
+  bins_var <- min(bins, distinct_values)
+
+  if (bins_var < bins) {
+
+    warning(
+      "`", var, "` was discretized into ", bins_var,
+      " bins instead of ", bins,
+      " because it has only ", distinct_values,
+      " distinct confidential values"
     )
 
   }
 
-  return(TRUE)
+  return(bins_var)
 
 }
 
@@ -153,6 +181,12 @@
 #' an error is thrown.
 #'
 .compute_cut_points <- function(values, bins, discretize_method) {
+
+  if (bins == 1) {
+
+    return(numeric(0))
+
+  }
 
   # interior cut points always derive from the confidential data; each
   # method yields bins - 1 of them
