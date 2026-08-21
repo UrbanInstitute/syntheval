@@ -37,58 +37,11 @@
     # like every other variable, becoming an NA bin or dropped rows
     conf_values <- conf_data[[var]][!is.na(conf_data[[var]])]
 
-    # Discretization needs at least one finite value
-    if (!all(is.finite(conf_values)) || length(conf_values) == 0) {
+    .validate_discretizable_values(values = conf_values, var = var, bins = bins)
 
-      stop(
-        "observed numeric values must be finite to discretize; `", var,
-        "` is not"
-      )
-
-    }
-
-    # There should be enough distinct values for the number of bins specified
-    if (dplyr::n_distinct(conf_values) < bins) {
-
-      stop(
-        "`", var, "` has fewer distinct confidential values than `bins`"
-      )
-
-    }
-
-    # interior cut points always derive from the confidential data; each
-    # method yields bins - 1 of them
-    if (discretize_method == "width") {
-
-      cut_points <- seq(
-        from = min(conf_values),
-        to = max(conf_values),
-        length.out = bins + 1
-      )[2:bins]
-
-    } else if (discretize_method == "ntile") {
-
-      cut_points <- stats::quantile(
-        x = conf_values,
-        probs = seq(from = 0, to = 1, length.out = bins + 1),
-        names = FALSE
-      )[2:bins]
-
-    } else if (discretize_method == "cluster") {
-
-      centers <- sort(
-        stats::kmeans(x = conf_values, centers = bins)$centers[, 1]
-      )
-
-      cut_points <- (centers[-1] + centers[-length(centers)]) / 2
-
-    } else {
-
-      stop(
-        "`discretize_method` must be one of 'width', 'ntile', or 'cluster'"
-      )
-
-    }
+    cut_points <- .compute_cut_points(values = conf_values,
+                                      bins = bins,
+                                      discretize_method = discretize_method)
 
     # outer bins extend to +/-Inf so out-of-range synthetic values land in
     # edge bins; unique() collapses ties from skewed quantiles
@@ -140,8 +93,101 @@
 
   } else {
 
-    TRUE
+    return(TRUE)
 
   }
+
+}
+
+#' @title Validate values for discretization into bins
+#'
+#' @description Validates that a numeric variable has finite observed values
+#' and enough distinct values to construct the requested number of bins.
+#'
+#' @param values Numeric vector of observed confidential values for one
+#' variable.
+#' @param var Character scalar naming the variable.
+#' @param bins Single integer >= 2 giving the requested number of bins.
+#'
+#' @return `TRUE` if validation passes; otherwise an error is thrown.
+#'
+.validate_discretizable_values <- function(values, var, bins) {
+
+  if (!all(is.finite(values)) || length(values) == 0) {
+
+    stop(
+      "observed numeric values must be finite to discretize; `", var,
+      "` is not"
+    )
+
+  }
+
+  if (dplyr::n_distinct(values) < bins) {
+
+    stop(
+      "`", var, "` has fewer distinct confidential values than `bins`"
+    )
+
+  }
+
+  return(TRUE)
+
+}
+
+#' @title Compute discretization cut points
+#'
+#' @description Computes the interior cut points used to discretize a numeric
+#' variable into the requested number of bins. Cut points are derived from the
+#' observed confidential values using one of three methods: equal-width bins,
+#' quantile bins, or univariate k-means clustering.
+#'
+#' @param values Numeric vector of observed confidential values for one
+#' variable, typically after removing missing values.
+#' @param bins Single integer >= 2 giving the requested number of bins.
+#' @param discretize_method Character scalar specifying how cut points are
+#' placed: `"width"` for equal-width bins, `"ntile"` for quantile bins, or
+#' `"cluster"` for univariate k-means clustering.
+#'
+#' @return A numeric vector of `bins - 1` interior cut points. If
+#' `discretize_method` is not one of `"width"`, `"ntile"`, or `"cluster"`,
+#' an error is thrown.
+#'
+.compute_cut_points <- function(values, bins, discretize_method) {
+
+  # interior cut points always derive from the confidential data; each
+  # method yields bins - 1 of them
+  if (discretize_method == "width") {
+
+    cut_points <- seq(
+      from = min(values),
+      to = max(values),
+      length.out = bins + 1
+    )[2:bins]
+
+  } else if (discretize_method == "ntile") {
+
+    cut_points <- stats::quantile(
+      x = values,
+      probs = seq(from = 0, to = 1, length.out = bins + 1),
+      names = FALSE
+    )[2:bins]
+
+  } else if (discretize_method == "cluster") {
+
+    centers <- sort(
+      stats::kmeans(x = values, centers = bins)$centers[, 1]
+    )
+
+    cut_points <- (centers[-1] + centers[-length(centers)]) / 2
+
+  } else {
+
+    stop(
+      "`discretize_method` must be one of 'width', 'ntile', or 'cluster'"
+    )
+
+  }
+
+  return(cut_points)
 
 }
