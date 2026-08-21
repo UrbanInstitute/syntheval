@@ -34,125 +34,77 @@
   bins = NULL,
   discretize_method = c("width", "ntile", "cluster")
 ) {
+  # validate weight_var
   if (!is.null(weight_var)) {
 
-    is_character_weight_var <- is.character(weight_var)
-    has_single_weight_var <- length(weight_var) == 1
-
-    if (!(
-      is_character_weight_var &&
-      has_single_weight_var
-    )) {
-
-      stop("`weight_var` must be a single character string")
-
-    }
-
-    synth_has_weight_var <- weight_var %in% names(synth_data)
-    conf_has_weight_var <- weight_var %in% names(conf_data)
-
-    if (!(
-      synth_has_weight_var &&
-      conf_has_weight_var
-    )) {
-
-      stop("`weight_var` must be a column in both datasets")
-
-    }
-
-    synth_weight_is_numeric <- is.numeric(synth_data[[weight_var]])
-    conf_weight_is_numeric <- is.numeric(conf_data[[weight_var]])
-
-    if (!(
-      synth_weight_is_numeric &&
-      conf_weight_is_numeric
-    )) {
-
-      stop("`weight_var` must be a numeric column in both datasets")
-
-    }
+    stopifnot(
+      "`weight_var` must be a single character string" = {
+        rlang::is_string(weight_var)
+      },
+      "`weight_var` must be a column in both datasets" = {
+        weight_var %in% names(synth_data) && weight_var %in% names(conf_data)
+      }
+    )
 
     for (weights in list(synth_data[[weight_var]], conf_data[[weight_var]])) {
 
-      has_finite_weights <- all(is.finite(weights))
-      has_nonnegative_weights <- all(weights >= 0)
-      has_positive_total_weight <- sum(weights) > 0
-
-      if (!(
-        has_finite_weights &&
-        has_nonnegative_weights &&
-        has_positive_total_weight
-      )) {
-
-        stop(
-          "`weight_var` values must be finite and non-negative with a ",
-          "positive total in both datasets"
-        )
-
-      }
-    }
-  }
-
-  if (!is.null(group_by)) {
-    is_character_group_by <- is.character(group_by)
-    has_group_by_entries <- length(group_by) >= 1
-    has_observed_group_by <- !anyNA(group_by)
-    synth_has_group_by <- all(group_by %in% names(synth_data))
-    conf_has_group_by <- all(group_by %in% names(conf_data))
-
-    if (!(
-      is_character_group_by &&
-      has_group_by_entries &&
-      has_observed_group_by &&
-      synth_has_group_by &&
-      conf_has_group_by
-    )) {
-
-      stop(
-        "`group_by` must be a character vector of variables present in ",
-        "both datasets"
+      stopifnot(
+        "`weight_var` must be a numeric column in both datasets" = {
+          is.numeric(weights)
+        },
+        "`weight_var` values must be finite in both datasets" = {
+          all(is.finite(weights))
+        },
+        "`weight_var` values must be non-negative in both datasets" = {
+          all(weights >= 0)
+        },
+        "`weight_var` values must have a positive total in both datasets" = {
+          sum(weights) > 0
+        }
       )
 
     }
 
-    if (anyDuplicated(group_by) > 0) {
-
-      stop("`group_by` must not contain duplicate variable names")
-
-    }
-
-    if (!(
-      is.null(weight_var) ||
-      !(weight_var %in% group_by)
-    )) {
-
-      stop("`group_by` cannot include `weight_var`")
-
-    }
   }
 
+  # validate group_by
+  if (!is.null(group_by)) {
+
+    stopifnot(
+      "`group_by` must be a character vector of variables present in both datasets" = {
+        is.character(group_by) &&
+          length(group_by) >= 1 &&
+          !anyNA(group_by) &&
+          all(group_by %in% names(synth_data)) &&
+          all(group_by %in% names(conf_data))
+      },
+      "`group_by` must not contain duplicate variable names" = {
+        !anyDuplicated(group_by)
+      },
+      "`group_by` cannot include `weight_var`" = {
+        is.null(weight_var) || !(weight_var %in% group_by)
+      }
+    )
+
+  }
+
+  # variables available for marginals: shared by both datasets, excluding
+  # weights and grouping variables
   shared_vars <- setdiff(
     intersect(names(synth_data), names(conf_data)),
     c(weight_var, group_by)
   )
 
+  # optionally restrict to synthesized variables
   if (!is.null(synth_varnames)) {
-    is_character_synth_varnames <- is.character(synth_varnames)
-    has_synth_varnames_entries <- length(synth_varnames) >= 1
-    has_observed_synth_varnames <- !anyNA(synth_varnames)
 
-    if (!(
-      is_character_synth_varnames &&
-      has_synth_varnames_entries &&
-      has_observed_synth_varnames
-    )) {
-
-      stop(
-        "`synth_varnames` must be a non-empty character vector without ",
-        "missing values, or NULL"
-      )
-
-    }
+    stopifnot(
+      "`synth_varnames` must be a non-empty character vector without missing values, or NULL" = {
+        is.character(synth_varnames) &&
+          length(synth_varnames) >= 1 &&
+          !anyNA(synth_varnames)
+      }
+    )
 
     shared_vars <- intersect(shared_vars, synth_varnames)
 
@@ -164,11 +116,10 @@
       )
 
     }
+
   }
 
-  has_enough_shared_vars <- length(shared_vars) >= k
-
-  if (!has_enough_shared_vars) {
+  if (length(shared_vars) < k) {
 
     stop(
       "`k` cannot exceed the number of variables available for marginals ",
@@ -178,7 +129,9 @@
 
   }
 
+  # optionally discretize numeric variables
   if (!is.null(bins)) {
+
     discretized <- .discretize_k_marginal_vars(
       synth_data = synth_data,
       conf_data = conf_data,
@@ -189,34 +142,36 @@
 
     synth_data <- discretized$synth_data
     conf_data <- discretized$conf_data
+
   }
 
+  # handle missing values in marginal and grouping variables
   na_vars_scope <- c(shared_vars, group_by)
 
   if (!na.rm) {
 
-    na_vars <- na_vars_scope[
-      purrr::map_lgl(
-        .x = na_vars_scope,
-        .f = \(v) {
-          anyNA(synth_data[[v]]) || anyNA(conf_data[[v]])
-        }
-      )
-    ]
+    # NA becomes its own level; report which variables are affected
+    has_na <- purrr::map_lgl(
+      .x = na_vars_scope,
+      .f = \(v) anyNA(synth_data[[v]]) || anyNA(conf_data[[v]])
+    )
 
-    if (length(na_vars) > 0) {
+    if (any(has_na)) {
 
       message(
         "Some variables contain missing data: ",
-        paste(na_vars, collapse = ", ")
+        paste(na_vars_scope[has_na], collapse = ", ")
       )
 
     }
 
     synth_data[na_vars_scope] <- convert_na_to_level(synth_data[na_vars_scope])
     conf_data[na_vars_scope] <- convert_na_to_level(conf_data[na_vars_scope])
+
   } else if (!is.null(group_by)) {
 
+    # marginal variables are handled per combination downstream; grouping
+    # variables must be dropped here so strata are well defined
     synth_data <- dplyr::filter(
       synth_data,
       !dplyr::if_any(.cols = dplyr::all_of(group_by), .fns = is.na)
@@ -234,6 +189,7 @@
       )
 
     }
+
   }
 
   return(
