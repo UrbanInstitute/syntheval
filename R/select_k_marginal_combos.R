@@ -33,7 +33,8 @@
       FUN = \(vars) any(vars %in% priority_vars)
     )
 
-    n_sampled <- min(max(n_marginals - sum(is_priority), 0), sum(!is_priority))
+    n_sampled <-.compute_nonpriority_sample_size(n_marginals = n_marginals,
+                                                 is_priority = is_priority)
 
     sampled_rows <- sample(x = which(!is_priority), size = n_sampled)
 
@@ -41,7 +42,39 @@
       sort(c(which(is_priority), sampled_rows)), ,
       drop = FALSE
     ]
+
   }
 
   return(kmarginals_vars)
+}
+
+#' @title Compute the number of non-priority combinations to sample
+#'
+#' @description Given a ceiling on the total number of k-marginal
+#' combinations and a logical indicator of which combinations are priority
+#' combinations, computes how many non-priority combinations may still be
+#' sampled after all priority combinations are retained. The result is never
+#' negative and never exceeds the number of available non-priority
+#' combinations.
+#'
+#' @param n_marginals Single integer ceiling on the total number of
+#' selected combinations.
+#' @param is_priority Logical vector indicating which candidate combinations
+#' are priority combinations.
+#'
+#' @return A single integer giving the number of non-priority combinations to
+#' sample.
+#'
+.compute_nonpriority_sample_size <- function(
+  n_marginals,
+  is_priority
+) {
+
+  priority_count <- sum(is_priority)
+  non_priority_count <- sum(! is_priority)
+  remaining_slots <- max(n_marginals - priority_count, 0)
+  n_sampled <- min(remaining_slots, non_priority_count)
+
+  return(n_sampled)
+
 }
