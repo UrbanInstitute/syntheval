@@ -34,7 +34,8 @@ rows always errors, since there is nothing to score against.}
 }
 \value{
 A tibble with one row per cell: \code{variables}, \code{cell},
-\code{prop_synth}, \code{prop_conf}, and \code{abs_diff}.
+\code{prop_synth}, \code{prop_conf}, \code{abs_diff}, and \code{diff} (synthetic minus
+confidential).
 }
 \description{
 For each supplied variable combination, computes the marginal

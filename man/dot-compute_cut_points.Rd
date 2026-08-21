@@ -17,9 +17,7 @@ placed: \code{"width"} for equal-width bins, \code{"ntile"} for quantile bins, o
 \code{"cluster"} for univariate k-means clustering.}
 }
 \value{
-A numeric vector of \code{bins - 1} interior cut points. If
-\code{discretize_method} is not one of \code{"width"}, \code{"ntile"}, or \code{"cluster"},
-an error is thrown.
+A numeric vector of \code{bins - 1} interior cut points.
 }
 \description{
 Computes the interior cut points used to discretize a numeric
