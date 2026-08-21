@@ -158,7 +158,7 @@ test_that("marginals and cells report worst-first detail", {
   # three observed cells sorted by descending absolute difference
   expect_equal(
     names(result$cells),
-    c("variables", "cell", "prop_synth", "prop_conf", "abs_diff")
+    c("variables", "cell", "prop_synth", "prop_conf", "abs_diff", "diff")
   )
   expect_equal(result$cells$abs_diff, c(0.25, 0.25, 0))
   expect_equal(result$cells$cell[3], "y, p")

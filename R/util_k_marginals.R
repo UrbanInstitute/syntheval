@@ -87,23 +87,13 @@
 ) {
   discretize_method <- match.arg(discretize_method)
 
-  if (!(is.logical(na.rm) && length(na.rm) == 1 && !is.na(na.rm))) {
-    stop("`na.rm` must be a single TRUE or FALSE")
-  }
-
-  for (keep in list(keep_marginals, keep_cells, n_marginals)) {
-    if (!(is.numeric(keep) && length(keep) == 1 && !is.na(keep) &&
-      keep >= 1 && keep == floor(keep))) {
-      stop(
-        "`keep_marginals`, `keep_cells`, and `n_marginals` must be single ",
-        "integers >= 1 or Inf"
-      )
-    }
-  }
-
-  if (!(is.numeric(k) && length(k) == 1 && k %in% 1:3)) {
-    stop("`k` must be a single integer between 1 and 3")
-  }
+  .validate_k_marginals_worker_args(
+    na.rm = na.rm,
+    keep_marginals = keep_marginals,
+    keep_cells = keep_cells,
+    n_marginals = n_marginals,
+    k = k
+  )
 
   stopifnot(inherits(synth_data, "data.frame"))
   stopifnot(inherits(conf_data, "data.frame"))
@@ -319,6 +309,82 @@
   )
 
   return(result)
+}
+
+#' @title Validate worker arguments for the k-marginals metric
+#'
+#' @description Validates the scalar worker arguments that control NA
+#' handling, truncation of detail tables, sampling ceiling, and the order of
+#' the marginals. The function errors when any of the following conditions are
+#' met:
+#' 1. `na.rm` is not a logical scalar.
+#' 2. `keep_marginals`, `keep_cells`, or `n_marginals` is not a single
+#' integer >= 1 or `Inf`.
+#' 3. `k` is not a single integer between 1 and 3.
+#'
+#' @param na.rm Logical scalar controlling missing-value handling.
+#' @param keep_marginals Single integer >= 1 or `Inf` giving the number of
+#' marginals to retain.
+#' @param keep_cells Single integer >= 1 or `Inf` giving the number of cells
+#' to retain.
+#' @param n_marginals Single integer >= 1 or `Inf` giving the maximum number
+#' of marginals to evaluate.
+#' @param k Single integer giving the k-marginal order.
+#'
+#' @return `TRUE` if validation passes; otherwise an error is thrown.
+#'
+.validate_k_marginals_worker_args <- function(
+  na.rm,
+  keep_marginals,
+  keep_cells,
+  n_marginals,
+  k
+) {
+  is_logical_na_rm <- is.logical(na.rm)
+  has_single_na_rm <- length(na.rm) == 1
+  has_observed_na_rm <- !is.na(na.rm)
+
+  if (!(is_logical_na_rm && has_single_na_rm && has_observed_na_rm)) {
+    stop("`na.rm` must be a single TRUE or FALSE")
+  }
+
+  keep_values <- list(
+    keep_marginals = keep_marginals,
+    keep_cells = keep_cells,
+    n_marginals = n_marginals
+  )
+
+  for (keep in keep_values) {
+    is_numeric_keep <- is.numeric(keep)
+    has_single_keep <- length(keep) == 1
+    has_observed_keep <- !is.na(keep)
+
+    if (is_numeric_keep && has_single_keep && has_observed_keep) {
+      keep_at_least_one <- keep >= 1
+      keep_is_integer <- keep == floor(keep)
+    } else {
+      keep_at_least_one <- FALSE
+      keep_is_integer <- FALSE
+    }
+
+    if (!(is_numeric_keep && has_single_keep && has_observed_keep &&
+      keep_at_least_one && keep_is_integer)) {
+      stop(
+        "`keep_marginals`, `keep_cells`, and `n_marginals` must be single ",
+        "integers >= 1 or Inf"
+      )
+    }
+  }
+
+  is_numeric_k <- is.numeric(k)
+  has_single_k <- length(k) == 1
+  k_in_supported_range <- k %in% 1:3
+
+  if (!(is_numeric_k && has_single_k && k_in_supported_range)) {
+    stop("`k` must be a single integer between 1 and 3")
+  }
+
+  return(TRUE)
 }
 
 #' @title Print a k_marginals object
