@@ -26,13 +26,11 @@
   discretize_method
 ) {
 
-  .validate_bins(bins)
+  .validate_bins(bins = bins)
 
   numeric_vars <- vars[
     purrr::map_lgl(.x = vars, .f = \(v) is.numeric(conf_data[[v]]))
   ]
-
-}
 
   for (var in numeric_vars) {
     # cut points derive from observed values; missing values follow na.rm
@@ -54,26 +52,37 @@
 
     # interior cut points always derive from the confidential data; each
     # method yields bins - 1 of them
-    cut_points <- switch(
-      EXPR = discretize_method,
-      width = seq(
+    if (discretize_method == "width") {
+
+      cut_points <- seq(
         from = min(conf_values),
         to = max(conf_values),
         length.out = bins + 1
-      )[2:bins],
-      ntile = stats::quantile(
+      )[2:bins]
+
+    } else if (discretize_method == "ntile") {
+
+      cut_points <- stats::quantile(
         x = conf_values,
         probs = seq(from = 0, to = 1, length.out = bins + 1),
         names = FALSE
-      )[2:bins],
-      cluster = {
-        centers <- sort(
-          stats::kmeans(x = conf_values, centers = bins)$centers[, 1]
-        )
+      )[2:bins]
 
-        (centers[-1] + centers[-length(centers)]) / 2
-      }
-    )
+    } else if (discretize_method == "cluster") {
+
+      centers <- sort(
+        stats::kmeans(x = conf_values, centers = bins)$centers[, 1]
+      )
+
+      cut_points <- (centers[-1] + centers[-length(centers)]) / 2
+
+    } else {
+
+      stop(
+        "`discretize_method` must be one of 'width', 'ntile', or 'cluster'"
+      )
+
+    }
 
     # outer bins extend to +/-Inf so out-of-range synthetic values land in
     # edge bins; unique() collapses ties from skewed quantiles
@@ -106,7 +115,7 @@
 #'
 #' @param bins numeric scalar for number of bins for data
 #'
-#' @return TRUE` if `bins` is a single integer >= 2; otherwise an error is 
+#' @return `TRUE` if `bins` is a single integer >= 2; otherwise an error is
 #' thrown.
 #'
 .validate_bins <- function(bins) {
