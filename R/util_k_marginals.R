@@ -417,7 +417,7 @@ print.k_marginals <- function(x, n = 5, ...) {
 #'
 util_k_marginals <- function(
   eval_data,
-  k = 3,
+  k = 1,
   keep_marginals = Inf,
   keep_cells = Inf,
   n_marginals = Inf,
