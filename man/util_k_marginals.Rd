@@ -6,7 +6,7 @@
 \usage{
 util_k_marginals(
   eval_data,
-  k = 3,
+  k = 1,
   keep_marginals = Inf,
   keep_cells = Inf,
   n_marginals = Inf,
@@ -82,8 +82,9 @@ reproducible clusters). Defaults to "width".}
 }
 \value{
 A \code{k_marginals} object with three elements: \code{score}, a value in
-range 0 to 1000 where a higher value denotes lower MabsDDs and consequently
-greater similarity between confidential and synthetic data; \code{marginals}, a
+range 0 to 1 where 0 is a perfect match, 1 is the worst mismatch, and
+larger values denote greater discrepancy between confidential and
+synthetic data; \code{marginals}, a
 tibble with the MabsDD for each combination of variables, worst first; and
 \code{cells}, a tibble with the synthetic and confidential proportions and their
 absolute difference for every cell, worst first. \code{score} is always computed
@@ -97,5 +98,5 @@ objects, one per replicate.
 For each unique k-combination of variables shared by the
 synthetic and confidential data, the mean absolute difference (MabsDD)
 between the two datasets' marginal cell probabilities is computed. The
-MabsDDs are averaged across combinations and rescaled as (1 - mean) * 1000.
+MabsDDs are averaged across combinations, with score = mean(MabsDD).
 }

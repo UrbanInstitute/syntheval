@@ -12,14 +12,14 @@
 #     MabsDD = mean(|0.25 - 0.50|, |0.75 - 0.50|) = 0.25
 #   marginal b: conf (p = 0.75, q = 0.25), synth (p = 0.50, q = 0.50)
 #     MabsDD = mean(|0.50 - 0.75|, |0.50 - 0.25|) = 0.25
-#   score = (1 - mean(0.25, 0.25)) * 1000 = 750
+#   score = mean(0.25, 0.25) = 0.25
 #
 # k = 2 (single combination: a x b)
 #   cells: conf (x,p = 0.50, y,p = 0.25, y,q = 0.25)
 #          synth (x,p = 0.25, y,p = 0.25, y,q = 0.50)
 #     per-cell |synth - conf|: (x,p) 0.25, (y,p) 0, (y,q) 0.25
 #     MabsDD = mean(0.25, 0, 0.25) = 1/6
-#   score = (1 - 1/6) * 1000 = 5000/6
+#   score = 1/6
 
 conf <- tibble::tibble(
   a = c("x", "x", "y", "y"),
@@ -34,22 +34,22 @@ synth <- tibble::tibble(
 test_that("k = 1 score matches hand-computed value", {
   expect_equal(
     .util_k_marginals(synth_data = synth, conf_data = conf, k = 1)$score,
-    750
+    0.25
   )
 })
 
 test_that("k = 2 score matches hand-computed value", {
   expect_equal(
     .util_k_marginals(synth_data = synth, conf_data = conf, k = 2)$score,
-    5000 / 6
+    1 / 6
   )
 })
 
-test_that("identical data scores exactly 1000 for every k", {
+test_that("identical data scores exactly 0 for every k", {
   for (k in 1:2) {
     expect_equal(
       .util_k_marginals(synth_data = conf, conf_data = conf, k = k)$score,
-      1000
+      0
     )
   }
 })
@@ -57,13 +57,13 @@ test_that("identical data scores exactly 1000 for every k", {
 test_that("cells absent from one dataset count as proportion zero", {
   # conf has level y that synth lacks; synth is all x
   # marginal a: conf (x = 0.5, y = 0.5), synth (x = 1, y = 0)
-  # MabsDD = mean(0.5, 0.5) = 0.5 -> score 500
+  # MabsDD = mean(0.5, 0.5) = 0.5 -> score 0.5
   conf_gap <- tibble::tibble(a = c("x", "y"))
   synth_gap <- tibble::tibble(a = c("x", "x"))
 
   expect_equal(
     .util_k_marginals(synth_data = synth_gap, conf_data = conf_gap, k = 1)$score,
-    500
+    0.5
   )
 })
 
@@ -129,9 +129,9 @@ test_that("variables not shared by both datasets are ignored", {
 test_that("util_k_marginals accepts an eval_data object", {
   ed <- eval_data(conf_data = conf, synth_data = synth)
 
-  expect_equal(util_k_marginals(eval_data = ed, k = 1)$score, 750)
+  expect_equal(util_k_marginals(eval_data = ed, k = 1)$score, 0.25)
 
-  expect_equal(util_k_marginals(eval_data = ed, k = 2)$score, 5000 / 6)
+  expect_equal(util_k_marginals(eval_data = ed, k = 2)$score, 1 / 6)
 })
 
 test_that("util_k_marginals maps over replicates", {
@@ -139,7 +139,7 @@ test_that("util_k_marginals maps over replicates", {
 
   result <- util_k_marginals(eval_data = ed, k = 1)
 
-  expect_equal(purrr::map_dbl(result, "score"), c(750, 1000))
+  expect_equal(purrr::map_dbl(result, "score"), c(0.25, 0))
 })
 
 test_that("util_k_marginals rejects non-eval_data input", {
@@ -179,7 +179,7 @@ test_that("cells absent from the synthetic data appear with proportion zero", {
 test_that("print method reports the score and worst marginals", {
   result <- .util_k_marginals(synth_data = synth, conf_data = conf, k = 1)
 
-  expect_output(print(result), regexp = "k-marginals score: 750")
+  expect_output(print(result), regexp = "k-marginals score: 0.25")
   expect_output(print(result), regexp = "Worst marginals:")
 })
 
@@ -258,7 +258,7 @@ test_that("invalid retention arguments throw an error", {
       synth_data = synth, conf_data = conf, k = 1,
       keep_marginals = Inf, keep_cells = Inf
     )$score,
-    750
+    0.25
   )
 })
 
@@ -271,7 +271,7 @@ test_that("util_k_marginals passes retention arguments through", {
 
   expect_equal(nrow(result$marginals), 1)
   expect_equal(nrow(result$cells), 2)
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 })
 
 test_that("non-integer and non-finite k values throw an error", {
@@ -328,7 +328,7 @@ test_that("one-row datasets produce a valid result", {
 
   result <- .util_k_marginals(synth_data = one_row, conf_data = one_row, k = 1)
 
-  expect_equal(result$score, 1000)
+  expect_equal(result$score, 0)
   expect_equal(nrow(result$cells), 2)
 })
 
@@ -353,7 +353,7 @@ test_that("n_marginals caps the number of evaluated combinations", {
   )
 
   expect_equal(nrow(result$marginals), 2)
-  expect_true(result$score >= 0 && result$score <= 1000)
+  expect_true(result$score >= 0 && result$score <= 1)
 })
 
 test_that("sampling is reproducible given a seed", {
@@ -470,7 +470,7 @@ test_that("priority_vars applies to k = 3 combinations", {
 
 test_that("weighted proportions match hand-computed values", {
   # conf: weight shares x = 3/4, y = 1/4; synth: x = 1/2, y = 1/2
-  # MabsDD = mean(0.25, 0.25) = 0.25 -> score 750
+  # MabsDD = mean(0.25, 0.25) = 0.25 -> score 0.25
   conf_w <- tibble::tibble(a = c("x", "y"), w = c(3, 1))
   synth_w <- tibble::tibble(a = c("x", "y"), w = c(1, 1))
 
@@ -478,7 +478,7 @@ test_that("weighted proportions match hand-computed values", {
     synth_data = synth_w, conf_data = conf_w, k = 1, weight_var = "w"
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
   expect_equal(
     dplyr::filter(result$cells, .data$cell == "x")$prop_conf,
     0.75
@@ -548,7 +548,7 @@ test_that("util_k_marginals passes weight_var through", {
 
   expect_equal(
     util_k_marginals(eval_data = ed, k = 1, weight_var = "w")$score,
-    750
+    0.25
   )
 })
 
@@ -594,13 +594,13 @@ test_that("zero weights are valid when the total is positive", {
     synth_data = synth_w, conf_data = conf_w, k = 1, weight_var = "w"
   )
 
-  expect_equal(result$score, 500)
+  expect_equal(result$score, 0.5)
 })
 
 test_that("width discretization matches hand-computed values", {
   # conf 1:4 with 2 bins: interior cut at 2.5, so low = {1, 2}, high = {3, 4}
   # conf shares (0.5, 0.5); synth c(1, 1, 1, 4) shares (0.75, 0.25)
-  # MabsDD = mean(0.25, 0.25) = 0.25 -> score 750
+  # MabsDD = mean(0.25, 0.25) = 0.25 -> score 0.25
   conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
   synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
 
@@ -608,7 +608,7 @@ test_that("width discretization matches hand-computed values", {
     synth_data = synth_num, conf_data = conf_num, k = 1, bins = 2
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
   expect_equal(nrow(result$cells), 2)
 })
 
@@ -616,7 +616,7 @@ test_that("ntile discretization uses confidential quantiles", {
   # conf quartile cut points at 25/50/75th percentiles of 1:8
   # 4 bins of 2 values each: conf shares 0.25 apiece
   # synth all in the lowest bin: shares (1, 0, 0, 0)
-  # MabsDD = mean(0.75, 0.25, 0.25, 0.25) = 0.375 -> score 625
+  # MabsDD = mean(0.75, 0.25, 0.25, 0.25) = 0.375 -> score 0.375
   conf_num <- tibble::tibble(v = c(1, 2, 3, 4, 5, 6, 7, 8))
   synth_num <- tibble::tibble(v = c(1, 1, 1, 1, 1, 1, 1, 1))
 
@@ -628,12 +628,12 @@ test_that("ntile discretization uses confidential quantiles", {
     discretize_method = "ntile"
   )
 
-  expect_equal(result$score, 625)
+  expect_equal(result$score, 0.375)
 })
 
 test_that("cluster discretization separates well-separated groups", {
   # two tight clusters around 1 and 10: the midpoint break lands between
-  # them, so conf shares (0.5, 0.5) and synth (1, 0) -> score 500
+  # them, so conf shares (0.5, 0.5) and synth (1, 0) -> score 0.5
   conf_num <- tibble::tibble(v = c(1, 1.1, 10, 10.1))
   synth_num <- tibble::tibble(v = c(1, 1, 1.1, 1.1))
 
@@ -647,7 +647,7 @@ test_that("cluster discretization separates well-separated groups", {
     discretize_method = "cluster"
   )
 
-  expect_equal(result$score, 500)
+  expect_equal(result$score, 0.5)
 })
 
 test_that("synthetic values outside the confidential range land in edge bins", {
@@ -659,7 +659,7 @@ test_that("synthetic values outside the confidential range land in edge bins", {
   )
 
   # extremes split evenly across the two edge bins, matching conf shares
-  expect_equal(result$score, 1000)
+  expect_equal(result$score, 0)
 })
 
 test_that("non-numeric variables are untouched by discretization", {
@@ -716,7 +716,7 @@ test_that("util_k_marginals passes discretization arguments through", {
 
   expect_equal(
     suppressMessages(util_k_marginals(eval_data = ed, k = 1, bins = 2))$score,
-    750
+    0.25
   )
 })
 
@@ -1013,14 +1013,14 @@ test_that("wrapper restriction bounds k by the synthesized-variable set", {
 #               synth (x = 0.25, y = 0.50, NA = 0.25)
 #     MabsDD = mean(0.25, 0.25, 0) = 1/6
 #   marginal b: MabsDD = mean(0.25, 0.25) = 0.25
-#   score = (1 - mean(1/6, 1/4)) * 1000 = 19000/24
+#   score = mean(1/6, 1/4) = 5/24
 #
 # na.rm = TRUE, k = 1 (rows dropped per marginal)
 #   marginal a (3 rows each): conf (x = 2/3, y = 1/3),
 #                             synth (x = 1/3, y = 2/3)
 #     MabsDD = mean(1/3, 1/3) = 1/3
 #   marginal b (all 4 rows): MabsDD = 0.25
-#   score = (1 - mean(1/3, 1/4)) * 1000 = 17000/24
+#   score = mean(1/3, 1/4) = 7/24
 
 conf_na <- tibble::tibble(
   a = c("x", "x", "y", NA),
@@ -1037,7 +1037,7 @@ test_that("NA values form their own level by default", {
     .util_k_marginals(synth_data = synth_na, conf_data = conf_na, k = 1)
   )
 
-  expect_equal(result$score, 19000 / 24)
+  expect_equal(result$score, 5 / 24)
 
   expect_true("NA" %in% result$cells$cell)
 })
@@ -1047,7 +1047,7 @@ test_that("na.rm = TRUE drops missing values per marginal", {
     synth_data = synth_na, conf_data = conf_na, k = 1, na.rm = TRUE
   )
 
-  expect_equal(result$score, 17000 / 24)
+  expect_equal(result$score, 7 / 24)
 
   expect_false("NA" %in% result$cells$cell)
 })
@@ -1110,7 +1110,7 @@ test_that("numeric NA values land in an NA bin or are dropped", {
 
   # with the NAs dropped, the two synthetic values split evenly like the
   # confidential data, so the marginal matches exactly
-  expect_equal(dropped$score, 1000)
+  expect_equal(dropped$score, 0)
 })
 
 test_that("a marginal with no complete rows errors under na.rm = TRUE", {
@@ -1130,7 +1130,7 @@ test_that("util_k_marginals passes na.rm through", {
 
   expect_equal(
     util_k_marginals(eval_data = ed, k = 1, na.rm = TRUE)$score,
-    17000 / 24
+    7 / 24
   )
 })
 
@@ -1144,7 +1144,7 @@ test_that("na.rm = TRUE drops rows per combination, not globally", {
   #           synth drops row 3 -> (x,p), (x,q), (y,q) each 1/3
   #           MabsDD = mean(0, 0, 1/3, 1/3) = 1/6
   #   (a, c): conf -> (x,m) = 2/3, (y,n) = 1/3; synth identical -> MabsDD = 0
-  #   score = (1 - mean(0, 1/6, 0)) * 1000 = 17000/18
+  #   score = mean(0, 1/6, 0) = 1/18
   #
   # global (listwise) deletion would filter different rows from each dataset
   # and corrupt the complete (b, c) marginal, so madd = 0 for (b, c) is the
@@ -1165,7 +1165,7 @@ test_that("na.rm = TRUE drops rows per combination, not globally", {
     synth_data = synth_pair, conf_data = conf_pair, k = 2, na.rm = TRUE
   )
 
-  expect_equal(result$score, 17000 / 18)
+  expect_equal(result$score, 1 / 18)
 
   bc <- dplyr::filter(result$marginals, .data$variables == "b, c")
 
@@ -1240,9 +1240,9 @@ test_that("weighted proportions drop missing rows before computing shares", {
   # from the surviving rows' weights:
   #   conf keeps weights 1, 1, 2 -> x = 2/4, y = 2/4
   #   synth keeps weights 1, 3 -> x = 1/4, y = 3/4
-  #   MabsDD = mean(0.25, 0.25) = 0.25 -> score 750
+  #   MabsDD = mean(0.25, 0.25) = 0.25 -> score 0.25
   # dividing by the full weight total (including the dropped 10s) would give
-  # a different score, so 750 pins down the recomputation
+  # a different score, so 0.25 pins down the recomputation
   conf_w <- tibble::tibble(
     a = c("x", "x", "y", NA),
     w = c(1, 1, 2, 10)
@@ -1261,7 +1261,7 @@ test_that("weighted proportions drop missing rows before computing shares", {
     na.rm = TRUE
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 })
 
 test_that("confidential numeric NA values discretize under both na.rm modes", {
@@ -1277,7 +1277,7 @@ test_that("confidential numeric NA values discretize under both na.rm modes", {
   )
 
   expect_true("NA" %in% kept$cells$cell)
-  expect_equal(kept$score, 1000)
+  expect_equal(kept$score, 0)
 
   # na.rm = TRUE: observed values bin as low 2/4, high 2/4 in both datasets
   dropped <- .util_k_marginals(
@@ -1286,7 +1286,7 @@ test_that("confidential numeric NA values discretize under both na.rm modes", {
   )
 
   expect_false("NA" %in% dropped$cells$cell)
-  expect_equal(dropped$score, 1000)
+  expect_equal(dropped$score, 0)
 })
 
 # group_by stratification
@@ -1300,9 +1300,9 @@ test_that("confidential numeric NA values discretize under both na.rm modes", {
 #
 # universe = {a}; g stratifies and never marginalizes
 # stratum A (conf share 0.5): conf (x = 0.5, y = 0.5), synth (x = 1)
-#   MabsDD = mean(0.5, 0.5) = 0.5 -> score 500
-# stratum B (conf share 0.5): identical -> MabsDD = 0 -> score 1000
-# overall = 0.5 * 500 + 0.5 * 1000 = 750
+#   MabsDD = mean(0.5, 0.5) = 0.5 -> score 0.5
+# stratum B (conf share 0.5): identical -> MabsDD = 0 -> score 0
+# overall = 0.5 * 0.5 + 0.5 * 0 = 0.25
 
 conf_g <- tibble::tibble(
   g = c("A", "A", "B", "B"),
@@ -1319,7 +1319,7 @@ test_that("group_by stratifies the score by confidential shares", {
     synth_data = synth_g, conf_data = conf_g, k = 1, group_by = "g"
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 })
 
 test_that("grouped output gains group columns and group_scores", {
@@ -1332,7 +1332,7 @@ test_that("grouped output gains group columns and group_scores", {
   # worst stratum first
   expect_equal(result$group_scores$g, c("A", "B"))
   expect_equal(result$group_scores$share, c(0.5, 0.5))
-  expect_equal(result$group_scores$score, c(500, 1000))
+  expect_equal(result$group_scores$score, c(0.5, 0))
 
   expect_true("g" %in% names(result$marginals))
   expect_true("g" %in% names(result$cells))
@@ -1348,9 +1348,9 @@ test_that("grouped output gains group columns and group_scores", {
 
 test_that("an empty synthetic stratum scores against zero proportions", {
   # synth has no B rows: stratum B conf cells (x = 0.5, y = 0.5) face
-  # synthetic proportions of 0 -> MabsDD = 0.5 -> score 500
-  # stratum A: conf (x = 0.5, y = 0.5), synth (x = 0.5, y = 0.5) -> 1000
-  # overall = 0.5 * 1000 + 0.5 * 500 = 750
+  # synthetic proportions of 0 -> MabsDD = 0.5 -> score 0.5
+  # stratum A: conf (x = 0.5, y = 0.5), synth (x = 0.5, y = 0.5) -> 0
+  # overall = 0.5 * 0 + 0.5 * 0.5 = 0.25
   synth_a_only <- tibble::tibble(
     g = c("A", "A", "A", "A"),
     a = c("x", "x", "y", "y")
@@ -1360,14 +1360,14 @@ test_that("an empty synthetic stratum scores against zero proportions", {
     synth_data = synth_a_only, conf_data = conf_g, k = 1, group_by = "g"
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 })
 
 test_that("group shares use weights when weight_var is set", {
   # conf weight shares: A = 2/4, B = 2/4 (row shares would be 2/3, 1/3)
-  # stratum A: conf (x = 0.5, y = 0.5), synth (x = 1) -> score 500
-  # stratum B: conf (x = 1), synth (x = 1) -> score 1000
-  # overall = 0.5 * 500 + 0.5 * 1000 = 750; row shares would give 2000/3
+  # stratum A: conf (x = 0.5, y = 0.5), synth (x = 1) -> score 0.5
+  # stratum B: conf (x = 1), synth (x = 1) -> score 0
+  # overall = 0.5 * 0.5 + 0.5 * 0 = 0.25; row shares would give 1/3
   conf_gw <- tibble::tibble(
     g = c("A", "A", "B"),
     a = c("x", "y", "x"),
@@ -1388,7 +1388,7 @@ test_that("group shares use weights when weight_var is set", {
     weight_var = "w"
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 })
 
 test_that("invalid group_by values error", {
@@ -1447,7 +1447,7 @@ test_that("util_k_marginals passes group_by through", {
 
   expect_equal(
     util_k_marginals(eval_data = ed, k = 1, group_by = "g")$score,
-    750
+    0.25
   )
 })
 
@@ -1462,15 +1462,15 @@ test_that("missing group values follow na.rm", {
     a = c("x", "x", "x", "y")
   )
 
-  # na.rm = FALSE: NA forms its own stratum (perfect match -> 1000);
-  # stratum A scores 500 -> overall 750
+  # na.rm = FALSE: NA forms its own stratum (perfect match -> 0);
+  # stratum A scores 0.5 -> overall 0.25
   kept <- suppressMessages(
     .util_k_marginals(
       synth_data = synth_gna, conf_data = conf_gna, k = 1, group_by = "g"
     )
   )
 
-  expect_equal(kept$score, 750)
+  expect_equal(kept$score, 0.25)
   expect_true("NA" %in% kept$group_scores$g)
 
   # na.rm = TRUE: NA-group rows drop entirely, leaving only stratum A
@@ -1479,15 +1479,15 @@ test_that("missing group values follow na.rm", {
     na.rm = TRUE
   )
 
-  expect_equal(dropped$score, 500)
+  expect_equal(dropped$score, 0.5)
   expect_equal(nrow(dropped$group_scores), 1)
 })
 
 test_that("multi-column group_by stratifies by joint combinations", {
   # four joint strata of two rows each; only stratum (A, p) diverges:
-  #   conf (x = 0.5, y = 0.5), synth (x = 1) -> MabsDD = 0.5 -> score 500
-  # the other three strata are identical -> 1000
-  # overall = 0.25 * 500 + 0.75 * 1000 = 875
+  #   conf (x = 0.5, y = 0.5), synth (x = 1) -> MabsDD = 0.5 -> score 0.5
+  # the other three strata are identical -> 0
+  # overall = 0.25 * 0.5 + 0.75 * 0 = 0.125
   conf_g2 <- tibble::tibble(
     g1 = c("A", "A", "A", "A", "B", "B", "B", "B"),
     g2 = c("p", "p", "q", "q", "p", "p", "q", "q"),
@@ -1504,7 +1504,7 @@ test_that("multi-column group_by stratifies by joint combinations", {
     group_by = c("g1", "g2")
   )
 
-  expect_equal(result$score, 875)
+  expect_equal(result$score, 0.125)
 
   # both grouping columns ride along in every output
   expect_named(result$group_scores, c("g1", "g2", "share", "score"))
@@ -1523,7 +1523,7 @@ test_that("multi-column group_by stratifies by joint combinations", {
 
 test_that("partially missing joint strata follow na.rm", {
   # g2 is missing on rows 3-4; only the (A, NA) stratum diverges:
-  #   conf (x = 0.5, y = 0.5), synth (x = 1) -> score 500
+  #   conf (x = 0.5, y = 0.5), synth (x = 1) -> score 0.5
   conf_gpart <- tibble::tibble(
     g1 = c("A", "A", "A", "A"),
     g2 = c("p", "p", NA, NA),
@@ -1533,7 +1533,7 @@ test_that("partially missing joint strata follow na.rm", {
   synth_gpart <- dplyr::mutate(conf_gpart, a = c("x", "y", "x", "x"))
 
   # na.rm = FALSE: the partial combination becomes an (A, "NA") stratum
-  # overall = 0.5 * 1000 + 0.5 * 500 = 750
+  # overall = 0.5 * 0 + 0.5 * 0.5 = 0.25
   kept <- suppressMessages(
     .util_k_marginals(
       synth_data = synth_gpart, conf_data = conf_gpart, k = 1,
@@ -1541,7 +1541,7 @@ test_that("partially missing joint strata follow na.rm", {
     )
   )
 
-  expect_equal(kept$score, 750)
+  expect_equal(kept$score, 0.25)
   expect_true("NA" %in% kept$group_scores$g2)
 
   # na.rm = TRUE: rows missing any grouping value drop, leaving (A, p) only
@@ -1550,7 +1550,7 @@ test_that("partially missing joint strata follow na.rm", {
     group_by = c("g1", "g2"), na.rm = TRUE
   )
 
-  expect_equal(dropped$score, 1000)
+  expect_equal(dropped$score, 0)
   expect_equal(nrow(dropped$group_scores), 1)
 })
 
@@ -1595,7 +1595,7 @@ test_that("group_by composes with synth_varnames", {
     group_by = "g", synth_varnames = "a"
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
   expect_equal(unique(result$marginals$variables), "a")
 
   # a grouping variable named in synth_varnames still stratifies rather
@@ -1670,13 +1670,13 @@ test_that("literal 'NA' strings in grouping columns collide with true NA", {
   )
 
   # na.rm = TRUE bypasses the conversion, so the "NA" stratum scores
-  # normally: stratum "NA" diverges (500), stratum A matches (1000)
+  # normally: stratum "NA" diverges (0.5), stratum A matches (0)
   result <- .util_k_marginals(
     synth_data = synth_legit, conf_data = conf_legit, k = 1, group_by = "g",
     na.rm = TRUE
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 })
 
 test_that("grouped results map over replicates with the same structure", {
@@ -1699,7 +1699,7 @@ test_that("grouped results map over replicates with the same structure", {
   }
 
   # first replicate diverges in stratum A, second is identical data
-  expect_equal(purrr::map_dbl(result, "score"), c(750, 1000))
+  expect_equal(purrr::map_dbl(result, "score"), c(0.25, 0))
 })
 
 test_that("a confidential stratum emptied by na.rm errors instead of NaN", {
@@ -1732,8 +1732,8 @@ test_that("a confidential stratum emptied by na.rm errors instead of NaN", {
     na.rm = TRUE
   )
 
-  # stratum B scores conf (x = 0.5, y = 0.5) against zero synth -> 500
-  expect_equal(result$score, 750)
+  # stratum B scores conf (x = 0.5, y = 0.5) against zero synth -> 0.5
+  expect_equal(result$score, 0.25)
 })
 
 test_that("priority_vars with NA entries hits the intended error", {

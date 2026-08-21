@@ -16,9 +16,10 @@
 #' marginal that uses the affected variable.
 #'
 #' @return A list with `score` (the share-weighted mean of per-stratum
-#' scores), `marginals` and `cells` (stacked per-stratum tables with the
-#' grouping columns, worst first), and `group_scores` (one row per stratum
-#' with its share and score, worst first).
+#' mean(MabsDD) scores on the 0 to 1 scale), `marginals` and `cells` (stacked
+#' per-stratum tables with the grouping columns, worst first), and
+#' `group_scores` (one row per stratum with its share and score, worst
+#' first).
 #'
 .stratify_k_marginals <- function(
   synth_data,
@@ -72,7 +73,7 @@
           stratum,
           tibble::tibble(
             share = strata$.share[i],
-            score = (1 - mean(marginals_g$madd)) * 1000
+            score = mean(marginals_g$madd)
           )
         )
       )
@@ -88,7 +89,7 @@
   group_scores <- purrr::list_rbind(
     purrr::map(per_stratum, "group_scores")
   ) |>
-    dplyr::arrange(.data$score)
+    dplyr::arrange(dplyr::desc(.data$score))
 
   # per-stratum scores roll up weighted by confidential shares, so small
   # strata surface in group_scores without dominating the headline

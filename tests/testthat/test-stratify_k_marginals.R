@@ -1,6 +1,6 @@
 test_that("stratified results roll up by confidential shares", {
-  # stratum A diverges (score 500), stratum B matches (score 1000);
-  # equal confidential shares give an overall score of 750
+  # stratum A diverges (score 0.5), stratum B matches (score 0);
+  # equal confidential shares give an overall score of 0.25
   conf_st <- tibble::tibble(
     g = c("A", "A", "B", "B"),
     a = c("x", "y", "x", "y")
@@ -20,7 +20,7 @@ test_that("stratified results roll up by confidential shares", {
     group_by = "g"
   )
 
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 
   # group_scores are worst first with the grouping column attached
   expect_named(result$group_scores, c("g", "share", "score"))
@@ -55,13 +55,13 @@ test_that("stratum shares use weights when weight_var is set", {
   )
 
   expect_equal(sort(result$group_scores$share), c(0.5, 0.5))
-  expect_equal(result$score, 750)
+  expect_equal(result$score, 0.25)
 })
 
 test_that("multi-column group_by builds joint strata directly", {
   # only stratum (A, p) diverges: conf (x = 0.5, y = 0.5), synth (x = 1)
-  # -> 500; the other three strata match -> 1000
-  # overall = 0.25 * 500 + 0.75 * 1000 = 875
+  # -> 0.5; the other three strata match -> 0
+  # overall = 0.25 * 0.5 + 0.75 * 0 = 0.125
   conf_st2 <- tibble::tibble(
     g1 = c("A", "A", "A", "A", "B", "B", "B", "B"),
     g2 = c("p", "p", "q", "q", "p", "p", "q", "q"),
@@ -80,7 +80,7 @@ test_that("multi-column group_by builds joint strata directly", {
     group_by = c("g1", "g2")
   )
 
-  expect_equal(result$score, 875)
+  expect_equal(result$score, 0.125)
   expect_named(result$group_scores, c("g1", "g2", "share", "score"))
   expect_equal(nrow(result$group_scores), 4)
 })

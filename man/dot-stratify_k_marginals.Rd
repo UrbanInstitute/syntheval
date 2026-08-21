@@ -31,9 +31,10 @@ marginal that uses the affected variable.}
 }
 \value{
 A list with \code{score} (the share-weighted mean of per-stratum
-scores), \code{marginals} and \code{cells} (stacked per-stratum tables with the
-grouping columns, worst first), and \code{group_scores} (one row per stratum
-with its share and score, worst first).
+mean(MabsDD) scores on the 0 to 1 scale), \code{marginals} and \code{cells} (stacked
+per-stratum tables with the grouping columns, worst first), and
+\code{group_scores} (one row per stratum with its share and score, worst
+first).
 }
 \description{
 Splits the synthetic and confidential data into the strata

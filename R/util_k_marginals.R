@@ -7,7 +7,7 @@
 #' synthetic and confidential data included. The mean absolute
 #' difference (MabsDD) between the synthetic and confidential data's marginal
 #' probabilities is computed for each k-combination. The MabsDDs are
-#' averaged into a scalar before being rescaled (1 - mean) * 1000.
+#' averaged into a scalar score equal to mean(MabsDD).
 #'
 #' @param synth_data A tibble with synthetic data.
 #' @param conf_data A tibble with confidential data.
@@ -60,8 +60,9 @@
 #' reproducible clusters). Defaults to "width".
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
-#' range 0 to 1000 where a higher value denotes lower MabsDDs and consequently
-#' greater similarity between confidential and synthetic data; `marginals`, a
+#' range 0 to 1 where 0 is a perfect match, 1 is the worst mismatch, and
+#' larger values denote greater discrepancy between confidential and
+#' synthetic data; `marginals`, a
 #' tibble with the MabsDD for each combination of variables, worst first; and
 #' `cells`, a tibble with the synthetic and confidential proportions and their
 #' absolute difference for every cell, worst first. `score` is always computed
@@ -275,11 +276,10 @@
       dplyr::summarize(madd = mean(.data$abs_diff), .by = "variables") |>
       dplyr::arrange(dplyr::desc(.data$madd))
 
-    # mean of the MabsDDs, rescaled to an ascending measure on [0, 1000];
-    # computed from all marginals before any truncation
+    # mean of the MabsDDs, computed from all marginals before any truncation
     result <- structure(
       list(
-        score = (1 - mean(marginals$madd)) * 1000,
+        score = mean(marginals$madd),
         marginals = utils::head(marginals, n = keep_marginals),
         cells = utils::head(cells, n = keep_cells)
       ),
@@ -311,9 +311,9 @@
   return(result)
 }
 
-#' @title Validate worker arguments for the k-marginals metric
+#' @title Validate internal helper arguments for the k-marginals metric
 #'
-#' @description Validates the scalar worker arguments that control NA
+#' @description Validates the scalar helper arguments that control NA
 #' handling, truncation of detail tables, sampling ceiling, and the order of
 #' the marginals. The function errors when any of the following conditions are
 #' met:
@@ -416,7 +416,7 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' @description For each unique k-combination of variables shared by the
 #' synthetic and confidential data, the mean absolute difference (MabsDD)
 #' between the two datasets' marginal cell probabilities is computed. The
-#' MabsDDs are averaged across combinations and rescaled as (1 - mean) * 1000.
+#' MabsDDs are averaged across combinations, with score = mean(MabsDD).
 #'
 #' @param eval_data An `eval_data` object.
 #' @param k Scalar order of the k-marginal (valid range = 1:3).
@@ -468,8 +468,9 @@ print.k_marginals <- function(x, n = 5, ...) {
 #' reproducible clusters). Defaults to "width".
 #'
 #' @return A `k_marginals` object with three elements: `score`, a value in
-#' range 0 to 1000 where a higher value denotes lower MabsDDs and consequently
-#' greater similarity between confidential and synthetic data; `marginals`, a
+#' range 0 to 1 where 0 is a perfect match, 1 is the worst mismatch, and
+#' larger values denote greater discrepancy between confidential and
+#' synthetic data; `marginals`, a
 #' tibble with the MabsDD for each combination of variables, worst first; and
 #' `cells`, a tibble with the synthetic and confidential proportions and their
 #' absolute difference for every cell, worst first. `score` is always computed
