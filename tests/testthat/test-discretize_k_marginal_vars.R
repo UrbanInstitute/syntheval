@@ -8,7 +8,10 @@ synth <- tibble::tibble(v = c(1, 1, 4, 4), a = c("x", "x", "y", "y"))
 
 discretize <- function(synth_data = synth, conf_data = conf, ...) {
   .discretize_k_marginal_vars(
-    synth_data = synth_data, conf_data = conf_data, vars = c("v", "a"), ...
+    synth_data = synth_data,
+    conf_data = conf_data,
+    vars = c("v", "a"),
+    ...
   )
 }
 
@@ -36,7 +39,11 @@ test_that("width bins split the confidential range evenly", {
 test_that("outer bins extend to +/-Inf", {
   synth_wide <- dplyr::mutate(synth, v = c(-100, -100, 100, 100))
 
-  result <- discretize(synth_data = synth_wide, bins = 2, discretize_method = "width")
+  result <- discretize(
+    synth_data = synth_wide,
+    bins = 2,
+    discretize_method = "width"
+  )
 
   # nothing falls outside the bins
   expect_false(anyNA(result$synth_data$v))
@@ -47,7 +54,11 @@ test_that("missing numeric values stay missing after discretization", {
   # NA is left for downstream na.rm handling rather than forced into a bin
   synth_na <- dplyr::mutate(synth, v = c(1, 4, NA, NA))
 
-  result <- discretize(synth_data = synth_na, bins = 2, discretize_method = "width")
+  result <- discretize(
+    synth_data = synth_na,
+    bins = 2,
+    discretize_method = "width"
+  )
 
   expect_equal(is.na(result$synth_data$v), c(FALSE, FALSE, TRUE, TRUE))
   expect_equal(as.vector(table(result$synth_data$v)), c(1, 1))
@@ -60,7 +71,11 @@ test_that("too few distinct confidential values reduce bins with a warning", {
 
   for (method in c("width", "ntile", "cluster")) {
     expect_warning(
-      result <- discretize(conf_data = conf_const, bins = 2, discretize_method = method),
+      result <- discretize(
+        conf_data = conf_const,
+        bins = 2,
+        discretize_method = method
+      ),
       regexp = "has only 1 distinct confidential values"
     )
 
@@ -76,7 +91,9 @@ test_that("tied quantile cut points collapse bins with a warning", {
 
   expect_warning(
     result <- discretize(
-      synth_data = synth_5, conf_data = conf_ties, bins = 4,
+      synth_data = synth_5,
+      conf_data = conf_ties,
+      bins = 4,
       discretize_method = "ntile"
     ),
     regexp = "bins instead of 4 because of tied cut points"
