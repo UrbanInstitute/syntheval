@@ -26,7 +26,11 @@
   discretize_method
 ) {
 
-  .validate_bins(bins = bins)
+  stopifnot(
+    "`bins` must be a single integer >= 2" = {
+      rlang::is_scalar_integerish(bins) && !is.na(bins) && bins >= 2
+    }
+  )
 
   numeric_vars <- vars[
     purrr::map_lgl(.x = vars, .f = \(v) is.numeric(conf_data[[v]]))
@@ -37,7 +41,11 @@
     # like every other variable, becoming an NA bin or dropped rows
     conf_values <- conf_data[[var]][!is.na(conf_data[[var]])]
 
-    .validate_discretizable_values(values = conf_values, var = var)
+    stopifnot(
+      "observed numeric values must be finite to discretize" = {
+        length(conf_values) > 0 && all(is.finite(conf_values))
+      }
+    )
 
     bins_var <- .resolve_bins(values = conf_values, var = var, bins = bins)
 
@@ -64,65 +72,6 @@
   }
 
   return(list(synth_data = synth_data, conf_data = conf_data))
-
-}
-
-#' @title Input validation for the number of bins in 
-#' .discretize_k_marginal_vars()
-#'
-#' @description
-#' The function returns an error when any of the conditions are met:
-#' 1. bins is not a numeric data type
-#' 2. bins is not a scalar
-#' 3. bins is an NA value
-#' 4. bins is lesser than 2
-#' 5. bins is not an integer
-#'
-#' @param bins numeric scalar for number of bins for data
-#'
-#' @return `TRUE` if `bins` is a single integer >= 2; otherwise an error is
-#' thrown.
-#'
-.validate_bins <- function(bins) {
-
-  if (!(is.numeric(bins) &&
-          length(bins) == 1 &&
-          !is.na(bins) &&
-          bins >= 2 &&
-          bins == floor(bins))) {
-
-    stop("`bins` must be a single integer >= 2")
-
-  } else {
-
-    return(TRUE)
-
-  }
-
-}
-
-#' @title Validate values for discretization into bins
-#'
-#' @description Validates that a numeric variable has finite observed values
-#' available for discretization.
-#'
-#' @param values Numeric vector of observed confidential values for one
-#' variable.
-#' @param var Character scalar naming the variable.
-#' @return `TRUE` if validation passes; otherwise an error is thrown.
-#'
-.validate_discretizable_values <- function(values, var) {
-
-  if (!all(is.finite(values)) || length(values) == 0) {
-
-    stop(
-      "observed numeric values must be finite to discretize; `", var,
-      "` is not"
-    )
-
-  }
-
-  return(TRUE)
 
 }
 
@@ -176,9 +125,7 @@
 #' placed: `"width"` for equal-width bins, `"ntile"` for quantile bins, or
 #' `"cluster"` for univariate k-means clustering.
 #'
-#' @return A numeric vector of `bins - 1` interior cut points. If
-#' `discretize_method` is not one of `"width"`, `"ntile"`, or `"cluster"`,
-#' an error is thrown.
+#' @return A numeric vector of `bins - 1` interior cut points.
 #'
 .compute_cut_points <- function(values, bins, discretize_method) {
 
@@ -213,12 +160,6 @@
     )
 
     cut_points <- (centers[-1] + centers[-length(centers)]) / 2
-
-  } else {
-
-    stop(
-      "`discretize_method` must be one of 'width', 'ntile', or 'cluster'"
-    )
 
   }
 
