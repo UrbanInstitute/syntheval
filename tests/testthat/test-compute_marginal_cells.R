@@ -27,6 +27,13 @@ test_that("cells report proportions and absolute differences per combo", {
   expect_equal(unique(cells$variables), c("a", "b"))
 })
 
+# This test asserts two cases:
+# 1. An empty synthetic marginal is allowed when `allow_empty_synth = TRUE`;
+#    its cell proportions are treated as 0 and compared to the confidential
+#    proportions.
+# 2. An empty confidential marginal is always invalid, because there is no
+#    observed reference distribution to score against, so
+#    `.compute_marginal_cells()` should error.
 test_that("only the synthetic side may be empty", {
   synth_empty <- tibble::tibble(a = c(NA_character_, NA_character_))
   conf_ok <- tibble::tibble(a = c("x", "y"))
