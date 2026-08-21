@@ -39,28 +39,36 @@
     weight_var
   ) {
     if (na.rm) {
+
       data <- dplyr::filter(
         data,
         !dplyr::if_any(.cols = dplyr::all_of(vars), .fns = is.na)
+
       )
 
       if (nrow(data) == 0 && !allow_empty) {
+
         stop(
           "no rows remain for the marginal over ",
           paste(vars, collapse = ", "),
           " after removing missing values"
         )
+
       }
     }
 
     if (is.null(weight_var)) {
+
       counts <- dplyr::count(data, dplyr::across(dplyr::all_of(vars)))
+
     } else {
+
       counts <- dplyr::count(
         data,
         dplyr::across(dplyr::all_of(vars)),
         wt = .data[[weight_var]]
       )
+
     }
 
     props <- counts |>
@@ -78,23 +86,34 @@
     # against and errors inside process_data
     cells <- dplyr::full_join(
       process_data(
-        data = synth_data, vars = vars, prop_name = "prop_synth",
-        allow_empty = allow_empty_synth
+        data = synth_data,
+        vars = vars,
+        prop_name = "prop_synth",
+        allow_empty = allow_empty_synth,
+        na.rm = na.rm,
+        weight_var = weight_var
       ),
       process_data(
-        data = conf_data, vars = vars, prop_name = "prop_conf",
-        allow_empty = FALSE
+        data = conf_data,
+        vars = vars,
+        prop_name = "prop_conf",
+        allow_empty = FALSE,
+        na.rm = na.rm,
+        weight_var = weight_var
       ),
       by = vars
     ) |>
       tidyr::replace_na(replace = list(prop_synth = 0, prop_conf = 0)) |>
-      tidyr::unite(col = "cell", dplyr::all_of(vars), sep = ", ") |>
+      tidyr::unite(col = "cell",
+                   dplyr::all_of(vars),
+                   sep = ", ") |>
       dplyr::mutate(
         variables = paste(vars, collapse = ", "),
-        abs_diff = abs(.data$prop_synth - .data$prop_conf)
+        diff = .data$prop_synth - .data$prop_conf,
+        abs_diff = abs(.data$diff)
       ) |>
       dplyr::select(
-        "variables", "cell", "prop_synth", "prop_conf", "abs_diff"
+        variables, cell, prop_synth, prop_conf, abs_diff, diff
       )
     # variables disambiguates cells across combinations and drives the
     # per-combination summary; the prop columns show the direction of the
