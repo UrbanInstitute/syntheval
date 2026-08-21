@@ -20,7 +20,12 @@ test_that("priority combinations are always kept", {
   )
 
   expect_equal(nrow(combos), 2)
-  expect_true(all(apply(combos, 1, \(vars) "a" %in% vars)))
+  expect_true(all(
+    purrr::map_lgl(
+      .x = seq_len(nrow(combos)),
+      .f = \(i) "a" %in% combos[i, ]
+    )
+  ))
 })
 
 test_that("priority combinations exceeding n_marginals are all kept", {
@@ -32,7 +37,12 @@ test_that("priority combinations exceeding n_marginals are all kept", {
   )
 
   expect_equal(nrow(combos), 2)
-  expect_true(all(apply(combos, 1, \(vars) "a" %in% vars)))
+  expect_true(all(
+    purrr::map_lgl(
+      .x = seq_len(nrow(combos)),
+      .f = \(i) "a" %in% combos[i, ]
+    )
+  ))
 })
 
 test_that("sampling fills remaining slots after priority combinations", {
@@ -49,7 +59,10 @@ test_that("sampling fills remaining slots after priority combinations", {
   # cap respected exactly: all 3 priority combos plus 1 sampled non-priority
   expect_equal(nrow(combos), 4)
 
-  has_a <- apply(combos, 1, \(vars) "a" %in% vars)
+  has_a <- purrr::map_lgl(
+    .x = seq_len(nrow(combos)),
+    .f = \(i) "a" %in% combos[i, ]
+  )
   expect_equal(sum(has_a), 3)
   expect_equal(sum(!has_a), 1)
 })

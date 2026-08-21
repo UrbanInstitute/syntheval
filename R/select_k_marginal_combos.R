@@ -27,14 +27,15 @@
   # sample combinations down to n_marginals, always keeping combinations that
   # contain a priority variable
   if (nrow(kmarginals_vars) > n_marginals) {
-    is_priority <- apply(
-      X = kmarginals_vars,
-      MARGIN = 1,
-      FUN = \(vars) any(vars %in% priority_vars)
+    is_priority <- purrr::map_lgl(
+      .x = seq_len(nrow(kmarginals_vars)),
+      .f = \(i) any(kmarginals_vars[i, ] %in% priority_vars)
     )
 
-    n_sampled <-.compute_nonpriority_sample_size(n_marginals = n_marginals,
-                                                 is_priority = is_priority)
+    n_sampled <- .compute_nonpriority_sample_size(
+      n_marginals = n_marginals,
+      is_priority = is_priority
+    )
 
     sampled_rows <- sample(x = which(!is_priority), size = n_sampled)
 
