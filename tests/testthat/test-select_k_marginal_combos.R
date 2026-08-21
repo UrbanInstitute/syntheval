@@ -43,7 +43,10 @@ test_that("sampling is reproducible given a seed", {
 test_that("priority combinations are always kept", {
   # the two combinations containing a fill the cap exactly
   combos <- .select_k_marginal_combos(
-    shared_vars = vars_3, k = 2, n_marginals = 2, priority_vars = "a"
+    shared_vars = vars_3,
+    k = 2,
+    n_marginals = 2,
+    priority_vars = "a"
   )
 
   expect_equal(nrow(combos), 2)
@@ -51,7 +54,10 @@ test_that("priority combinations are always kept", {
 
   # priority combinations exceeding the cap are still all kept
   combos_over <- .select_k_marginal_combos(
-    shared_vars = vars_3, k = 2, n_marginals = 1, priority_vars = "a"
+    shared_vars = vars_3,
+    k = 2,
+    n_marginals = 1,
+    priority_vars = "a"
   )
 
   expect_equal(nrow(combos_over), 2)
@@ -62,7 +68,10 @@ test_that("sampling fills remaining slots after priority combinations", {
   set.seed(20250813)
 
   combos <- .select_k_marginal_combos(
-    shared_vars = vars_4, k = 2, n_marginals = 4, priority_vars = "a"
+    shared_vars = vars_4,
+    k = 2,
+    n_marginals = 4,
+    priority_vars = "a"
   )
 
   # all 3 priority combinations plus 1 sampled non-priority
@@ -75,19 +84,28 @@ test_that("non-priority sample size never exceeds the available slots", {
 
   # 4 slots, 2 priority -> 2 sampled
   expect_equal(
-    .compute_nonpriority_sample_size(n_marginals = 4, is_priority = is_priority),
+    .compute_nonpriority_sample_size(
+      n_marginals = 4,
+      is_priority = is_priority
+    ),
     2
   )
 
   # 1 slot, 2 priority -> nothing sampled
   expect_equal(
-    .compute_nonpriority_sample_size(n_marginals = 1, is_priority = is_priority),
+    .compute_nonpriority_sample_size(
+      n_marginals = 1,
+      is_priority = is_priority
+    ),
     0
   )
 
   # 10 slots, only 2 non-priority available -> 2 sampled
   expect_equal(
-    .compute_nonpriority_sample_size(n_marginals = 10, is_priority = is_priority),
+    .compute_nonpriority_sample_size(
+      n_marginals = 10,
+      is_priority = is_priority
+    ),
     2
   )
 })
