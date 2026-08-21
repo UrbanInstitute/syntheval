@@ -31,64 +31,53 @@
 ) {
   # strata are defined by the confidential data; a stratum with no synthetic
   # rows scores against all-zero synthetic proportions. Shares are the
-  # confidential row (or weight) share of each stratum, computed once
-  conf_totals <- if (is.null(weight_var)) {
+  # confidential row (or weight) share of each stratum
+  conf_weights <- if (is.null(weight_var)) {
     rep(1, nrow(conf_data))
   } else {
     conf_data[[weight_var]]
   }
 
   strata <- conf_data |>
-    dplyr::mutate(.stratum_total = conf_totals) |>
-    dplyr::summarize(
-      .share = sum(.data$.stratum_total),
-      .by = dplyr::all_of(group_by)
-    ) |>
-    dplyr::mutate(.share = .data$.share / sum(.data$.share))
+    dplyr::mutate(.weight = conf_weights) |>
+    dplyr::summarize(share = sum(.data$.weight), .by = dplyr::all_of(group_by)) |>
+    dplyr::mutate(share = .data$share / sum(.data$share))
 
-  per_stratum <- purrr::map(
+  # per-cell differences within each stratum, stacked with the grouping
+  # columns attached
+  cells <- purrr::map(
     .x = seq_len(nrow(strata)),
     .f = \(i) {
-      stratum <- strata[i, group_by, drop = FALSE]
+      stratum <- strata[i, group_by]
 
-      synth_g <- dplyr::semi_join(synth_data, stratum, by = group_by)
-      conf_g <- dplyr::semi_join(conf_data, stratum, by = group_by)
-
-      cells_g <- .compute_marginal_cells(
-        synth_data = synth_g,
-        conf_data = conf_g,
+      cells_i <- .compute_marginal_cells(
+        synth_data = dplyr::semi_join(synth_data, stratum, by = group_by),
+        conf_data = dplyr::semi_join(conf_data, stratum, by = group_by),
         combos = combos,
         weight_var = weight_var,
         na.rm = na.rm,
         allow_empty_synth = TRUE
       )
 
-      marginals_g <- cells_g |>
-        dplyr::summarize(madd = mean(.data$abs_diff), .by = "variables")
-
-      list(
-        cells = dplyr::bind_cols(stratum, cells_g),
-        marginals = dplyr::bind_cols(stratum, marginals_g),
-        group_scores = dplyr::bind_cols(
-          stratum,
-          tibble::tibble(
-            share = strata$.share[i],
-            score = mean(marginals_g$madd)
-          )
-        )
-      )
+      dplyr::bind_cols(stratum, cells_i)
     }
-  )
-
-  cells <- purrr::list_rbind(purrr::map(per_stratum, "cells")) |>
+  ) |>
+    purrr::list_rbind() |>
     dplyr::arrange(dplyr::desc(.data$abs_diff))
 
-  marginals <- purrr::list_rbind(purrr::map(per_stratum, "marginals")) |>
+  # MabsDD per combination within each stratum, then mean MabsDD per stratum:
+  # the same cells -> marginals -> score path as the ungrouped metric
+  marginals <- cells |>
+    dplyr::summarize(
+      madd = mean(.data$abs_diff),
+      .by = dplyr::all_of(c(group_by, "variables"))
+    ) |>
     dplyr::arrange(dplyr::desc(.data$madd))
 
-  group_scores <- purrr::list_rbind(
-    purrr::map(per_stratum, "group_scores")
-  ) |>
+  group_scores <- marginals |>
+    dplyr::summarize(score = mean(.data$madd), .by = dplyr::all_of(group_by)) |>
+    dplyr::left_join(strata, by = group_by) |>
+    dplyr::select(dplyr::all_of(group_by), "share", "score") |>
     dplyr::arrange(dplyr::desc(.data$score))
 
   # per-stratum scores roll up weighted by confidential shares, so small
