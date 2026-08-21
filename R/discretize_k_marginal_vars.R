@@ -25,14 +25,14 @@
   bins,
   discretize_method
 ) {
-  if (!(is.numeric(bins) && length(bins) == 1 && !is.na(bins) &&
-    bins >= 2 && bins == floor(bins))) {
-    stop("`bins` must be a single integer >= 2")
-  }
+
+  .validate_bins(bins)
 
   numeric_vars <- vars[
     purrr::map_lgl(.x = vars, .f = \(v) is.numeric(conf_data[[v]]))
   ]
+
+}
 
   for (var in numeric_vars) {
     # cut points derive from observed values; missing values follow na.rm
@@ -91,4 +91,38 @@
   }
 
   return(list(synth_data = synth_data, conf_data = conf_data))
+}
+
+#' @title Input validation for the number of bins in 
+#' .discretize_k_marginal_vars()
+#'
+#' @description
+#' The function returns an error when any of the conditions are met:
+#' 1. bins is not a numeric data type
+#' 2. bins is not a scalar
+#' 3. bins is an NA value
+#' 4. bins is lesser than 2
+#' 5. bins is not an integer
+#'
+#' @param bins numeric scalar for number of bins for data
+#'
+#' @return TRUE` if `bins` is a single integer >= 2; otherwise an error is 
+#' thrown.
+#'
+.validate_bins <- function(bins) {
+
+  if (!(is.numeric(bins) &&
+          length(bins) == 1 &&
+          !is.na(bins) &&
+          bins >= 2 &&
+          bins == floor(bins))) {
+
+    stop("`bins` must be a single integer >= 2")
+
+  } else {
+
+    TRUE
+
+  }
+
 }
