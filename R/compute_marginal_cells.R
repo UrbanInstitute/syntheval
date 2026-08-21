@@ -30,7 +30,14 @@
 ) {
   # cell proportions for one dataset over one set of variables; weighted
   # proportions are weight shares instead of row shares
-  process_data <- function(data, vars, prop_name, allow_empty) {
+  process_data <- function(
+    data,
+    vars,
+    prop_name,
+    allow_empty,
+    na.rm,
+    weight_var
+  ) {
     if (na.rm) {
       data <- dplyr::filter(
         data,
