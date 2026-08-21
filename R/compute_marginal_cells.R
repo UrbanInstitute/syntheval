@@ -18,7 +18,8 @@
 #' rows always errors, since there is nothing to score against.
 #'
 #' @return A tibble with one row per cell: `variables`, `cell`,
-#' `prop_synth`, `prop_conf`, and `abs_diff`.
+#' `prop_synth`, `prop_conf`, `abs_diff`, and `diff` (synthetic minus
+#' confidential).
 #'
 .compute_marginal_cells <- function(
   synth_data,
