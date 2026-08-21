@@ -66,7 +66,9 @@ test_that("weighted proportions are weight shares", {
   synth_w <- tibble::tibble(a = c("x", "y"), w = c(1, 1))
 
   cells <- .compute_marginal_cells(
-    synth_data = synth_w, conf_data = conf_w, combos = matrix("a"),
+    synth_data = synth_w,
+    conf_data = conf_w,
+    combos = matrix("a"),
     weight_var = "w"
   )
 
@@ -83,7 +85,10 @@ test_that("na.rm drops rows per marginal, not globally", {
   conf_na <- dplyr::mutate(conf, a = c("x", "x", "y", NA))
 
   cells <- .compute_marginal_cells(
-    synth_data = synth, conf_data = conf_na, combos = combos_1, na.rm = TRUE
+    synth_data = synth,
+    conf_data = conf_na,
+    combos = combos_1,
+    na.rm = TRUE
   )
 
   # marginal a uses 3 conf rows: x = 2/3
@@ -104,8 +109,11 @@ test_that("weighted proportions drop missing rows before computing shares", {
   synth_wna <- tibble::tibble(a = c("x", "y", NA), w = c(1, 3, 10))
 
   cells <- .compute_marginal_cells(
-    synth_data = synth_wna, conf_data = conf_wna, combos = matrix("a"),
-    weight_var = "w", na.rm = TRUE
+    synth_data = synth_wna,
+    conf_data = conf_wna,
+    combos = matrix("a"),
+    weight_var = "w",
+    na.rm = TRUE
   )
 
   x_cell <- dplyr::filter(cells, .data$cell == "x")
