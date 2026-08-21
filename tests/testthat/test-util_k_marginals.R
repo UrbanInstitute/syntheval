@@ -689,7 +689,7 @@ test_that("bins = NULL leaves numeric variables as-is", {
 
 test_that("invalid discretization arguments reach the helper's errors", {
   # bad-bins shapes are covered in test-discretize_k_marginal_vars.R; one
-  # case here confirms the worker wires bins through to that validation
+  # case here confirms the helper wires bins through to that validation
   conf_num <- tibble::tibble(v = c(1, 2, 3, 4))
   synth_num <- tibble::tibble(v = c(1, 1, 1, 4))
 
@@ -742,7 +742,7 @@ test_that("util_k_marginals messages the resolved discretization method", {
   expect_no_message(util_k_marginals(eval_data = ed, k = 1))
 })
 
-test_that("synth_varnames restricts the worker's variable universe", {
+test_that("synth_varnames restricts the helper's variable universe", {
   conf_sv <- tibble::tibble(
     a = c("x", "x", "y", "y"),
     b = c("p", "p", "p", "q"),

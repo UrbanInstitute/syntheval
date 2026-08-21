@@ -1,6 +1,6 @@
-#' @title Worker function for the k-marginals metric
+#' @title Helper function for the k-marginals metric
 #'
-#' @description This worker function takes a specified k-marginal and calculates
+#' @description This helper function takes a specified k-marginal and calculates
 #' all unique k-combinations of variables shared by the input data. For each
 #' combination, tibbles containing unique combinations of observed value levels
 #' are created with the marginal probabilities for each cell for both
@@ -88,7 +88,7 @@
 ) {
   discretize_method <- match.arg(discretize_method)
 
-  .validate_k_marginals_worker_args(
+  .validate_k_marginals_helper_args(
     na.rm = na.rm,
     keep_marginals = keep_marginals,
     keep_cells = keep_cells,
@@ -103,144 +103,21 @@
     stop("`synth_data` and `conf_data` must each contain at least one row")
   }
 
-  if (!is.null(weight_var)) {
-    if (!(is.character(weight_var) && length(weight_var) == 1)) {
-      stop("`weight_var` must be a single character string")
-    }
-
-    if (!(weight_var %in% names(synth_data) &&
-      weight_var %in% names(conf_data))) {
-      stop("`weight_var` must be a column in both datasets")
-    }
-
-    if (!(is.numeric(synth_data[[weight_var]]) &&
-      is.numeric(conf_data[[weight_var]]))) {
-      stop("`weight_var` must be a numeric column in both datasets")
-    }
-
-    # invalid weights break the probability interpretation of proportions
-    for (weights in list(synth_data[[weight_var]], conf_data[[weight_var]])) {
-      if (!all(is.finite(weights)) || any(weights < 0) ||
-        sum(weights) <= 0) {
-        stop(
-          "`weight_var` values must be finite and non-negative with a ",
-          "positive total in both datasets"
-        )
-      }
-    }
-  }
-
-  if (!is.null(group_by)) {
-    if (!(is.character(group_by) && length(group_by) >= 1 &&
-      !anyNA(group_by) &&
-      all(group_by %in% names(synth_data)) &&
-      all(group_by %in% names(conf_data)))) {
-      stop(
-        "`group_by` must be a character vector of variables present in ",
-        "both datasets"
-      )
-    }
-
-    if (anyDuplicated(group_by) > 0) {
-      stop("`group_by` must not contain duplicate variable names")
-    }
-
-    if (!is.null(weight_var) && weight_var %in% group_by) {
-      stop("`group_by` cannot include `weight_var`")
-    }
-  }
-
-  # only variables present in both datasets contribute marginals; the weight
-  # column and grouping variables are never themselves marginals
-  shared_vars <- setdiff(
-    intersect(names(synth_data), names(conf_data)),
-    c(weight_var, group_by)
+  prepared_inputs <- .prepare_k_marginals_inputs(
+    synth_data = synth_data,
+    conf_data = conf_data,
+    k = k,
+    weight_var = weight_var,
+    group_by = group_by,
+    synth_varnames = synth_varnames,
+    na.rm = na.rm,
+    bins = bins,
+    discretize_method = discretize_method
   )
 
-  if (!is.null(synth_varnames)) {
-    if (!(is.character(synth_varnames) && length(synth_varnames) >= 1 &&
-      !anyNA(synth_varnames))) {
-      stop(
-        "`synth_varnames` must be a non-empty character vector without ",
-        "missing values, or NULL"
-      )
-    }
-
-    shared_vars <- intersect(shared_vars, synth_varnames)
-
-    # fail here rather than at the later k check, whose message would point
-    # away from the real problem
-    if (length(shared_vars) == 0) {
-      stop(
-        "`synth_varnames` matches no variables available for marginals ",
-        "after shared-variable, `group_by`, and `weight_var` filtering"
-      )
-    }
-  }
-
-  if (!is.null(bins)) {
-    discretized <- .discretize_k_marginal_vars(
-      synth_data = synth_data,
-      conf_data = conf_data,
-      vars = shared_vars,
-      bins = bins,
-      discretize_method = discretize_method
-    )
-
-    synth_data <- discretized$synth_data
-    conf_data <- discretized$conf_data
-  }
-
-  if (length(shared_vars) < k) {
-    stop(
-      "`k` cannot exceed the number of variables available for marginals ",
-      "after shared-variable, `group_by`, `weight_var`, and ",
-      "`synth_varnames` filtering"
-    )
-  }
-
-  # grouping variables get the same NA treatment as marginal variables: an
-  # "NA" stratum by default, or their incomplete rows dropped entirely
-  na_vars_scope <- c(shared_vars, group_by)
-
-  if (!na.rm) {
-    na_vars <- na_vars_scope[
-      purrr::map_lgl(
-        .x = na_vars_scope,
-        .f = \(v) anyNA(synth_data[[v]]) || anyNA(conf_data[[v]])
-      )
-    ]
-
-    if (length(na_vars) > 0) {
-      message(
-        "Some variables contain missing data: ",
-        paste(na_vars, collapse = ", ")
-      )
-    }
-
-    # missing values become their own "NA" level so they participate in
-    # marginals; numeric variables without bins keep NA, which count() still
-    # groups separately
-    synth_data[na_vars_scope] <- convert_na_to_level(synth_data[na_vars_scope])
-    conf_data[na_vars_scope] <- convert_na_to_level(conf_data[na_vars_scope])
-  } else if (!is.null(group_by)) {
-    # rows without a stratum cannot enter any stratified marginal
-    synth_data <- dplyr::filter(
-      synth_data,
-      !dplyr::if_any(.cols = dplyr::all_of(group_by), .fns = is.na)
-    )
-
-    conf_data <- dplyr::filter(
-      conf_data,
-      !dplyr::if_any(.cols = dplyr::all_of(group_by), .fns = is.na)
-    )
-
-    if (nrow(conf_data) == 0) {
-      stop(
-        "no confidential rows remain after removing missing `group_by` values"
-      )
-    }
-  }
+  synth_data <- prepared_inputs$synth_data
+  conf_data <- prepared_inputs$conf_data
+  shared_vars <- prepared_inputs$shared_vars
 
   if (!is.null(priority_vars)) {
     if (!(is.character(priority_vars) &&
@@ -333,7 +210,7 @@
 #'
 #' @return `TRUE` if validation passes; otherwise an error is thrown.
 #'
-.validate_k_marginals_worker_args <- function(
+.validate_k_marginals_helper_args <- function(
   na.rm,
   keep_marginals,
   keep_cells,
@@ -505,7 +382,7 @@ util_k_marginals <- function(
     stop("`synth_vars` must be a single TRUE or FALSE")
   }
 
-  # NULL for plain data frame eval_data, so the worker applies no restriction
+  # NULL for plain data frame eval_data, so the helper applies no restriction
   synth_varnames <- if (synth_vars) {
     eval_data$synth_vars
   } else {

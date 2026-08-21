@@ -2,7 +2,7 @@
 % Please edit documentation in R/util_k_marginals.R
 \name{.util_k_marginals}
 \alias{.util_k_marginals}
-\title{Worker function for the k-marginals metric}
+\title{Helper function for the k-marginals metric}
 \usage{
 .util_k_marginals(
   synth_data,
@@ -97,7 +97,7 @@ truncate the detail tables. When \code{group_by} is set, \code{marginals} and
 reports each stratum's share and score, worst first.
 }
 \description{
-This worker function takes a specified k-marginal and calculates
+This helper function takes a specified k-marginal and calculates
 all unique k-combinations of variables shared by the input data. For each
 combination, tibbles containing unique combinations of observed value levels
 are created with the marginal probabilities for each cell for both
