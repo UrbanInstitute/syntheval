@@ -48,7 +48,7 @@
   # calculate summary statistics
   totals <- combined_data %>%
     dplyr::group_by(source, dplyr::across(dplyr::all_of(group_by_q))) %>% 
-    dplyr::summarise(
+    dplyr::summarize(
       dplyr::across(
         .cols = -".temp_weight",
         .fns = list(

@@ -159,7 +159,7 @@
       .data$class, 
       .drop = !keep_empty_levels
     ) %>%
-    dplyr::summarise(.total_weight = sum(.data$.temp_weight)) %>%
+    dplyr::summarize(.total_weight = sum(.data$.temp_weight)) %>%
     dplyr::mutate(prop = (.data$.total_weight) / sum(.data$.total_weight)) %>%
     dplyr::ungroup()
   
@@ -172,7 +172,7 @@
       .data$class, 
       .drop = !keep_empty_levels
     ) %>%
-    dplyr::summarise(synthetic = sum(.data$synthetic, na.rm = TRUE),
+    dplyr::summarize(synthetic = sum(.data$synthetic, na.rm = TRUE),
                      original = sum(.data$original, na.rm = TRUE)) %>%
     dplyr::mutate(difference = .data$synthetic - .data$original) %>%
     dplyr::ungroup()

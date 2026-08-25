@@ -9,16 +9,16 @@
 .aggregate_qid <- function(df, keys) {
   
   return(
-    df %>% 
+    df |> 
       dplyr::group_by(
         dplyr::across(dplyr::all_of(keys)), 
         .drop=FALSE
-      ) %>%
-      dplyr::summarise(raw_n = dplyr::n()) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(prop = .data$raw_n / nrow(df)) %>%
-      dplyr::arrange(!!!rlang::syms(keys)) %>%
-      tibble::remove_rownames() %>%
+      ) |>
+      dplyr::summarize(raw_n = dplyr::n()) |>
+      dplyr::ungroup() |>
+      dplyr::mutate(prop = .data$raw_n / nrow(df)) |>
+      dplyr::arrange(!!!rlang::syms(keys)) |>
+      tibble::remove_rownames() |>
       tibble::rowid_to_column("key_id")
   )
   
@@ -83,7 +83,7 @@
         )) {
           
           stop(
-            "Key {key} has mismatched levels in confidential and synthetic data"
+            stringr::str_glue("Key {key} has mismatched levels in confidential and synthetic data")
           )
           
         }
@@ -98,7 +98,7 @@
       )) {
         
         stop(
-          "Key {key} has mismatched levels in confidential and synthetic data"
+          stringr::str_glue("Key {key} has mismatched levels in confidential and synthetic data")
         )
         
       }
@@ -113,7 +113,7 @@
       )) {
         
         stop(
-          "Key {key} has mismatched levels in confidential and holdout data"
+          stringr::str_glue("Key {key} has mismatched levels in confidential and holdout data")
         )
         
       }
@@ -124,6 +124,91 @@
   
   # return 0 if all checks passed
   return(0)
+  
+}
+
+#' 
+#' Compute conditional target distributions within quasi-identifier equivalence classes.
+#' 
+#' @param df A data.frame.
+#' @param qid_keys A character vector of quasi-identifying column names.
+#' @param target_keys A character vector of target column names.
+#' 
+#' @return A long-format tibble with columns `key_id`, one column per `qid_keys`,
+#' `target_var`, `target_level`, `n`, and `prob` (the conditional probability of
+#' `target_level` within the equivalence class defined by `qid_keys`).
+#' 
+.conditional_distributions <- function(df, qid_keys, target_keys) {
+  
+  eq_classes <- .aggregate_qid(df, keys = qid_keys)
+  
+  target_distributions <- purrr::map(
+    .x = target_keys,
+    .f = .target_distribution,
+    df = df,
+    qid_keys = qid_keys
+  ) |>
+    dplyr::bind_rows()
+  
+  result <- target_distributions |>
+    dplyr::inner_join(
+      dplyr::select(eq_classes, dplyr::all_of(c("key_id", qid_keys))),
+      by = qid_keys
+    ) |>
+    dplyr::relocate(
+      dplyr::all_of(c("key_id", qid_keys, "target_var", "target_level", "n", "prob"))
+    )
+  
+  return(result)
+  
+}
+
+#' 
+#' Compute the conditional distribution of a single target variable within 
+#' quasi-identifier equivalence classes.
+#' 
+#' @param target A single target column name.
+#' @param df A data.frame.
+#' @param qid_keys A character vector of quasi-identifying column names.
+#' 
+#' @return A tibble with columns for `qid_keys`, `target_var`, `target_level`, 
+#' `n`, and `prob`.
+#' 
+.target_distribution <- function(target, df, qid_keys) {
+  
+  # count observations for each equivalence class x target level combination.
+  # note: .drop = FALSE completes the full cross-product of every distinct 
+  # value observed in qid_keys and target (including an actual `NA` in a 
+  # qid_keys column), so every equivalence class gets one row per target 
+  # level, with n = 0 for combinations that weren't observed. `total_n` is 
+  # still computed via a join rather than an inline grouped sum() to avoid 
+  # ambiguous vector recycling.
+  counts <- df |>
+    dplyr::group_by(
+      dplyr::across(dplyr::all_of(c(qid_keys, target))),
+      .drop = FALSE
+    ) |>
+    dplyr::summarize(n = dplyr::n(), .groups = "drop") |>
+    dplyr::rename(target_level = dplyr::all_of(target)) |>
+    dplyr::mutate(target_level = as.character(.data$target_level))
+  
+  totals <- counts |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(qid_keys))) |>
+    dplyr::summarize(total_n = sum(.data$n), .groups = "drop")
+  
+  result <- counts |>
+    dplyr::left_join(totals, by = qid_keys) |>
+    dplyr::mutate(
+      prob = dplyr::if_else(
+        .data$total_n == 0, 
+        NA_real_, 
+        .data$n / .data$total_n
+      ),
+      target_var = target
+    ) |>
+    dplyr::select(-dplyr::all_of("total_n"))
+  
+  return(result)
   
 }
 
@@ -256,7 +341,7 @@ prep_discrete_eval_data <- function(eval_data, col_map) {
       # reintroduce NA as a factor level 
       
       return(
-        data %>%
+        data |>
           dplyr::mutate(
             {{col_name}} := factor(
               non_na_cut, 

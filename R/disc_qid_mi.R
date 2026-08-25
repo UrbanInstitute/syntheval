@@ -102,7 +102,7 @@ plot_prob_qid_partition <- function(
     ) %>%
     # compute the proportion of synthetic replicates that select at least one
     # quasi-identifying key
-    dplyr::summarise(
+    dplyr::summarize(
       raw_n_conf = mean(.data[["raw_n_conf"]]), 
       s_synth = mean(.data[["s_synth"]])
     ) %>%
