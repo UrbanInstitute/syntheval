@@ -242,8 +242,8 @@ test_that("attribute_scan handles actual NA values in qid_keys without erroring"
     target_keys = c("t")
   )
   
-  na_dist <- scan$confidential$distributions %>%
-    dplyr::filter(is.na(q)) %>%
+  na_dist <- scan$confidential$distributions |>
+    dplyr::filter(is.na(q)) |>
     dplyr::arrange(target_level)
   
   # the q = NA class is completed against every target level, just like any 
