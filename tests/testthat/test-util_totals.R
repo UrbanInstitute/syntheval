@@ -220,20 +220,21 @@ test_that("moments grouping by multiple variables", {
 
 test_that("util_totals() variables selection returns correct dimensions ", {
   
-  storms_sub <- dplyr::select(dplyr::storms, -name, -pressure)
+  acs_conf_sub <- dplyr::select(acs_conf, county, sex, age, famsize)
   
   syn <- list(
     synthetic_data = dplyr::slice_sample(
-      dplyr::storms,
+      acs_conf_sub,
       n = 1000
     ),
     jth_synthesis_time = data.frame(
-      variable = factor(c("month", "day", "year"))
+      variable = factor(c("county", "sex", "age"))
     )
   ) %>%
     structure(class = "postsynth")
   
-  ed <- eval_data(conf_data = storms_sub, synth_data = syn)
+  ed <- eval_data(conf_data = acs_conf_sub, synth_data = syn)
+  
   # are variable names missing ever?
   expect_false(
     util_totals(
@@ -256,7 +257,7 @@ test_that("util_totals() variables selection returns correct dimensions ", {
       all()
   )
   
-  # 22 rows = all 11 variables times 2 statistics
+  # 4 rows = 2 variables times 2 statistics
   expect_equal(
     dim(
       util_totals(
@@ -265,10 +266,10 @@ test_that("util_totals() variables selection returns correct dimensions ", {
         synth_vars = FALSE
       )
     ),
-    c(22, 6)
+    c(4, 6)
   )
   
-  # 20 rows = 10 common variables times 2 statistics
+  # 4 rows = 2 common variables times 2 statistics
   expect_equal(
     dim(
       util_totals(
@@ -277,10 +278,10 @@ test_that("util_totals() variables selection returns correct dimensions ", {
         synth_vars = FALSE
       )
     ),
-    c(20, 6)
+    c(4, 6)
   )
   
-  # 6 rows = 3 synthesized numeric variables times 2 statistics
+  # 2 rows = 1 synthesized numeric variables times 2 statistics
   expect_equal(
     dim(
       util_totals(
@@ -289,10 +290,10 @@ test_that("util_totals() variables selection returns correct dimensions ", {
         synth_vars = TRUE
       )
     ),
-    c(6, 6)
+    c(2, 6)
   )
   
-  # 6 rows = 3 synthesized numeric variables times 2 statistics
+  # 2 rows = 1 synthesized numeric variables times 2 statistics
   expect_equal(
     dim(
       util_totals(
@@ -301,7 +302,7 @@ test_that("util_totals() variables selection returns correct dimensions ", {
         synth_vars = TRUE
       )
     ),
-    c(6, 6)
+    c(2, 6)
   )
   
 })

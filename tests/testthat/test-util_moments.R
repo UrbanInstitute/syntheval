@@ -223,77 +223,69 @@ test_that("moments grouping by multiple variables", {
 
 test_that("util_moments() variables selection returns correct dimensions ", {
 
-  storms_sub <- dplyr::select(dplyr::storms, -name, -pressure)
+  acs_conf_sub <- dplyr::select(acs_conf, county, sex, age, famsize)
   
   syn <- list(
     synthetic_data = dplyr::slice_sample(
-      dplyr::storms,
+      acs_conf_sub,
       n = 1000
     ),
     jth_synthesis_time = data.frame(
-      variable = factor(c("month", "day", "year"))
+      variable = factor(c("county", "sex", "age"))
     )
   ) %>%
     structure(class = "postsynth")
   
-  ed <- eval_data(conf_data = storms_sub, synth_data = syn)
+  ed <- eval_data(conf_data = acs_conf_sub, synth_data = syn)
   
   # are variable names missing ever?
-  expect_message(
-    expect_false(
-      util_moments(
-        ed, 
-        common_vars = FALSE,
-        synth_vars = FALSE
-      )$variable %>%
-        is.na() %>%
-        all()
-    )
+  expect_false(
+    util_moments(
+      ed, 
+      common_vars = FALSE,
+      synth_vars = FALSE
+    )$variable %>%
+      is.na() %>%
+      all()
   )
-
+  
   # are statistics names missing ever?
-  expect_message(
-    expect_false(
+  expect_false(
+    util_moments(
+      ed, 
+      common_vars = FALSE,
+      synth_vars = FALSE
+    )$statistic %>%
+      is.na() %>%
+      all()
+  )
+
+  # 10 rows = 2 variables times 5 statistics
+  expect_equal(
+    dim(
       util_moments(
-        ed, 
+        ed,
         common_vars = FALSE,
         synth_vars = FALSE
-      )$statistic %>%
-        is.na() %>%
-        all()
-    )
+      )
+    ),
+    c(10, 6)
   )
-
-  # 55 rows = all 11 variables times 5 statistics
-  expect_message(
-    expect_equal(
-      dim(
-        util_moments(
-          ed,
-          common_vars = FALSE,
-          synth_vars = FALSE
-        )
-      ),
-      c(55, 6)
-    )
-  )
-
-  # 50 rows = 10 common variables times 5 statistics
-  expect_message(
-    expect_equal(
-      dim(
-        util_moments(
-          ed, 
-          common_vars = TRUE,
-          synth_vars = FALSE
-        )
-      ),
-      c(50, 6)
-    )
+  
+  # 10 rows = 2 common variables times 5 statistics
+  expect_equal(
+    dim(
+      util_moments(
+        ed, 
+        common_vars = TRUE,
+        synth_vars = FALSE
+      )
+    ),
+    c(10, 6)
   )
 
  
-  # 15 rows = 3 synthesized numeric variables times 5 statistics
+  # 5 rows = 1 common variable times 5 statistics
   expect_equal(
     dim(
       util_moments(
@@ -302,10 +294,10 @@ test_that("util_moments() variables selection returns correct dimensions ", {
         synth_vars = TRUE
       )
     ),
-    c(15, 6)
+    c(5, 6)
   )
   
-  # 15 rows = 3 synthesized numeric variables times 5 statistics
+  # 5 rows = 1 synthesized numeric variables times 5 statistics
   expect_equal(
     dim(
       util_moments(
@@ -314,7 +306,7 @@ test_that("util_moments() variables selection returns correct dimensions ", {
         synth_vars = TRUE
       )
     ),
-    c(15, 6)
+    c(5, 6)
   )
   
 })

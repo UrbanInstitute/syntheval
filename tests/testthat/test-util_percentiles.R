@@ -199,29 +199,30 @@ test_that("unweighted percentiles grouped by multiple variables ", {
 
 test_that("util_percentiles() variables selection returns correct dimensions ", {
   
-  storms_sub <- dplyr::select(dplyr::storms, -name, -pressure) %>%
-    dplyr::filter(complete.cases(.))
+  acs_conf_sub <- dplyr::select(acs_conf, county, sex, age, famsize)
+  
+  acs_conf_sub[1, "famsize"] <- NA
   
   syn <- list(
     synthetic_data = dplyr::slice_sample(
-      dplyr::storms %>%
-        dplyr::filter(complete.cases(.)),
+      acs_conf_sub,
       n = 1000
     ),
     jth_synthesis_time = data.frame(
-      variable = factor(c("month", "day", "year"))
+      variable = factor(c("county", "sex", "age"))
     )
   ) %>%
     structure(class = "postsynth")
   
-  ed <- eval_data(conf_data = storms_sub, synth_data = syn)
+  ed <- eval_data(conf_data = acs_conf_sub, synth_data = syn)
   
   # are variable names missing ever?
   expect_false(
     util_percentiles(
       ed,
       common_vars = TRUE, 
-      synth_vars = FALSE
+      synth_vars = FALSE, 
+      na.rm = TRUE
     )$variable %>%
       is.na() %>%
       all()
@@ -232,36 +233,36 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
     util_percentiles(
       ed,
       common_vars = TRUE, 
-      synth_vars = FALSE
+      synth_vars = FALSE,
+      na.rm = TRUE
     )$p %>%
       is.na() %>%
       all()
   )
   
   # error: quantile doesn't work with missing values
-  expect_message(
-    expect_error(
-      util_percentiles(
-        ed, 
-        common_vars = FALSE, 
-        synth_vars = FALSE
-      )
+  expect_error(
+    util_percentiles(
+      ed, 
+      common_vars = FALSE, 
+      synth_vars = FALSE
     )
   )
   
-  # 30 rows = 10 common variables times 3 statistics
+  # 6 rows = 2 common variables times 3 statistics
   expect_equal(
     dim(
       util_percentiles(
         ed,
         common_vars = TRUE, 
-        synth_vars = FALSE
+        synth_vars = FALSE,
+        na.rm = TRUE
       )
     ),
-    c(30, 6)
+    c(6, 6)
   )
   
-  # 9 rows = 3 synthesized numeric variables times 3 statistics
+  # 3 rows = 1 synthesized numeric variables times 3 statistics
   expect_equal(
     dim(
       util_percentiles(
@@ -270,10 +271,10 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
         synth_vars = TRUE
       )
     ),
-    c(9, 6)
+    c(3, 6)
   )
   
-  # 9 rows = 3 synthesized numeric variables times 3 statistics
+  # 3 rows = 1 synthesized numeric variables times 3 statistics
   expect_equal(
     dim(
       util_percentiles(
@@ -282,7 +283,7 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
         synth_vars = TRUE
       )
     ),
-    c(9, 6)
+    c(3, 6)
   )
   
 })
@@ -290,13 +291,11 @@ test_that("util_percentiles() variables selection returns correct dimensions ", 
 test_that("util_percentiles na.rm", {
   
   # if na.rm = FALSE, raise error for missing values
-  expect_message(
-    expect_error(
-      util_percentiles(
-        ed_na,
-        probs = 0.5,
-        na.rm = FALSE
-      )
+  expect_error(
+    util_percentiles(
+      ed_na,
+      probs = 0.5,
+      na.rm = FALSE
     )
   )
   
