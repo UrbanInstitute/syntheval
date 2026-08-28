@@ -31,4 +31,13 @@ of predictive utility because the holdout data are never used for
 synthesis or model fitting/tuning. Currently only this holdout procedure is
 supported; a future iteration will add a no-holdout procedure.
 }
+\seealso{
+Other Predictive utility metrics:
+\code{\link[=pred_auc]{pred_auc()}},
+\code{\link[=pred_mae]{pred_mae()}},
+\code{\link[=pred_precision]{pred_precision()}},
+\code{\link[=pred_recall]{pred_recall()}},
+\code{\link[=pred_rmse]{pred_rmse()}},
+\code{\link[=pred_visualize]{pred_visualize()}}
+}
 \concept{Predictive utility metrics}
