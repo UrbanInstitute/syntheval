@@ -343,3 +343,19 @@ test_that("util_moments na.rm works as expected", {
     all(res_rm[2, c("original", "synthetic")] == c(1000, 800))
   )
 })
+
+test_that("util_moments() works with multiple replicates", {
+  
+  ed_multi <- eval_data(synth_data = list(syn, syn), conf_data = df)
+  ed_single <- eval_data(synth_data = syn, conf_data = df)
+  
+  result <- util_moments(ed_multi, weight_var = weight, group_by = e)
+  
+  expect_type(result, "list")
+  expect_length(result, 2)
+  expect_identical(
+    result[[1]],
+    util_moments(ed_single, weight_var = weight, group_by = e)
+  )
+  
+})

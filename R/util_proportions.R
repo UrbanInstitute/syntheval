@@ -18,7 +18,7 @@
     weight_var_q = NULL, 
     group_by_q = NULL,
     common_vars = TRUE,
-    synth_varnames = TRUE,
+    synth_varnames = NULL,
     keep_empty_levels = FALSE,
     na.rm = FALSE) {
   
@@ -120,7 +120,7 @@
       
     } else {
       
-      join_spec <- dplyr::join_by(class, "variable", source, group_by_q)
+      join_spec <- c("class", "variable", "source", group_by_q)
       
     }
     
