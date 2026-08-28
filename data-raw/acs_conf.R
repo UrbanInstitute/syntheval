@@ -1,4 +1,6 @@
 library(ipumsr)
+library(tidyverse)
+library(labelled)
 
 set.seed(20240726)
 
@@ -33,11 +35,21 @@ submitted_extract <- ipumsr::submit_extract(acs_extract_request)
 downloadable_extract <- ipumsr::wait_for_extract(submitted_extract)
 path_to_data_files <- ipumsr::download_extract(downloadable_extract)
 
-data <- ipumsr::read_ipums_micro(path_to_data_files)
+data <- ipumsr::read_ipums_micro("usa_00103.xml") #path_to_data_files)
 
 # Gold-standard dataset pre-processing / cleaning -------------------------
 
+# remove IPUMS labels
 acs <- data %>%
+  # Remove labels from numeric variables and variables that will be adjusted before becoming factor
+  mutate(
+    across(c(FAMSIZE, INCTOT, TRANTIME), ~ zap_labels(.x))
+  ) %>%
+  # Change remaining variable labels to factor
+  mutate(across(where(is.labelled), ~ as_factor(lbl_clean(.x)))) %>%
+  remove_labels()
+
+acs <- acs %>%
   dplyr::transmute(
     county = haven::as_factor(COUNTYFIP) %>%
       forcats::fct_recode(
@@ -46,6 +58,8 @@ acs <- data %>%
         "Sarpy" = "153", 
         `NA` = "County not identifiable from public-use data (1950-onward)"
       ), 
+    county = if_else(county == "NA", NA, county),
+    county = droplevels(county),
     gq = haven::as_factor(GQ) %>%
       forcats::fct_collapse(
         "Household" = c("Households under 1970 definition",
@@ -83,8 +97,8 @@ acs <- data %>%
     ) %>% 
   dplyr::slice_sample(n = 2000)
 
-acs_conf <- acs[1:1000, ]
-acs_holdout <- acs[1001:2000, ]
+acs_conf <- slice(acs, 1:1000)
+acs_holdout <- slice(acs, 1001:2000)
   
 usethis::use_data(acs_conf, overwrite = TRUE)
 usethis::use_data(acs_holdout, overwrite = TRUE)

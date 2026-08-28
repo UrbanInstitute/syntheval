@@ -55,5 +55,5 @@ Imports:
 Suggestions:
     rpart
 Depends: 
-    R (>= 3.0)
+    R (>= 3.5)
 LazyData: true
