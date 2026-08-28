@@ -46,5 +46,7 @@ export(util_percentiles)
 export(util_proportions)
 export(util_totals)
 importFrom(magrittr,"%>%")
-importFrom(rlang,":=")
-importFrom(rlang,.data)
+importFrom(rlang,
+  ":=",
+  .data
+)
