@@ -42,11 +42,25 @@ scan_confidence <- function(attribute_scan) {
 }
 
 
+#'
+#' Compute population-weighted confidence for each target variable
+#'
+#' @param source_distributions A long-format conditional distributions tibble
+#' for the source (synthetic or holdout) data, as stored in an `attribute_scan`
+#' object (see `.conditional_distributions()`).
+#' @param conf_distributions A long-format conditional distributions tibble for
+#' the confidential data, used to compute `class_n` weights.
+#' @param qid_keys A character vector of quasi-identifying column names.
+#'
+#' @return A tibble with columns `target_var` and `confidence` (the
+#' population-weighted average of the per-class maximum probability assigned by
+#' the source distribution).
+#'
 .confidence_by_target <- function(source_distributions, conf_distributions, qid_keys) {
 
   # max probability per class from source
   max_by_class <- .max_probability_by_class(distributions = source_distributions, qid_keys = qid_keys) |>
-    dplyr::select(-class_n)
+    dplyr::select(-dplyr::all_of("class_n"))
 
   class_totals <- conf_distributions |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c("key_id", qid_keys, "target_var")))) |>

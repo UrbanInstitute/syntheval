@@ -114,7 +114,7 @@
         abs_diff = abs(.data$diff)
       ) |>
       dplyr::select(
-        variables, cell, prop_synth, prop_conf, abs_diff, diff
+        dplyr::all_of(c("variables", "cell", "prop_synth", "prop_conf", "abs_diff", "diff"))
       )
     # variables disambiguates cells across combinations and drives the
     # per-combination summary; the prop columns show the direction of the
