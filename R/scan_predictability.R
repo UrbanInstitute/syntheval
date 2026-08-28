@@ -42,6 +42,20 @@ scan_predictability <- function(attribute_scan) {
 }
 
 
+#'
+#' Compute population-weighted predictability for each target variable
+#'
+#' @param source_distributions A long-format conditional distributions tibble
+#' for the source (synthetic or holdout) data, as stored in an `attribute_scan`
+#' object (see `.conditional_distributions()`).
+#' @param conf_distributions A long-format conditional distributions tibble for
+#' the confidential data, used to compute `class_n` weights.
+#' @param qid_keys A character vector of quasi-identifying column names.
+#'
+#' @return A tibble with columns `target_var` and `predictability` (the
+#' population-weighted average of per-class top-class accuracy computed from
+#' the source distribution).
+#'
 .predictability_by_target <- function(source_distributions, conf_distributions, qid_keys) {
 
   per_class <- .top_class_accuracy_by_class(source_distributions, conf_distributions, qid_keys)

@@ -42,7 +42,21 @@ scan_top_class_accuracy <- function(attribute_scan) {
 }
 
 
-# Helper: per-class top-class accuracy (probability that top predicted class equals truth)
+#'
+#' Compute per-equivalence-class top-class accuracy from conditional distributions tibbles
+#'
+#' @param source_distributions A long-format conditional distributions tibble
+#' for the source (synthetic or holdout) data, as stored in an `attribute_scan`
+#' object (see `.conditional_distributions()`).
+#' @param conf_distributions A long-format conditional distributions tibble for
+#' the confidential data, used as ground truth.
+#' @param qid_keys A character vector of quasi-identifying column names.
+#'
+#' @return A tibble with columns `key_id`, the quasi-identifying key columns,
+#' `target_var`, and `top_class_accuracy` (the probability, under the
+#' confidential distribution, that the source distribution's most-probable
+#' level equals the confidential value).
+#'
 .top_class_accuracy_by_class <- function(source_distributions, conf_distributions, qid_keys) {
 
   # determine top level(s) per class in the source distribution
