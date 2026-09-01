@@ -1,17 +1,14 @@
-# syntheval 0.1.0
+# syntheval 0.1.0 (development)
 
 - Add `attribute_scan()` functionality for discovery attribute inference metrics.
-- Add `scan_predictability_ratio()` for comparing synthetic-data-based predictability to holdout-data-based predictability.
-- Add `scan_truth_probability_ratio()` for comparing probabilities assigned to true confidential values using synthetic and holdout distributions.
-- Add `scan_confidence_ratio()` for comparing inference confidence from synthetic and holdout distributions.
-- Add `scan_entropy_ratio()` for comparing uncertainty from synthetic and holdout distributions.
-- Add `scan_excess_predictability()` for measuring the increase in predictability attributable to the synthetic data beyond what is observed in the holdout data.
-- Add `scan_excess_confidence()` for measuring the increase in inference confidence attributable to the synthetic data beyond what is observed in the holdout data.
+* Add `util_k_marginals()` to calculate the k-marginals metric for 1-, 2-, and 3-way marginals, with worst-marginal and worst-cell output, marginal sampling with priority variables, sample weights, a `synth_vars` flag to restrict marginals to synthesized variables, `na.rm` handling of missing values, `group_by` stratification with per-stratum scores, and discretization of numeric variables. (#20)
+* Add optional parallelization to the bootstrapped null pMSEs in `add_pmse_ratio()` via `furrr`; enable it with `future::plan()`. Results for a given seed change relative to earlier versions because bootstrap iterations now use parallel-safe L'Ecuyer-CMRG streams. (#113)
 
-# syntheval 0.0.5
+# syntheval 0.0.5 (release)
 
 * Remove `util_tails()`
-* Remove deprecated dplyr code. 
+* Update deprecated dplyr code. 
+* Move all functions to use `eval_data` (#106).
 
 # syntheval 0.0.4
 

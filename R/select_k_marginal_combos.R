@@ -1,0 +1,81 @@
+#' @title Select the variable combinations for the k-marginals metric
+#'
+#' @description Enumerates all unique k-combinations of the supplied
+#' variables and, when the total exceeds `n_marginals`, samples the
+#' combinations down to the cap while always retaining combinations that
+#' contain a priority variable.
+#'
+#' @param shared_vars Character vector of variables available for marginals.
+#' @param k Scalar order of the k-marginal.
+#' @param n_marginals Single integer target maximum for the number of
+#' variable combinations, or `Inf` for no cap. All priority combinations are
+#' retained even when they alone exceed the target.
+#' @param priority_vars Optional character vector of variable names whose
+#' combinations always survive sampling. Defaults to `NULL`.
+#'
+#' @return A character matrix with one row per selected combination and `k`
+#' columns.
+#'
+.select_k_marginal_combos <- function(
+  shared_vars,
+  k,
+  n_marginals,
+  priority_vars = NULL
+) {
+  kmarginals_vars <- t(utils::combn(x = shared_vars, m = k))
+
+  # sample combinations down to n_marginals, always keeping combinations that
+  # contain a priority variable
+  if (nrow(kmarginals_vars) > n_marginals) {
+    is_priority <- purrr::map_lgl(
+      .x = seq_len(nrow(kmarginals_vars)),
+      .f = \(i) any(kmarginals_vars[i, ] %in% priority_vars)
+    )
+
+    n_sampled <- .compute_nonpriority_sample_size(
+      n_marginals = n_marginals,
+      is_priority = is_priority
+    )
+
+    sampled_rows <- sample(x = which(!is_priority), size = n_sampled)
+
+    kmarginals_vars <- kmarginals_vars[
+      sort(c(which(is_priority), sampled_rows)), ,
+      drop = FALSE
+    ]
+
+  }
+
+  return(kmarginals_vars)
+}
+
+#' @title Compute the number of non-priority combinations to sample
+#'
+#' @description Given a ceiling on the total number of k-marginal
+#' combinations and a logical indicator of which combinations are priority
+#' combinations, computes how many non-priority combinations may still be
+#' sampled after all priority combinations are retained. The result is never
+#' negative and never exceeds the number of available non-priority
+#' combinations.
+#'
+#' @param n_marginals Single integer ceiling on the total number of
+#' selected combinations.
+#' @param is_priority Logical vector indicating which candidate combinations
+#' are priority combinations.
+#'
+#' @return A single integer giving the number of non-priority combinations to
+#' sample.
+#'
+.compute_nonpriority_sample_size <- function(
+  n_marginals,
+  is_priority
+) {
+
+  priority_count <- sum(is_priority)
+  non_priority_count <- sum(! is_priority)
+  remaining_slots <- max(n_marginals - priority_count, 0)
+  n_sampled <- min(remaining_slots, non_priority_count)
+
+  return(n_sampled)
+
+}

@@ -113,6 +113,9 @@ scan_t_closeness <- function(attribute_scan, metric = c("linf", "l1", "l2"), sum
     dplyr::select(dplyr::all_of(c("target_var", "target_level", "overall_prob")))
   
   by_class <- distributions |>
+    # prob is NA for equivalence classes with zero observed records (completed
+    # by .drop = FALSE upstream), so drop them like the other *_by_class() helpers
+    dplyr::filter(!is.na(.data$prob)) |>
     dplyr::left_join(overall_dist, by = c("target_var", "target_level")) |>
     dplyr::mutate(abs_diff = abs(.data$prob - .data$overall_prob)) |>
     dplyr::group_by(
