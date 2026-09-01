@@ -2,25 +2,25 @@
 % Please edit documentation in R/scan_confidence.R
 \name{.confidence_by_target}
 \alias{.confidence_by_target}
-\title{Compute population-weighted confidence for each target variable}
+\title{Compute the population-weighted average of per-class maximum source
+probabilities, aggregated by target variable}
 \usage{
 .confidence_by_target(source_distributions, conf_distributions, qid_keys)
 }
 \arguments{
 \item{source_distributions}{A long-format conditional distributions tibble
-for the source (synthetic or holdout) data, as stored in an \code{attribute_scan}
-object (see \code{.conditional_distributions()}).}
+for the source (synthetic or holdout) data, as stored in an
+\code{attribute_scan} object (see \code{.conditional_distributions()}).}
 
-\item{conf_distributions}{A long-format conditional distributions tibble for
-the confidential data, used to compute \code{class_n} weights.}
+\item{conf_distributions}{A long-format conditional distributions tibble
+for the confidential data.}
 
 \item{qid_keys}{A character vector of quasi-identifying column names.}
 }
 \value{
-A tibble with columns \code{target_var} and \code{confidence} (the
-population-weighted average of the per-class maximum probability assigned by
-the source distribution).
+A tibble with columns \code{target_var} and \code{confidence}.
 }
 \description{
-Compute population-weighted confidence for each target variable
+Compute the population-weighted average of per-class maximum source
+probabilities, aggregated by target variable
 }

@@ -42,21 +42,20 @@ scan_top_class_accuracy <- function(attribute_scan) {
 }
 
 
-#'
-#' Compute per-equivalence-class top-class accuracy from conditional distributions tibbles
-#'
+#' 
+#' Compute the per-class probability that the source distribution's
+#' most-probable level equals the confidential (truth) value
+#' 
 #' @param source_distributions A long-format conditional distributions tibble
-#' for the source (synthetic or holdout) data, as stored in an `attribute_scan`
-#' object (see `.conditional_distributions()`).
-#' @param conf_distributions A long-format conditional distributions tibble for
-#' the confidential data, used as ground truth.
+#' for the source (synthetic or holdout) data, as stored in an
+#' `attribute_scan` object (see `.conditional_distributions()`).
+#' @param conf_distributions A long-format conditional distributions tibble
+#' for the confidential data.
 #' @param qid_keys A character vector of quasi-identifying column names.
-#'
+#' 
 #' @return A tibble with columns `key_id`, the quasi-identifying key columns,
-#' `target_var`, and `top_class_accuracy` (the probability, under the
-#' confidential distribution, that the source distribution's most-probable
-#' level equals the confidential value).
-#'
+#' `target_var`, and `top_class_accuracy`.
+#' 
 .top_class_accuracy_by_class <- function(source_distributions, conf_distributions, qid_keys) {
 
   # determine top level(s) per class in the source distribution
@@ -70,8 +69,7 @@ scan_top_class_accuracy <- function(attribute_scan) {
 
   joined <- conf_distributions |>
     dplyr::select(dplyr::all_of(c("key_id", qid_keys, "target_var", "target_level", "prob"))) |>
-    dplyr::mutate(conf_prob = .data$prob) |>
-    dplyr::select(-dplyr::all_of("prob")) |>
+    dplyr::rename(conf_prob = "prob") |>
     dplyr::left_join(top_levels, by = c("key_id", qid_keys, "target_var", "target_level")) |>
     dplyr::mutate(is_top = dplyr::coalesce(.data$is_top, FALSE))
 

@@ -2,7 +2,8 @@
 % Please edit documentation in R/scan_top_class_accuracy.R
 \name{.top_class_accuracy_by_class}
 \alias{.top_class_accuracy_by_class}
-\title{Compute per-equivalence-class top-class accuracy from conditional distributions tibbles}
+\title{Compute the per-class probability that the source distribution's
+most-probable level equals the confidential (truth) value}
 \usage{
 .top_class_accuracy_by_class(
   source_distributions,
@@ -12,20 +13,19 @@
 }
 \arguments{
 \item{source_distributions}{A long-format conditional distributions tibble
-for the source (synthetic or holdout) data, as stored in an \code{attribute_scan}
-object (see \code{.conditional_distributions()}).}
+for the source (synthetic or holdout) data, as stored in an
+\code{attribute_scan} object (see \code{.conditional_distributions()}).}
 
-\item{conf_distributions}{A long-format conditional distributions tibble for
-the confidential data, used as ground truth.}
+\item{conf_distributions}{A long-format conditional distributions tibble
+for the confidential data.}
 
 \item{qid_keys}{A character vector of quasi-identifying column names.}
 }
 \value{
 A tibble with columns \code{key_id}, the quasi-identifying key columns,
-\code{target_var}, and \code{top_class_accuracy} (the probability, under the
-confidential distribution, that the source distribution's most-probable
-level equals the confidential value).
+\code{target_var}, and \code{top_class_accuracy}.
 }
 \description{
-Compute per-equivalence-class top-class accuracy from conditional distributions tibbles
+Compute the per-class probability that the source distribution's
+most-probable level equals the confidential (truth) value
 }

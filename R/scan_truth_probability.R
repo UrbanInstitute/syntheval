@@ -68,12 +68,10 @@ scan_truth_probability <- function(attribute_scan) {
 
   joined <- conf_distributions |>
     dplyr::select(dplyr::all_of(c("key_id", qid_keys, "target_var", "target_level", "prob"))) |>
-    dplyr::mutate(conf_prob = .data$prob) |>
-    dplyr::select(-dplyr::all_of("prob")) |>
+    dplyr::rename(conf_prob = "prob") |>
     dplyr::inner_join(
       dplyr::select(source_distributions, dplyr::all_of(c("key_id", qid_keys, "target_var", "target_level", "prob"))) |>
-        dplyr::mutate(source_prob = .data$prob) |>
-        dplyr::select(-dplyr::all_of("prob")),
+        dplyr::rename(source_prob = "prob"),
       by = c("key_id", "target_var", "target_level", qid_keys)
     )
 

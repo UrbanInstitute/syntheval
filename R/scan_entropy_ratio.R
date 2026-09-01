@@ -1,0 +1,33 @@
+#'
+#' Entropy ratio: synthetic-data expected entropy relative to holdout-data expected entropy
+#'
+#' @param attribute_scan An `attribute_scan` object. Must include holdout data
+#' (i.e. `attribute_scan$holdout` is not `NULL`).
+#'
+#' @returns A tibble with columns `target_var`, `synthetic` and `holdout` (the
+#' per-target `scan_expected_entropy()` values for each source), and
+#' `entropy_ratio` (`synthetic` divided by `holdout`). Values below 1 indicate
+#' the synthetic data leaves less uncertainty about the confidential target
+#' than the holdout data, suggesting higher attribute inference risk.
+#'
+#' @export
+#'
+scan_entropy_ratio <- function(attribute_scan) {
+  stopifnot(is_attribute_scan(attribute_scan))
+
+  if (is.null(attribute_scan$holdout)) {
+    stop(
+      "Error: attribute_scan must include holdout data to calculate ",
+      "scan_entropy_ratio(). Supply holdout_data to eval_data()."
+    )
+  }
+
+  expected_entropy <- scan_expected_entropy(attribute_scan)
+
+  result <- expected_entropy |>
+    tidyr::pivot_wider(names_from = "source", values_from = "expected_entropy") |>
+    dplyr::mutate(entropy_ratio = .data$synthetic / .data$holdout) |>
+    dplyr::relocate(dplyr::all_of(c("target_var", "synthetic", "holdout", "entropy_ratio")))
+
+  return(result)
+}
