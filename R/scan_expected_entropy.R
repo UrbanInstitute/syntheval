@@ -42,11 +42,24 @@ scan_expected_entropy <- function(attribute_scan) {
 }
 
 
+#' 
+#' Compute the population-weighted average of per-class source-distribution
+#' entropy, aggregated by target variable
+#' 
+#' @param source_distributions A long-format conditional distributions tibble
+#' for the source (synthetic or holdout) data, as stored in an
+#' `attribute_scan` object (see `.conditional_distributions()`).
+#' @param conf_distributions A long-format conditional distributions tibble
+#' for the confidential data.
+#' @param qid_keys A character vector of quasi-identifying column names.
+#' 
+#' @return A tibble with columns `target_var` and `expected_entropy`.
+#' 
 .expected_entropy_by_target <- function(source_distributions, conf_distributions, qid_keys) {
 
   # per-class entropy from source distribution
   class_entropy <- .entropy_by_class(source_distributions, qid_keys) |>
-    dplyr::select(-class_n)
+    dplyr::select(-dplyr::all_of("class_n"))
 
   class_totals <- conf_distributions |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c("key_id", qid_keys, "target_var")))) |>
