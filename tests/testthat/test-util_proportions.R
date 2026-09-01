@@ -254,21 +254,21 @@ test_that("test util_proportions() with multiple grouping variables", {
 
 test_that("util_proportions() variables selection returns correct dimensions ", {
   
-  storms_sub <- dplyr::select(dplyr::storms, -name, -pressure)
+  acs_conf_sub <- dplyr::select(acs_conf, sex, marst, empstat)
   
   set.seed(1)
   syn <- list(
     synthetic_data = dplyr::slice_sample(
-      dplyr::storms,
+      acs_conf_sub |> dplyr::select(-sex),
       n = 1000
     ),
     jth_synthesis_time = data.frame(
-      variable = factor("status")
+      variable = factor("empstat")
     )
   ) %>%
     structure(class = "postsynth")
   
-  ed <- eval_data(conf_data = storms_sub, synth_data = syn)
+  ed <- eval_data(conf_data = acs_conf_sub, synth_data = syn)
   
   # are variable names missing ever?
   expect_false(
@@ -292,7 +292,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
       all()
   )
   
-  # 221 rows = 221 levels in name variable
+  # 11 rows because 11 levels (NA is added because it is not in the synthetic data)
   expect_equal(
     dim(
       util_proportions(
@@ -301,10 +301,10 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
         synth_vars = FALSE
       )
     ),
-    c(221, 5)
+    c(11, 5)
   )
   
-  # 9 rows = 9 levels in class variable
+  # 8 rows because sex isn't a common var
   expect_equal(
     dim(
       util_proportions(
@@ -313,10 +313,10 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
         synth_vars = FALSE
       )
     ),
-    c(9, 5)
+    c(8, 5)
   )
   
-  # 9 rows = 9 classes
+  # 3 rows because it only uses empstat
   expect_equal(
     dim(
       util_proportions(
@@ -325,10 +325,10 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
         synth_vars = TRUE
       )
     ),
-    c(9, 5)
+    c(3, 5)
   )
   
-  # 9 rows = 9 classes
+  # 3 rows because it only uses empstat
   expect_equal(
     dim(
       util_proportions(
@@ -337,7 +337,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
         synth_vars = TRUE
       )
     ),
-    c(9, 5)
+    c(3, 5)
   )
   
 })
