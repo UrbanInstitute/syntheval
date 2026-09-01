@@ -4,20 +4,14 @@ df <- data.frame(a = c(1, 2, 3),
                  c = c(1, 2, 3),
                  RECID = c("a", "b", "c"))
 
-# difference matrix for tests
-diff_matrix <- matrix(
-  c(NA, NA, NA,
-    -2, NA, NA,
-    0, -2, NA),
-  ncol = 3,
-  byrow = TRUE
-) 
+diff_table <- tibble::tibble(
+  var1 = c("a", "a", "a", "c", "c", "c", "b", "b", "b"),
+  var2 = c("a", "c", "b", "a", "c", "b", "a", "c", "b"),
+  difference = c(0, -2, 0, -2, 0, -2, 0, -2, 0)
+)
 
-rownames(diff_matrix) <- c("a", "c", "b")
-colnames(diff_matrix) <- c("a", "c", "b")
-
-# test with postsynth
-test_that("util_corr_fit is correct with postsynth ", {
+# test with postsynth, ungrouped
+test_that("util_corr_fit is correct with postsynth, ungrouped", {
   
   syn <- list(synthetic_data = data.frame(a = c(1, 2, 3),
                                           c = c(3, 2, 1),
@@ -32,15 +26,32 @@ test_that("util_corr_fit is correct with postsynth ", {
   
   corr <- util_corr_fit(ed)
   
-  expect_equal(corr$correlation_difference, diff_matrix)
-  expect_equal(corr$correlation_fit, sqrt(sum(c(0, -2, -2) ^ 2)) / 3)
-  expect_equal(corr$correlation_difference_mae, mean(abs(c(0, -2, -2))))
-  expect_equal(corr$correlation_difference_rmse, sqrt(mean(c(0, -2, -2) ^ 2)))
+  actual_diff <- corr$correlation_difference %>%
+    dplyr::select(var1, var2, difference) %>%
+    dplyr::arrange(var1, var2)
+
+  expected_diff <- diff_table %>%
+    dplyr::arrange(var1, var2)
+
+  
+  expect_equal(actual_diff, expected_diff)
+  expect_equal(
+    corr$correlation_fit,
+    sqrt(sum(expected_diff$difference ^ 2)) / nrow(expected_diff)
+  )
+  expect_equal(
+    corr$correlation_difference_mae,
+    mean(abs(expected_diff$difference))
+  )
+  expect_equal(
+    corr$correlation_difference_rmse,
+    sqrt(mean(expected_diff$difference ^ 2))
+  )
   
 })
 
 # test with data
-test_that("util_corr_fit is correct with postsynth ", {
+test_that("util_corr_fit is correct with postsynth, ungrouped", {
   
   syn <- data.frame(a = c(1, 2, 3),
                     c = c(3, 2, 1),
@@ -51,10 +62,25 @@ test_that("util_corr_fit is correct with postsynth ", {
   
   corr <- util_corr_fit(ed)
 
-  expect_equal(corr$correlation_difference, diff_matrix)
-  expect_equal(corr$correlation_fit, sqrt(sum(c(0, -2, -2) ^ 2)) / 3)
-  expect_equal(corr$correlation_difference_mae, mean(abs(c(0, -2, -2))))
-  expect_equal(corr$correlation_difference_rmse, sqrt(mean(c(0, -2, -2) ^ 2)))
+  actual_diff <- corr$correlation_difference %>%
+    dplyr::select(var1, var2, difference) %>%
+    dplyr::arrange(var1, var2)
+  expected_diff <- diff_table %>%
+    dplyr::arrange(var1, var2)
+
+  expect_equal(actual_diff, expected_diff)
+  expect_equal(
+    corr$correlation_fit,
+    sqrt(sum(expected_diff$difference ^ 2)) / nrow(expected_diff)
+  )
+  expect_equal(
+    corr$correlation_difference_mae,
+    mean(abs(expected_diff$difference))
+  )
+  expect_equal(
+    corr$correlation_difference_rmse,
+    sqrt(mean(expected_diff$difference ^ 2))
+  )
 })
 
 test_that("util_corr_fit works with NA ", {
@@ -62,9 +88,29 @@ test_that("util_corr_fit works with NA ", {
   ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
   
   corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs")
+
+  actual_diff <- corr$correlation_difference %>%
+    dplyr::select(var1, var2, difference) %>%
+    dplyr::arrange(var1, var2)
   
-  expect_equal(max(corr$correlation_difference, na.rm = TRUE), 0)
+  expect_equal(max(corr$correlation_difference$difference, na.rm = TRUE), 0)
   expect_equal(corr$correlation_fit, 0)
   expect_equal(corr$correlation_difference_mae, 0)
   expect_equal(corr$correlation_difference_rmse, 0)
+})
+
+test_that("util_corr_fit works with group_by_q", {
+  
+  ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
+  
+  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", group_by_q = "marst")
+
+  actual_diff <- corr$correlation_difference %>%
+    dplyr::select(marst, var1, var2, difference) %>%
+    dplyr::arrange(marst, var1, var2)
+
+  expect_equal(max(corr$correlation_difference$difference, na.rm = TRUE), 0)
+  expect_equal(max(corr$correlation_difference_mae$correlation_difference_mae, na.rm = TRUE), 0)
+  expect_equal(max(corr$correlation_difference_rmse$correlation_difference_rmse, na.rm = TRUE), 0)
+  expect_equal(max(corr$correlation_fit$correlation_fit, na.rm = TRUE), 0)
 })
