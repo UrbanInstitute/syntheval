@@ -122,6 +122,33 @@ test_that("testing if proportions are correct w/ group_by -- df", {
   
 })
 
+test_that("keep_empty_levels works with group_by", {
+  
+  ed_na <- eval_data(conf_data = df_na, synth_data = syn_na)
+  
+  res <- util_proportions(
+    ed_na,
+    group_by = b,
+    keep_empty_levels = TRUE
+  )
+  
+  # 4 groups of b (orange, yellow, green, NA) x 4 levels of c (1, 2, 3, NA)
+  expect_equal(nrow(res), 16)
+  
+  expect_identical(
+    names(res),
+    c("b", "variable", "class", "synthetic", "original", "difference")
+  )
+  
+  # empty level "3" appears once per group with zero proportions
+  empty_rows <- dplyr::filter(res, class == "3")
+  
+  expect_equal(nrow(empty_rows), 4)
+  expect_true(all(empty_rows$synthetic == 0))
+  expect_true(all(empty_rows$original == 0))
+  
+})
+
 # with weight_var specified  
 test_that("testing if proportions w/ weight_var are correct  -- postsynth", {
   

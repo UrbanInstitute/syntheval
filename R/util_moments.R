@@ -172,8 +172,8 @@ util_moments <- function(
         .util_moments(
           conf_data = eval_data$conf_data, 
           synth_data = sd, 
-          weight_var_q = weight_var,
-          group_by_q = group_by,
+          weight_var_q = weight_var_q,
+          group_by_q = group_by_q,
           drop_zeros = drop_zeros,
           common_vars = common_vars,
           synth_varnames = synth_varnames,
