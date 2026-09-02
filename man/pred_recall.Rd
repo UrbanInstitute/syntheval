@@ -17,12 +17,12 @@ and the recall of predictions from that source's model.
 Recall for a \code{pred} object
 }
 \seealso{
-Other Predictive utility metrics:
-\code{\link[=pred_auc]{pred_auc()}},
-\code{\link[=pred_mae]{pred_mae()}},
-\code{\link[=pred_precision]{pred_precision()}},
-\code{\link[=pred_rmse]{pred_rmse()}},
-\code{\link[=pred_visualize]{pred_visualize()}},
-\code{\link[=util_pred]{util_pred()}}
+Other Predictive utility metrics: 
+\code{\link{pred_auc}()},
+\code{\link{pred_mae}()},
+\code{\link{pred_precision}()},
+\code{\link{pred_rmse}()},
+\code{\link{pred_visualize}()},
+\code{\link{util_pred}()}
 }
 \concept{Predictive utility metrics}

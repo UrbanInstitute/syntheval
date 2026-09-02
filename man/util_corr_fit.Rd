@@ -4,7 +4,7 @@
 \alias{util_corr_fit}
 \title{Calculate the correlation fit metric of a confidential data set.}
 \usage{
-util_corr_fit(eval_data, use = "everything")
+util_corr_fit(eval_data, use = "everything", group_by_q = NULL)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object}
@@ -30,9 +30,9 @@ cells in the correlation matrix.
 Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
-Other utility metrics:
-\code{\link[=util_moments]{util_moments()}},
-\code{\link[=util_percentiles]{util_percentiles()}},
-\code{\link[=util_totals]{util_totals()}}
+Other utility metrics: 
+\code{\link{util_moments}()},
+\code{\link{util_percentiles}()},
+\code{\link{util_totals}()}
 }
 \concept{utility metrics}
