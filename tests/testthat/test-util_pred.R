@@ -33,12 +33,122 @@ test_that("util_pred uses the split procedure when holdout_data is not supplied"
   # a model fit on both the confidential and synthetic data
   expect_named(pred$models, c("confidential", "synthetic"), ignore.order = TRUE)
   
-  # predictions made on the holdout data for both models, and nothing else
+  # both fitted models generate predictions on both implementation partitions
   expect_setequal(
     unique(pred$predictions$source), 
-    c("confidential modeling", "confidential implementation", "synthetic modeling", "synthetic implementation")
+    c("confidential", "synthetic", "confidential diagnostic", "synthetic diagnostic")
   )
-  expect_equal(nrow(pred$predictions), nrow(acs_conf) * 2)
+  
+  # confidential and synthetic sources are scored on the same (confidential)
+  # implementation data, and the two diagnostic sources are scored on the
+  # same (synthetic) implementation data
+  expect_equal(
+    sum(pred$predictions$source == "confidential"),
+    sum(pred$predictions$source == "synthetic")
+  )
+  expect_equal(
+    sum(pred$predictions$source == "confidential diagnostic"),
+    sum(pred$predictions$source == "synthetic diagnostic")
+  )
+  
+})
+
+test_that("util_pred split procedure scores all four model x data combinations", {
+  
+  ed <- eval_data(
+    conf_data = acs_conf,
+    synth_data = acs_lr_synths[[1]]
+  )
+  
+  pred <- util_pred(ed, workflow = test_wf)
+  
+  covariates_by_source <- function(source_name) {
+    pred$predictions |>
+      dplyr::filter(source == source_name) |>
+      dplyr::select(age, hcovany, empstat)
+  }
+  
+  # confidential and synthetic are both predictions on the confidential
+  # implementation data, just from different fitted models
+  expect_equal(covariates_by_source("confidential"), covariates_by_source("synthetic"))
+  
+  # the two diagnostic sources are both predictions on the synthetic
+  # implementation data, just from different fitted models
+  expect_equal(
+    covariates_by_source("confidential diagnostic"), 
+    covariates_by_source("synthetic diagnostic")
+  )
+  
+})
+
+test_that("util_pred split procedure computes probabilities from the matching fitted model", {
+  
+  ed <- eval_data(
+    conf_data = acs_conf,
+    synth_data = acs_lr_synths[[1]]
+  )
+  
+  pred <- util_pred(ed, workflow = test_wf)
+  
+  manual_probs_by_source <- function(source_name, model) {
+    rows <- pred$predictions |> dplyr::filter(source == source_name)
+    stats::predict(pred$models[[model]], new_data = rows, type = "prob")$.pred_Female
+  }
+  
+  # every source's probabilities must come from its own model, not the
+  # other source's model
+  expect_equal(
+    pred$predictions |> dplyr::filter(source == "confidential") |> dplyr::pull(.pred_Female),
+    manual_probs_by_source("confidential", "confidential")
+  )
+  expect_equal(
+    pred$predictions |> dplyr::filter(source == "synthetic") |> dplyr::pull(.pred_Female),
+    manual_probs_by_source("synthetic", "synthetic")
+  )
+  expect_equal(
+    pred$predictions |> dplyr::filter(source == "confidential diagnostic") |> dplyr::pull(.pred_Female),
+    manual_probs_by_source("confidential diagnostic", "confidential")
+  )
+  expect_equal(
+    pred$predictions |> dplyr::filter(source == "synthetic diagnostic") |> dplyr::pull(.pred_Female),
+    manual_probs_by_source("synthetic diagnostic", "synthetic")
+  )
+  
+})
+
+test_that("util_pred equalize_data equalizes the confidential and synthetic row counts before splitting", {
+  
+  small_synth <- dplyr::slice_head(acs_conf, n = nrow(acs_conf) / 2)
+  
+  ed <- eval_data(
+    conf_data = acs_conf,
+    synth_data = small_synth
+  )
+  
+  pred <- util_pred(ed, workflow = test_wf, equalize_data = TRUE)
+  
+  # the confidential and synthetic implementation partitions come from
+  # equally-sized data once equalize_data resamples both down to the
+  # smaller row count
+  expect_equal(
+    sum(pred$predictions$source == "confidential"),
+    sum(pred$predictions$source == "confidential diagnostic")
+  )
+  
+})
+
+test_that("util_pred errors when equalize_data is TRUE and holdout_data is supplied", {
+  
+  ed <- eval_data(
+    conf_data = acs_conf,
+    synth_data = acs_conf,
+    holdout_data = acs_conf
+  )
+  
+  expect_error(
+    util_pred(ed, workflow = test_wf, equalize_data = TRUE),
+    "equalize_data not supported"
+  )
   
 })
 
@@ -63,28 +173,6 @@ test_that("util_pred uses the holdout procedure when holdout_data is supplied", 
   expect_equal(nrow(pred$predictions), nrow(acs_conf) * 2)
 
 })
-
-# test_that("util_pred predictions match when confidential and synthetic are identical", {
-#   
-#   ed <- eval_data(
-#     conf_data = acs_conf,
-#     synth_data = acs_conf
-#   )
-#   
-#   pred <- util_pred(ed, workflow = test_wf)
-#   
-#   conf_preds <- pred$predictions |>
-#     dplyr::filter(source == "confidential") |>
-#     dplyr::pull(.pred_class)
-#   
-#   synth_preds <- pred$predictions |>
-#     dplyr::filter(source == "synthetic") |>
-#     dplyr::pull(.pred_class)
-#   
-#   # identical training and holdout data should produce identical predictions
-#   expect_equal(conf_preds, synth_preds)
-#   
-# })
 
 test_that("util_pred holdout predictions match when confidential, synthetic, and holdout data are identical", {
 
@@ -158,6 +246,29 @@ test_that("util_pred holdout predictions differ when synthetic data differ from 
 
 })
 
+test_that("pred_auc, pred_precision, and pred_recall return one row per source without holdout data", {
+  
+  ed <- eval_data(
+    conf_data = acs_conf,
+    synth_data = acs_lr_synths[[1]]
+  )
+  
+  # sex is roughly balanced, so predictions naturally vary between classes
+  pred <- util_pred(ed, workflow = test_wf)
+  
+  auc <- pred_auc(pred)
+  precision <- pred_precision(pred)
+  recall <- pred_recall(pred)
+  
+  expect_setequal(auc$source, c("confidential", "synthetic", "confidential diagnostic", "synthetic diagnostic"))
+  expect_setequal(precision$source, c("confidential", "synthetic", "confidential diagnostic", "synthetic diagnostic"))
+  expect_setequal(recall$source, c("confidential", "synthetic", "confidential diagnostic", "synthetic diagnostic"))
+  
+  expect_true(all(auc$.estimate >= 0 & auc$.estimate <= 1))
+  expect_true(all(precision$.estimate >= 0 & precision$.estimate <= 1))
+  expect_true(all(recall$.estimate >= 0 & recall$.estimate <= 1))
+  
+})
 
 test_that("pred_auc, pred_precision, and pred_recall return one row per source with holdout data", {
 

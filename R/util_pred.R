@@ -5,27 +5,31 @@
 #' whether `eval_data` contains `holdout_data`: if present, both fitted models
 #' generate predictions on the holdout data, which is the strongest assessment
 #' of predictive utility because the holdout data are never used for
-#' synthesis or model fitting/tuning. Currently only this holdout procedure is
-#' supported; a future iteration will add a no-holdout procedure.
+#' synthesis or model fitting/tuning. If absent, the confidential data are
+#' split into modeling and implementation partitions, the synthetic data are
+#' split the same way, and both fitted models generate predictions on both
+#' implementation partitions (a 4-way cross of model x data).
 #'
 #' @param eval_data An `eval_data` object.
 #' @param workflow An unfitted `workflow` object from the `workflows` package.
 #' @param equalize_data a logical evaluating to TRUE or FALSE indicating whether
-#' the number of rows in the data should be equalized 
+#' the number of rows in the data should be equalized. This functionality is 
+#' only supported when holdout data are not used.
 #'
 #' @return A `pred` object, a list with:
-#'   * `procedure`: `"holdout"`.
+#'   * `procedure`: `"holdout"` or `"split"`.
 #'   * `models`: a list with the fitted `confidential` and `synthetic` workflows.
 #'   * `predictions`: a tibble of predictions from each fitted model, with a
-#'     `source` column (`"confidential"` or `"synthetic"`), prediction columns
-#'     from `predict()`, and the evaluation data columns (including the
-#'     outcome).
+#'     `source` column (`"confidential"` or `"synthetic"`, or, for the split
+#'     procedure, `"confidential diagnostic"` or `"synthetic diagnostic"`),
+#'     prediction columns from `predict()`, and the evaluation data columns
+#'     (including the outcome).
 #'
 #' @family Predictive utility metrics
 #'
 #' @export
 #'
-util_pred <- function(eval_data, workflow) {
+util_pred <- function(eval_data, workflow, equalize_data = FALSE) {
 
   stopifnot(inherits(workflow, "workflow"))
   # multiple synthetic replicates aren't supported yet
@@ -46,8 +50,9 @@ util_pred <- function(eval_data, workflow) {
       
     }
     
-    # split the confidential and synthetic data into training (called modeling)
-    # and testing (called implementation)
+    # split the confidential data into modeling data and implementation data,
+    # and split the synthetic data the same way so a synthetic implementation
+    # partition is available for the diagnostic comparison
     conf_split <- rsample::initial_split(conf_data, prop = 0.8)
     synth_split <- rsample::initial_split(synth_data, prop = 0.8)
     
@@ -60,51 +65,54 @@ util_pred <- function(eval_data, workflow) {
     conf_model <- parsnip::fit(workflow, data = conf_modeling)
     synth_model <- parsnip::fit(workflow, data = synth_modeling)
   
-    # apply the workflows to the four data sets
+    # both models generate predictions on both implementation partitions:
+    # confidential model -> confidential data (primary), synthetic model ->
+    # confidential data (primary), confidential model -> synthetic data
+    # (diagnostic), synthetic model -> synthetic data (diagnostic)
     
     # class probabilities are only defined for classification models, and
     # pred_auc() needs them, so fetch them when available
     if (workflows::extract_spec_parsnip(workflow)$mode == "classification") {
       
-      conf_modeling_probs <- stats::predict(conf_model, new_data = conf_modeling, type = "prob")
-      conf_implementation_probs <- stats::predict(conf_model, new_data = conf_implementation, type = "prob")
-      synth_modeling_probs <- stats::predict(conf_model, new_data = synth_modeling, type = "prob")
-      synth_implementation_probs <- stats::predict(conf_model, new_data = synth_implementation, type = "prob")
+      conf_on_conf_probs <- stats::predict(conf_model, new_data = conf_implementation, type = "prob")
+      synth_on_conf_probs <- stats::predict(synth_model, new_data = conf_implementation, type = "prob")
+      conf_on_synth_probs <- stats::predict(conf_model, new_data = synth_implementation, type = "prob")
+      synth_on_synth_probs <- stats::predict(synth_model, new_data = synth_implementation, type = "prob")
 
     } else {
       
-      conf_modeling_probs <- NULL
-      conf_implementation_probs <- NULL
-      synth_modeling_probs <- NULL
-      synth_implementation_probs <- NULL
+      conf_on_conf_probs <- NULL
+      synth_on_conf_probs <- NULL
+      conf_on_synth_probs <- NULL
+      synth_on_synth_probs <- NULL
     
     }
     
-    conf_modeling_predictions <- dplyr::bind_cols(
-      source = "confidential modeling",
-      stats::predict(conf_model, new_data = conf_modeling),
-      conf_modeling_probs,
-      conf_modeling
-    )
-    
-    conf_implementation_predictions <- dplyr::bind_cols(
-      source = "confidential implementation",
+    conf_predictions <- dplyr::bind_cols(
+      source = "confidential",
       stats::predict(conf_model, new_data = conf_implementation),
-      conf_implementation_probs,
+      conf_on_conf_probs,
       conf_implementation
     )
     
-    synth_modeling_predictions <- dplyr::bind_cols(
-      source = "synthetic modeling",
-      stats::predict(synth_model, new_data = synth_modeling),
-      synth_modeling_probs,
-      synth_modeling
+    synth_predictions <- dplyr::bind_cols(
+      source = "synthetic",
+      stats::predict(synth_model, new_data = conf_implementation),
+      synth_on_conf_probs,
+      conf_implementation
     )
     
-    synth_implementation_predictions <- dplyr::bind_cols(
-      source = "synthetic implementation",
+    conf_diagnostic_predictions <- dplyr::bind_cols(
+      source = "confidential diagnostic",
+      stats::predict(conf_model, new_data = synth_implementation),
+      conf_on_synth_probs,
+      synth_implementation
+    )
+    
+    synth_diagnostic_predictions <- dplyr::bind_cols(
+      source = "synthetic diagnostic",
       stats::predict(synth_model, new_data = synth_implementation),
-      synth_implementation_probs,
+      synth_on_synth_probs,
       synth_implementation
     )
     
@@ -116,14 +124,20 @@ util_pred <- function(eval_data, workflow) {
         synthetic = synth_model
       ),
       predictions = dplyr::bind_rows(
-        conf_modeling_predictions, 
-        conf_implementation_predictions,
-        synth_modeling_predictions,
-        synth_implementation_predictions
+        conf_predictions, 
+        synth_predictions,
+        conf_diagnostic_predictions,
+        synth_diagnostic_predictions
       )
     )
     
   } else {
+    
+    if (equalize_data) {
+      
+      stop("equalize_data not supported when holdout data are present")
+      
+    }
     
     # the confidential and synthetic models must be fit separately so their
     # predictions on the holdout data can be compared
