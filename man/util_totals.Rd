@@ -33,9 +33,9 @@ A \code{tibble} of totals.
 Calculate totals for original and synthetic data.
 }
 \seealso{
-Other utility metrics:
-\code{\link[=util_corr_fit]{util_corr_fit()}},
-\code{\link[=util_moments]{util_moments()}},
-\code{\link[=util_percentiles]{util_percentiles()}}
+Other utility metrics: 
+\code{\link{util_corr_fit}()},
+\code{\link{util_moments}()},
+\code{\link{util_percentiles}()}
 }
 \concept{utility metrics}

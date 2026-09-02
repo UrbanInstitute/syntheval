@@ -19,18 +19,18 @@ test_that("util_corr_fit is correct with postsynth, ungrouped", {
                                           RECID = c("a", "b", "c")),
               jth_synthesis_time = data.frame(
                 variable = factor(c("a", "c", "b"))
-              )) %>%
+              )) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = df, synth_data = syn)
   
   corr <- util_corr_fit(ed)
   
-  actual_diff <- corr$correlation_difference %>%
-    dplyr::select(var1, var2, difference) %>%
+  actual_diff <- corr$correlation_difference |>
+    dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
 
-  expected_diff <- diff_table %>%
+  expected_diff <- diff_table |>
     dplyr::arrange(var1, var2)
 
   
@@ -62,10 +62,10 @@ test_that("util_corr_fit is correct with postsynth, ungrouped", {
   
   corr <- util_corr_fit(ed)
 
-  actual_diff <- corr$correlation_difference %>%
-    dplyr::select(var1, var2, difference) %>%
+  actual_diff <- corr$correlation_difference |>
+    dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
-  expected_diff <- diff_table %>%
+  expected_diff <- diff_table |>
     dplyr::arrange(var1, var2)
 
   expect_equal(actual_diff, expected_diff)
@@ -89,8 +89,8 @@ test_that("util_corr_fit works with NA ", {
   
   corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs")
 
-  actual_diff <- corr$correlation_difference %>%
-    dplyr::select(var1, var2, difference) %>%
+  actual_diff <- corr$correlation_difference |>
+    dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
   
   expect_equal(max(corr$correlation_difference$difference, na.rm = TRUE), 0)
@@ -105,8 +105,8 @@ test_that("util_corr_fit works with group_by_q", {
   
   corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", group_by_q = "marst")
 
-  actual_diff <- corr$correlation_difference %>%
-    dplyr::select(marst, var1, var2, difference) %>%
+  actual_diff <- corr$correlation_difference |>
+    dplyr::select(marst, var1, var2, difference) |>
     dplyr::arrange(marst, var1, var2)
 
   expect_equal(max(corr$correlation_difference$difference, na.rm = TRUE), 0)
