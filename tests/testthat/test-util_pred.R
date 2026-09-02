@@ -18,6 +18,30 @@ regression_wf <- workflows::workflow() |>
       parsnip::set_engine("lm")
   )
 
+test_that("util_pred uses the split procedure when holdout_data is not supplied", {
+  
+  ed <- eval_data(
+    conf_data = acs_conf,
+    synth_data = acs_conf
+  )
+  
+  pred <- util_pred(ed, workflow = test_wf)
+  
+  expect_s3_class(pred, "pred")
+  expect_equal(pred$procedure, "split")
+  
+  # a model fit on both the confidential and synthetic data
+  expect_named(pred$models, c("confidential", "synthetic"), ignore.order = TRUE)
+  
+  # predictions made on the holdout data for both models, and nothing else
+  expect_setequal(
+    unique(pred$predictions$source), 
+    c("confidential modeling", "confidential implementation", "synthetic modeling", "synthetic implementation")
+  )
+  expect_equal(nrow(pred$predictions), nrow(acs_conf) * 2)
+  
+})
+
 test_that("util_pred uses the holdout procedure when holdout_data is supplied", {
 
   ed <- eval_data(
@@ -39,6 +63,28 @@ test_that("util_pred uses the holdout procedure when holdout_data is supplied", 
   expect_equal(nrow(pred$predictions), nrow(acs_conf) * 2)
 
 })
+
+# test_that("util_pred predictions match when confidential and synthetic are identical", {
+#   
+#   ed <- eval_data(
+#     conf_data = acs_conf,
+#     synth_data = acs_conf
+#   )
+#   
+#   pred <- util_pred(ed, workflow = test_wf)
+#   
+#   conf_preds <- pred$predictions |>
+#     dplyr::filter(source == "confidential") |>
+#     dplyr::pull(.pred_class)
+#   
+#   synth_preds <- pred$predictions |>
+#     dplyr::filter(source == "synthetic") |>
+#     dplyr::pull(.pred_class)
+#   
+#   # identical training and holdout data should produce identical predictions
+#   expect_equal(conf_preds, synth_preds)
+#   
+# })
 
 test_that("util_pred holdout predictions match when confidential, synthetic, and holdout data are identical", {
 
@@ -112,18 +158,8 @@ test_that("util_pred holdout predictions differ when synthetic data differ from 
 
 })
 
-test_that("util_pred errors without holdout_data (no-holdout procedure not yet implemented)", {
 
-  ed <- eval_data(
-    conf_data = acs_conf,
-    synth_data = acs_conf
-  )
-
-  expect_error(util_pred(ed, workflow = test_wf))
-
-})
-
-test_that("pred_auc, pred_precision, and pred_recall return one row per source", {
+test_that("pred_auc, pred_precision, and pred_recall return one row per source with holdout data", {
 
   ed <- eval_data(
     conf_data = acs_conf,

@@ -10,6 +10,8 @@
 #'
 #' @param eval_data An `eval_data` object.
 #' @param workflow An unfitted `workflow` object from the `workflows` package.
+#' @param equalize_data a logical evaluating to TRUE or FALSE indicating whether
+#' the number of rows in the data should be equalized 
 #'
 #' @return A `pred` object, a list with:
 #'   * `procedure`: `"holdout"`.
@@ -25,64 +27,148 @@
 #'
 util_pred <- function(eval_data, workflow) {
 
-  stopifnot(is_eval_data(eval_data))
-
-  if (is.null(eval_data$holdout_data)) {
-
-    # only the holdout procedure is implemented so far
-    stop(
-      "util_pred() currently only supports eval_data objects with holdout_data.",
-      call. = FALSE
-    )
-
-  }
-
   stopifnot(inherits(workflow, "workflow"))
   # multiple synthetic replicates aren't supported yet
   stopifnot(eval_data$n_rep == 1)
+  
+  if (is.null(eval_data$holdout_data)) {
 
-  # the confidential and synthetic models must be fit separately so their
-  # predictions on the holdout data can be compared
-  conf_model <- parsnip::fit(workflow, data = eval_data$conf_data)
-  synth_model <- parsnip::fit(workflow, data = eval_data$synth_data)
+    conf_data <- eval_data$conf_data
+    synth_data <- eval_data$synth_data
+    
+    # add option to equalize the size of the confidential and synthetic data
+    if (equalize_data) {
+    
+      min_n <- min(nrow(conf_data), nrow(synth_data))
+      
+      conf_data <- dplyr::slice_sample(eval_data$conf_data, n = min_n)
+      synth_data <- dplyr::slice_sample(eval_data$synth_data, n = min_n)
+      
+    }
+    
+    # split the confidential and synthetic data into training (called modeling)
+    # and testing (called implementation)
+    conf_split <- rsample::initial_split(conf_data, prop = 0.8)
+    synth_split <- rsample::initial_split(synth_data, prop = 0.8)
+    
+    conf_modeling <- rsample::training(conf_split)
+    conf_implementation <- rsample::testing(conf_split)
+    synth_modeling <- rsample::training(synth_split)
+    synth_implementation <- rsample::testing(synth_split)
+    
+    # fit the workflows
+    conf_model <- parsnip::fit(workflow, data = conf_modeling)
+    synth_model <- parsnip::fit(workflow, data = synth_modeling)
+  
+    # apply the workflows to the four data sets
+    
+    # class probabilities are only defined for classification models, and
+    # pred_auc() needs them, so fetch them when available
+    if (workflows::extract_spec_parsnip(workflow)$mode == "classification") {
+      
+      conf_modeling_probs <- stats::predict(conf_model, new_data = conf_modeling, type = "prob")
+      conf_implementation_probs <- stats::predict(conf_model, new_data = conf_implementation, type = "prob")
+      synth_modeling_probs <- stats::predict(conf_model, new_data = synth_modeling, type = "prob")
+      synth_implementation_probs <- stats::predict(conf_model, new_data = synth_implementation, type = "prob")
 
-  # class probabilities are only defined for classification models, and
-  # pred_auc() needs them, so fetch them when available
-  if (workflows::extract_spec_parsnip(workflow)$mode == "classification") {
-
-    conf_probs <- stats::predict(conf_model, new_data = eval_data$holdout_data, type = "prob")
-    synth_probs <- stats::predict(synth_model, new_data = eval_data$holdout_data, type = "prob")
-
+    } else {
+      
+      conf_modeling_probs <- NULL
+      conf_implementation_probs <- NULL
+      synth_modeling_probs <- NULL
+      synth_implementation_probs <- NULL
+    
+    }
+    
+    conf_modeling_predictions <- dplyr::bind_cols(
+      source = "confidential modeling",
+      stats::predict(conf_model, new_data = conf_modeling),
+      conf_modeling_probs,
+      conf_modeling
+    )
+    
+    conf_implementation_predictions <- dplyr::bind_cols(
+      source = "confidential implementation",
+      stats::predict(conf_model, new_data = conf_implementation),
+      conf_implementation_probs,
+      conf_implementation
+    )
+    
+    synth_modeling_predictions <- dplyr::bind_cols(
+      source = "synthetic modeling",
+      stats::predict(synth_model, new_data = synth_modeling),
+      synth_modeling_probs,
+      synth_modeling
+    )
+    
+    synth_implementation_predictions <- dplyr::bind_cols(
+      source = "synthetic implementation",
+      stats::predict(synth_model, new_data = synth_implementation),
+      synth_implementation_probs,
+      synth_implementation
+    )
+    
+    pred <- list(
+      procedure = "split",
+      # retained for future variable importance comparisons
+      models = list(
+        confidential = conf_model, 
+        synthetic = synth_model
+      ),
+      predictions = dplyr::bind_rows(
+        conf_modeling_predictions, 
+        conf_implementation_predictions,
+        synth_modeling_predictions,
+        synth_implementation_predictions
+      )
+    )
+    
   } else {
-
-    conf_probs <- NULL
-    synth_probs <- NULL
-
+    
+    # the confidential and synthetic models must be fit separately so their
+    # predictions on the holdout data can be compared
+    conf_model <- parsnip::fit(workflow, data = eval_data$conf_data)
+    synth_model <- parsnip::fit(workflow, data = eval_data$synth_data)
+    
+    # class probabilities are only defined for classification models, and
+    # pred_auc() needs them, so fetch them when available
+    if (workflows::extract_spec_parsnip(workflow)$mode == "classification") {
+      
+      conf_probs <- stats::predict(conf_model, new_data = eval_data$holdout_data, type = "prob")
+      synth_probs <- stats::predict(synth_model, new_data = eval_data$holdout_data, type = "prob")
+      
+    } else {
+      
+      conf_probs <- NULL
+      synth_probs <- NULL
+      
+    }
+    
+    # keep the holdout outcome and covariates alongside predictions so
+    # pred_*() functions can compute metrics without needing eval_data again
+    conf_predictions <- dplyr::bind_cols(
+      source = "confidential",
+      stats::predict(conf_model, new_data = eval_data$holdout_data),
+      conf_probs,
+      eval_data$holdout_data
+    )
+    
+    synth_predictions <- dplyr::bind_cols(
+      source = "synthetic",
+      stats::predict(synth_model, new_data = eval_data$holdout_data),
+      synth_probs,
+      eval_data$holdout_data
+    )
+    
+    pred <- list(
+      procedure = "holdout",
+      # retained for future variable importance comparisons
+      models = list(confidential = conf_model, synthetic = synth_model),
+      predictions = dplyr::bind_rows(conf_predictions, synth_predictions)
+    )
+    
   }
-
-  # keep the holdout outcome and covariates alongside predictions so
-  # pred_*() functions can compute metrics without needing eval_data again
-  conf_predictions <- dplyr::bind_cols(
-    source = "confidential",
-    stats::predict(conf_model, new_data = eval_data$holdout_data),
-    conf_probs,
-    eval_data$holdout_data
-  )
-
-  synth_predictions <- dplyr::bind_cols(
-    source = "synthetic",
-    stats::predict(synth_model, new_data = eval_data$holdout_data),
-    synth_probs,
-    eval_data$holdout_data
-  )
-
-  pred <- list(
-    procedure = "holdout",
-    # retained for future variable importance comparisons
-    models = list(confidential = conf_model, synthetic = synth_model),
-    predictions = dplyr::bind_rows(conf_predictions, synth_predictions)
-  )
-
+  
   structure(pred, class = "pred")
 
 }
