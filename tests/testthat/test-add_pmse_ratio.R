@@ -17,14 +17,16 @@ test_that("add_pmse returns ideal value for identical data with variation " , {
     ) %>%
     structure(class = "postsynth")
   
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+  
   dt_mod <- parsnip::decision_tree() %>%
     parsnip::set_mode(mode = "classification") %>%
     parsnip::set_engine(engine = "rpart")
   
-  rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) %>%
+    discrimination(ed) %>%
       add_propensities(
         recipe = rec,
         spec = dt_mod
@@ -70,17 +72,19 @@ test_that("add_pmse returns perfect value for identical data without variation "
     ) %>%
     structure(class = "postsynth")
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
-    parsnip::set_engine(engine = "glm")
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  rec <- recipes::recipe(.source_label ~ ., data = discrimination(postsynth, data)$combined_data)
+  dt_mod <- parsnip::decision_tree() %>%
+    parsnip::set_mode(mode = "classification") %>%
+    parsnip::set_engine(engine = "rpart")
+  
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(postsynth, data) %>%
+    discrimination(ed) %>%
       add_propensities(
         recipe = rec,
-        spec = logistic_mod
+        spec = dt_mod
       ) %>%
       add_pmse() %>%
       add_pmse_ratio(times = 25)

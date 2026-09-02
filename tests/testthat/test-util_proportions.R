@@ -45,14 +45,13 @@ syn_na <- list(
 ) %>%
   structure(class = "postsynth")
 
+ed0 <- eval_data(conf_data = df, synth_data = df) 
+ed1 <- eval_data(conf_data = df, synth_data = syn)
+
 # testing variable selection
 test_that("testing if proportions only uses fct and chr variables", {
   
-  summary_stats <-
-    util_proportions(
-      postsynth = syn, 
-      data = df
-    ) 
+  summary_stats <- util_proportions(ed1) 
   
   expect_equal(
     unique(summary_stats$variable),
@@ -63,11 +62,7 @@ test_that("testing if proportions only uses fct and chr variables", {
 # testing proportions
 test_that("testing if proportions are correct -- postsynth", {
   
-  summary_stats <-
-    util_proportions(
-      postsynth = syn, 
-      data = df
-    ) 
+  summary_stats <- util_proportions(ed1) 
   
   expect_equal(
     round(summary_stats$original, 3),
@@ -83,11 +78,7 @@ test_that("testing if proportions are correct -- postsynth", {
 
 test_that("testing if proportions are correct -- df", {
   
-  summary_stats <-
-    util_proportions(
-      postsynth = df, 
-      data = df
-    ) 
+  summary_stats <- util_proportions(ed0) 
   
   expect_equal(
     round(summary_stats$original, 3),
@@ -103,12 +94,7 @@ test_that("testing if proportions are correct -- df", {
 # with group_by specified 
 test_that("testing if proportions are correct w/ group_by -- postsynth", {
   
-  summary_stats <-
-    util_proportions(
-      postsynth = syn, 
-      data = df,
-      group_by = c
-    ) 
+  summary_stats <- util_proportions(ed1, group_by = c)
   
   expect_equal(
     summary_stats$original,
@@ -123,12 +109,7 @@ test_that("testing if proportions are correct w/ group_by -- postsynth", {
 
 test_that("testing if proportions are correct w/ group_by -- df", {
   
-  summary_stats <-
-    util_proportions(
-      postsynth = df, 
-      data = df,
-      group_by = c
-    ) 
+  summary_stats <- util_proportions(ed0, group_by = c)
   
   expect_equal(
     summary_stats$original,
@@ -141,15 +122,37 @@ test_that("testing if proportions are correct w/ group_by -- df", {
   
 })
 
+test_that("keep_empty_levels works with group_by", {
+  
+  ed_na <- eval_data(conf_data = df_na, synth_data = syn_na)
+  
+  res <- util_proportions(
+    ed_na,
+    group_by = b,
+    keep_empty_levels = TRUE
+  )
+  
+  # 4 groups of b (orange, yellow, green, NA) x 4 levels of c (1, 2, 3, NA)
+  expect_equal(nrow(res), 16)
+  
+  expect_identical(
+    names(res),
+    c("b", "variable", "class", "synthetic", "original", "difference")
+  )
+  
+  # empty level "3" appears once per group with zero proportions
+  empty_rows <- dplyr::filter(res, class == "3")
+  
+  expect_equal(nrow(empty_rows), 4)
+  expect_true(all(empty_rows$synthetic == 0))
+  expect_true(all(empty_rows$original == 0))
+  
+})
+
 # with weight_var specified  
 test_that("testing if proportions w/ weight_var are correct  -- postsynth", {
   
-  summary_stats <-
-    util_proportions(
-      postsynth = syn, 
-      data = df,
-      weight_var = weight
-    ) 
+  summary_stats <- util_proportions(ed1, weight_var = weight)
   
   expect_equal(
     summary_stats$original,
@@ -165,12 +168,7 @@ test_that("testing if proportions w/ weight_var are correct  -- postsynth", {
 
 test_that("testing if proportions w/ weight_var are correct -- df", {
   
-  summary_stats <-
-    util_proportions(
-      postsynth = df, 
-      data = df,
-      weight_var = weight
-    ) 
+  summary_stats <- util_proportions(ed0, weight_var = weight)
   
   expect_equal(
     summary_stats$original,
@@ -190,8 +188,7 @@ test_that("testing if proportions w/ weight_var and group_by are correct
   
   summary_stats <-
     util_proportions(
-      postsynth = syn, 
-      data = df,
+      ed1,
       weight_var = weight,
       group_by = c
     ) 
@@ -213,8 +210,7 @@ test_that("testing if proportions w/ weight_var and group_by are correct
   
   summary_stats <-
     util_proportions(
-      postsynth = df, 
-      data = df,
+      ed0,
       weight_var = weight,
       group_by = c
     ) 
@@ -259,11 +255,11 @@ test_that("test util_proportions() with multiple grouping variables", {
   ) %>%
     structure(class = "postsynth")
   
+  ed2 <- eval_data(conf_data = df2, synth_data = syn2)
   
   summary_stats <-
     util_proportions(
-      postsynth = syn2, 
-      data = df2,
+      ed2,
       weight_var = weight,
       group_by = c(var2, var3)
     ) 
@@ -299,11 +295,12 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
   ) %>%
     structure(class = "postsynth")
   
+  ed <- eval_data(conf_data = storms_sub, synth_data = syn)
+  
   # are variable names missing ever?
   expect_false(
     util_proportions(
-      postsynth = syn, 
-      data = storms_sub, 
+      ed, 
       common_vars = FALSE, 
       synth_vars = FALSE
     )$variable %>%
@@ -314,8 +311,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
   # are statistics names missing ever?
   expect_false(
     util_proportions(
-      postsynth = syn, 
-      data = storms_sub, 
+      ed,
       common_vars = FALSE, 
       synth_vars = FALSE
     )$class %>%
@@ -323,25 +319,23 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
       all()
   )
   
-  # 55 rows = all 11 variables times 5 statistics
+  # 221 rows = 221 levels in name variable
   expect_equal(
     dim(
       util_proportions(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed,
         common_vars = FALSE, 
         synth_vars = FALSE
       )
     ),
-    c(215, 5)
+    c(221, 5)
   )
   
-  # 50 rows = 10 common variables times 5 statistics
+  # 9 rows = 9 levels in class variable
   expect_equal(
     dim(
       util_proportions(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed,
         common_vars = TRUE, 
         synth_vars = FALSE
       )
@@ -353,8 +347,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
   expect_equal(
     dim(
       util_proportions(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed,
         common_vars = FALSE, 
         synth_vars = TRUE
       )
@@ -366,8 +359,7 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
   expect_equal(
     dim(
       util_proportions(
-        postsynth = syn, 
-        data = storms_sub, 
+        ed,
         common_vars = TRUE, 
         synth_vars = TRUE
       )
@@ -378,20 +370,17 @@ test_that("util_proportions() variables selection returns correct dimensions ", 
 })
 
 test_that("na.rm in levels works as expected", {
-  res <- util_proportions(
-    postsynth = syn_na,
-    data = df_na
-  )
+  
+  ed_na <- eval_data(conf_data = df_na, synth_data = syn_na)
+  
+  res <- util_proportions(ed_na)
+  
   expect_identical(
     res$class,
     c("NA", "green", "orange", "yellow", "1", "2", NA)  
   )
   
-  res_rm <- util_proportions(
-    postsynth = syn_na,
-    data = df_na,
-    na.rm = TRUE
-  )
+  res_rm <- util_proportions(ed_na, na.rm = TRUE)
   
   expect_identical(
     res_rm$class,
@@ -402,9 +391,10 @@ test_that("na.rm in levels works as expected", {
 
 test_that("keep_empty_levels works as expected", {
   
+  ed_na <- eval_data(conf_data = df_na, synth_data = syn_na)
+  
   res <- util_proportions(
-    postsynth = syn_na,
-    data = df_na,
+    ed_na,
     keep_empty_levels = TRUE
   )
   

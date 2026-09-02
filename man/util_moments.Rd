@@ -5,9 +5,8 @@
 \title{Calculate summary statistics for original and synthetic data.}
 \usage{
 util_moments(
-  postsynth,
-  data,
-  weight_var = 1,
+  eval_data,
+  weight_var = NULL,
   group_by = NULL,
   drop_zeros = FALSE,
   common_vars = TRUE,
@@ -16,9 +15,7 @@ util_moments(
 )
 }
 \arguments{
-\item{postsynth}{A postsynth object or tibble with synthetic data}
-
-\item{data}{A data frame with the original data}
+\item{eval_data}{An \code{eval_data} object}
 
 \item{weight_var}{An unquoted name of a weight variable}
 
@@ -28,7 +25,7 @@ util_moments(
 
 \item{common_vars}{A logical for if only common variables should be kept}
 
-\item{synth_vars}{A logical for if only synthesized variables should be kept}
+\item{synth_vars}{A logical for if \emph{only} synthesized variables should be kept}
 
 \item{na.rm}{A logical for ignoring \code{NA} values in computations.}
 }
@@ -39,11 +36,9 @@ A \code{tibble} of summary statistics.
 Calculate summary statistics for original and synthetic data.
 }
 \seealso{
-Other utility metrics: 
-\code{\link{util_co_occurrence}()},
-\code{\link{util_corr_fit}()},
-\code{\link{util_percentiles}()},
-\code{\link{util_tails}()},
-\code{\link{util_totals}()}
+Other utility metrics:
+\code{\link[=util_corr_fit]{util_corr_fit()}},
+\code{\link[=util_percentiles]{util_percentiles()}},
+\code{\link[=util_totals]{util_totals()}}
 }
 \concept{utility metrics}

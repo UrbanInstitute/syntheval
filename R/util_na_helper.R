@@ -70,6 +70,76 @@ prep_combined_data_for_na.rm <- function(
   
 }  
 
+#'
+#' Check whether na.rm is compatible with univariate utilty metrics
+#'
+#' @param combined_data A data frame or tibble
+#' @param na.rm A boolean for whether to ignore missing values
+#' @param drop_zeros A boolean for whether to ignore zero values in utility metrics
+#' @param drop_zeros_exclude An optional set of quoted columns on which to drop zeros 
+#'
+#' @return A data frame or tibble with missing and/or zero values set to NA
+#' 
+.prep_combined_data_for_na.rm_q <- function(
+    combined_data,
+    na.rm = FALSE,
+    drop_zeros = FALSE,
+    drop_zeros_exclude = NULL) {
+  
+  # raise warning if missing values present
+  if (na.rm == FALSE) {
+    
+    na_cols <- combined_data %>% 
+      purrr::map_lgl(.f = ~ any(is.na(.x)))
+    
+    if (any(na_cols)) {
+      
+      message(
+        paste(
+          "Some variables contain missing data: ",
+          paste(names(combined_data)[na_cols], collapse=", ")
+        )
+      )
+      
+      # stop if drop_zeros incompatible with keeping NAs
+      if (drop_zeros) {
+        
+        stop("Cannot set na.rm == FALSE and drop_zeros == TRUE with missing data")
+        
+      }
+      
+    }
+    
+  } 
+  
+  if (drop_zeros) {
+    
+    if (is.null(drop_zeros_exclude)) {
+      
+      combined_data[combined_data == 0] <- NA
+      
+    }
+    
+    else {
+      
+      combined_data <- combined_data %>%
+        dplyr::mutate(
+          dplyr::across(
+            -dplyr::any_of(drop_zeros_exclude),
+            \(x) {
+              dplyr::if_else(x == 0, NA, x)
+            }
+          )
+        )
+      
+    }
+    
+  }
+  
+  return(combined_data)
+  
+}  
+
 
 #'
 #' Convert `NA` values to `"NA"` for categorical variables

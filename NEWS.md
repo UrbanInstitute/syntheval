@@ -1,3 +1,9 @@
+# syntheval 0.0.5
+
+* Remove `util_tails()`
+* Update deprecated dplyr code. 
+* Move all functions to use `eval_data` (#106).
+
 # syntheval 0.0.4
 
 * Add empirical disclosure risk metrics.

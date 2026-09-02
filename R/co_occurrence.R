@@ -11,9 +11,9 @@ co_occurrence <- function(data, na.rm = FALSE) {
   data_names <- names(data)
   
   # create a p by p matrix
-  co_occurence_matrix <- matrix(nrow = ncol(data), ncol = ncol(data))
-  rownames(co_occurence_matrix) <- data_names
-  colnames(co_occurence_matrix) <- data_names
+  co_occurrence_matrix <- matrix(nrow = ncol(data), ncol = ncol(data))
+  rownames(co_occurrence_matrix) <- data_names
+  colnames(co_occurrence_matrix) <- data_names
   
   # iterate through the variables and assign the co-occurrences
   for (row_name in data_names) {
@@ -32,13 +32,13 @@ co_occurrence <- function(data, na.rm = FALSE) {
         
       } 
       
-      co_occurence_matrix[row_name, col_name] <- 
+      co_occurrence_matrix[row_name, col_name] <- 
         mean(row_var != 0 & col_var != 0)
       
     }
     
   }
   
-  return(co_occurence_matrix)
+  return(co_occurrence_matrix)
   
 }

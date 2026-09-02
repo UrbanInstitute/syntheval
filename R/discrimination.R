@@ -1,7 +1,6 @@
 #' Combine synthetic data and data for a discriminant based metric
 #'
-#' @param postsynth A postsynth object from tidysynthesis or a tibble
-#' @param data an original (observed) data set.
+#' @param eval_data An `eval_data` object.
 #'
 #' @return A list of class discrimination
 #' 
@@ -9,17 +8,22 @@
 #' 
 #' @export
 #'
-discrimination <- function(postsynth, data) {
+discrimination <- function(eval_data) {
   
-  if (is_postsynth(postsynth)) {
+  stopifnot(is_eval_data(eval_data)) 
+  
+  if (eval_data$n_rep > 1 ) {
     
-    synthetic_data <- postsynth$synthetic_data
+    synthetic_data <- eval_data[["synth_data"]][[1]]
+    message("Creating discriminator object using 1 synthetic data replicate.")
     
   } else {
     
-    synthetic_data <- postsynth
+    synthetic_data <- eval_data[["synth_data"]]
     
   }
+  data <- eval_data[["conf_data"]]
+  
   
   mismatched_variables <- c(
     setdiff(names(synthetic_data), names(data)),

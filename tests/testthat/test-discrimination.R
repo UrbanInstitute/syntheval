@@ -1,6 +1,9 @@
+
 test_that("discrimination() returns the correct object " , {
   
-  discrimination <- discrimination(penguins_postsynth, penguins_conf)
+  ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
+  
+  discrimination <- discrimination(ed)
   
   expect_equal(nrow(discrimination$combined_data), nrow(penguins_postsynth$synthetic_data) + nrow(penguins_conf))
   
@@ -14,11 +17,12 @@ test_that("discrimination() returns the correct object when sysnthesizing a subs
   postsynth_narrow <- penguins_postsynth
   postsynth_narrow$synthetic_data <- dplyr::select(postsynth_narrow$synthetic_data, -bill_depth_mm)
   
-  # expect warning for mismatched columns
-  expect_message(discrimination(postsynth_narrow, penguins_conf))
+  ed1 <- eval_data(conf_data = penguins_conf, synth_data = postsynth_narrow)
   
-  # create discrimination to test dimensions
-  discrimination <- suppressMessages(discrimination(postsynth_narrow, penguins_conf))
+  # expect warning for mismatched columns
+  expect_message(
+    discrimination <- discrimination(ed1)
+  )
   
   expect_equal(nrow(discrimination$combined_data), nrow(postsynth_narrow$synthetic_data) + nrow(penguins_conf))
   

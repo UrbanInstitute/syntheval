@@ -1,7 +1,6 @@
 #' Create a histogram + KDE estimate for a numeric variable.
 #'
-#' @param joint_data A data.frame combining rows from confidential and synthetic 
-#' data, with the column 'source' identifying the two.
+#' @param eval_data An `eval_data` object.
 #' @param var_name Numeric variable name to plot.
 #' @param cat1_name Optional categorical variable to group by for subplots.
 #' @param cat2_name Optional categorical variable to group by for subplots.
@@ -9,10 +8,19 @@
 #' @return A `ggplot2` plot
 #' 
 #' @export
-plot_numeric_hist_kde <- function(joint_data,
+plot_numeric_hist_kde <- function(eval_data,
                                   var_name,
                                   cat1_name = NULL,
                                   cat2_name = NULL) {
+  
+  stopifnot(is_eval_data(eval_data))
+  
+  # construct joint_data
+  joint_data <- dplyr::bind_rows(
+    confidential = eval_data[["conf_data"]],
+    synthetic = eval_data[["synth_data"]], 
+    .id = "source"
+  )
   
   # check data types
   stopifnot(pillar::type_sum(joint_data[[var_name]]) == "dbl")
@@ -78,8 +86,7 @@ plot_numeric_hist_kde <- function(joint_data,
 
 #' Create bar charts for a categorical random variable.
 #'
-#' @param joint_data A data.frame combining rows from confidential and synthetic 
-#' data, with the column 'source' identifying the two.
+#' @param eval_data An `eval_data` object.
 #' @param var_name Categorical variable name to plot.
 #' @param cat1_name Optional categorical variable to group by for subplots.
 #' @param cat2_name Optional categorical variable to group by for subplots.
@@ -87,10 +94,19 @@ plot_numeric_hist_kde <- function(joint_data,
 #' @return A `ggplot2` plot
 #' 
 #' @export
-plot_categorical_bar <- function(joint_data,
+plot_categorical_bar <- function(eval_data,
                                  var_name,
                                  cat1_name = NULL,
                                  cat2_name = NULL) {
+  
+  stopifnot(is_eval_data(eval_data))
+  
+  # construct joint_data
+  joint_data <- dplyr::bind_rows(
+    confidential = eval_data[["conf_data"]],
+    synthetic = eval_data[["synth_data"]], 
+    .id = "source"
+  )
   
   # check data types
   stopifnot(pillar::type_sum(joint_data[[var_name]]) == "fct")
@@ -203,20 +219,23 @@ create_cormat_plot <- function(data, cor_method = "pearson") {
 
 #' Create side-by-side correlation heatmaps for numeric random variables.
 #'
-#' @param conf_data Confidential data
-#' @param synth_data Synthetic data
+#' @param eval_data An `eval_data` object.
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
-#' 
+#'
 #' @return A `ggplot2` plot
-#' 
+#'
 #' @export
-plot_cormat <- function(conf_data, synth_data, cor_method = "pearson") {
-  
-  p1 <- create_cormat_plot(conf_data, cor_method = cor_method) + 
+plot_cormat <- function(eval_data, cor_method = "pearson") {
+
+  stopifnot(is_eval_data(eval_data))
+
+  p1 <- create_cormat_plot(eval_data[["conf_data"]], cor_method = cor_method) +
     ggplot2::ggtitle("Confidential data")
-  p2 <- create_cormat_plot(synth_data, cor_method = cor_method) + 
+  p2 <- create_cormat_plot(eval_data[["synth_data"]], cor_method = cor_method) +
     ggplot2::ggtitle("Synthetic data")
-  
-  gridExtra::grid.arrange(p1, p2, nrow=1)
-  
+
+  plot <- gridExtra::grid.arrange(p1, p2, nrow = 1)
+
+  return(plot)
+
 }

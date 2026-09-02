@@ -5,9 +5,8 @@
 \title{Calculate totals for original and synthetic data.}
 \usage{
 util_totals(
-  postsynth,
-  data,
-  weight_var = 1,
+  eval_data,
+  weight_var = NULL,
   group_by = NULL,
   common_vars = TRUE,
   synth_vars = TRUE,
@@ -15,9 +14,7 @@ util_totals(
 )
 }
 \arguments{
-\item{postsynth}{A postsynth object or tibble with synthetic data}
-
-\item{data}{A data frame with the original data}
+\item{eval_data}{An \code{eval_data} object}
 
 \item{weight_var}{An unquoted name of a weight variable}
 
@@ -36,11 +33,9 @@ A \code{tibble} of totals.
 Calculate totals for original and synthetic data.
 }
 \seealso{
-Other utility metrics: 
-\code{\link{util_co_occurrence}()},
-\code{\link{util_corr_fit}()},
-\code{\link{util_moments}()},
-\code{\link{util_percentiles}()},
-\code{\link{util_tails}()}
+Other utility metrics:
+\code{\link[=util_corr_fit]{util_corr_fit()}},
+\code{\link[=util_moments]{util_moments()}},
+\code{\link[=util_percentiles]{util_percentiles()}}
 }
 \concept{utility metrics}
