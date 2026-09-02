@@ -92,7 +92,8 @@
         names_to = "var2",
         values_to = "correlation"
       ) |>
-      dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation")))
+      dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation"))) |>
+      dplyr::filter(var1 != var2)
 
     return(correlation_matrix)
 

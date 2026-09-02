@@ -4,10 +4,11 @@ df <- data.frame(a = c(1, 2, 3),
                  c = c(1, 2, 3),
                  RECID = c("a", "b", "c"))
 
+# with diagonal elements removed (all off-diagonal pairs)
 diff_table <- tibble::tibble(
-  var1 = c("a", "a", "a", "c", "c", "c", "b", "b", "b"),
-  var2 = c("a", "c", "b", "a", "c", "b", "a", "c", "b"),
-  difference = c(0, -2, 0, -2, 0, -2, 0, -2, 0)
+  var1 = c("a", "a", "b", "b", "c", "c"),
+  var2 = c("b", "c", "a", "c", "a", "b"),
+  difference = c(0, -2, 0, -2, -2, -2)
 )
 
 # test with postsynth, ungrouped
@@ -35,6 +36,8 @@ test_that("util_corr_fit is correct with postsynth, ungrouped", {
 
   
   expect_equal(actual_diff, expected_diff)
+  # Verify no diagonal elements
+  expect_true(!any(actual_diff$var1 == actual_diff$var2))
   expect_equal(
     corr$correlation_fit,
     sqrt(sum(expected_diff$difference ^ 2)) / nrow(expected_diff)
@@ -69,6 +72,8 @@ test_that("util_corr_fit is correct with postsynth, ungrouped", {
     dplyr::arrange(var1, var2)
 
   expect_equal(actual_diff, expected_diff)
+  # Verify no diagonal elements
+  expect_true(!any(actual_diff$var1 == actual_diff$var2))
   expect_equal(
     corr$correlation_fit,
     sqrt(sum(expected_diff$difference ^ 2)) / nrow(expected_diff)
@@ -93,6 +98,8 @@ test_that("util_corr_fit works with NA ", {
     dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
   
+  # Verify no diagonal elements
+  expect_true(!any(actual_diff$var1 == actual_diff$var2))
   expect_equal(max(corr$correlation_difference$difference, na.rm = TRUE), 0)
   expect_equal(corr$correlation_fit, 0)
   expect_equal(corr$correlation_difference_mae, 0)
@@ -109,6 +116,8 @@ test_that("util_corr_fit works with group_by_q", {
     dplyr::select(marst, var1, var2, difference) |>
     dplyr::arrange(marst, var1, var2)
 
+  # Verify no diagonal elements
+  expect_true(!any(actual_diff$var1 == actual_diff$var2))
   expect_equal(max(corr$correlation_difference$difference, na.rm = TRUE), 0)
   expect_equal(max(corr$correlation_difference_mae$correlation_difference_mae, na.rm = TRUE), 0)
   expect_equal(max(corr$correlation_difference_rmse$correlation_difference_rmse, na.rm = TRUE), 0)
