@@ -4,22 +4,28 @@
 \alias{util_pred}
 \title{Fit models and generate predictions comparing confidential and synthetic data}
 \usage{
-util_pred(eval_data, workflow)
+util_pred(eval_data, workflow, equalize_data = FALSE)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}
 
 \item{workflow}{An unfitted \code{workflow} object from the \code{workflows} package.}
+
+\item{equalize_data}{a logical evaluating to TRUE or FALSE indicating whether
+the number of rows in the data should be equalized. This functionality is
+only supported when holdout data are not used.}
 }
 \value{
 A \code{pred} object, a list with:
 \itemize{
-\item \code{procedure}: \code{"holdout"}.
+\item \code{procedure}: \code{"holdout"} or \code{"split"}.
 \item \code{models}: a list with the fitted \code{confidential} and \code{synthetic} workflows.
 \item \code{predictions}: a tibble of predictions from each fitted model, with a
-\code{source} column (\code{"confidential"} or \code{"synthetic"}), prediction columns
-from \code{predict()}, and the evaluation data columns (including the
-outcome).
+\code{model} column (\code{"confidential"} or \code{"synthetic"}, identifying which
+fitted model made the prediction), a \code{data} column (\code{"confidential"}
+or \code{"synthetic"}, identifying which data was predicted on; always
+\code{"holdout"} for the holdout procedure), prediction columns from
+\code{predict()}, and the evaluation data columns (including the outcome).
 }
 }
 \description{
@@ -28,8 +34,10 @@ data, then generates predictions from both fitted models. Dispatches on
 whether \code{eval_data} contains \code{holdout_data}: if present, both fitted models
 generate predictions on the holdout data, which is the strongest assessment
 of predictive utility because the holdout data are never used for
-synthesis or model fitting/tuning. Currently only this holdout procedure is
-supported; a future iteration will add a no-holdout procedure.
+synthesis or model fitting/tuning. If absent, the confidential data are
+split into modeling and implementation partitions, the synthetic data are
+split the same way, and both fitted models generate predictions on both
+implementation partitions (a 4-way cross of model x data).
 }
 \seealso{
 Other Predictive utility metrics:
