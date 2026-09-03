@@ -21,10 +21,11 @@ A \code{pred} object, a list with:
 \item \code{procedure}: \code{"holdout"} or \code{"split"}.
 \item \code{models}: a list with the fitted \code{confidential} and \code{synthetic} workflows.
 \item \code{predictions}: a tibble of predictions from each fitted model, with a
-\code{source} column (\code{"confidential"} or \code{"synthetic"}, or, for the split
-procedure, \code{"confidential diagnostic"} or \code{"synthetic diagnostic"}),
-prediction columns from \code{predict()}, and the evaluation data columns
-(including the outcome).
+\code{model} column (\code{"confidential"} or \code{"synthetic"}, identifying which
+fitted model made the prediction), a \code{data} column (\code{"confidential"}
+or \code{"synthetic"}, identifying which data was predicted on; always
+\code{"holdout"} for the holdout procedure), prediction columns from
+\code{predict()}, and the evaluation data columns (including the outcome).
 }
 }
 \description{

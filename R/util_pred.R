@@ -20,10 +20,11 @@
 #'   * `procedure`: `"holdout"` or `"split"`.
 #'   * `models`: a list with the fitted `confidential` and `synthetic` workflows.
 #'   * `predictions`: a tibble of predictions from each fitted model, with a
-#'     `source` column (`"confidential"` or `"synthetic"`, or, for the split
-#'     procedure, `"confidential diagnostic"` or `"synthetic diagnostic"`),
-#'     prediction columns from `predict()`, and the evaluation data columns
-#'     (including the outcome).
+#'     `model` column (`"confidential"` or `"synthetic"`, identifying which
+#'     fitted model made the prediction), a `data` column (`"confidential"`
+#'     or `"synthetic"`, identifying which data was predicted on; always
+#'     `"holdout"` for the holdout procedure), prediction columns from
+#'     `predict()`, and the evaluation data columns (including the outcome).
 #'
 #' @family Predictive utility metrics
 #'
@@ -89,28 +90,32 @@ util_pred <- function(eval_data, workflow, equalize_data = FALSE) {
     }
     
     conf_predictions <- dplyr::bind_cols(
-      source = "confidential",
+      model = "confidential",
+      data = "confidential",
       stats::predict(conf_model, new_data = conf_implementation),
       conf_on_conf_probs,
       conf_implementation
     )
     
     synth_predictions <- dplyr::bind_cols(
-      source = "synthetic",
+      model = "synthetic",
+      data = "confidential",
       stats::predict(synth_model, new_data = conf_implementation),
       synth_on_conf_probs,
       conf_implementation
     )
     
     conf_diagnostic_predictions <- dplyr::bind_cols(
-      source = "confidential diagnostic",
+      model = "confidential",
+      data = "synthetic",
       stats::predict(conf_model, new_data = synth_implementation),
       conf_on_synth_probs,
       synth_implementation
     )
     
     synth_diagnostic_predictions <- dplyr::bind_cols(
-      source = "synthetic diagnostic",
+      model = "synthetic",
+      data = "synthetic",
       stats::predict(synth_model, new_data = synth_implementation),
       synth_on_synth_probs,
       synth_implementation
@@ -161,14 +166,16 @@ util_pred <- function(eval_data, workflow, equalize_data = FALSE) {
     # keep the holdout outcome and covariates alongside predictions so
     # pred_*() functions can compute metrics without needing eval_data again
     conf_predictions <- dplyr::bind_cols(
-      source = "confidential",
+      model = "confidential",
+      data = "holdout",
       stats::predict(conf_model, new_data = eval_data$holdout_data),
       conf_probs,
       eval_data$holdout_data
     )
     
     synth_predictions <- dplyr::bind_cols(
-      source = "synthetic",
+      model = "synthetic",
+      data = "holdout",
       stats::predict(synth_model, new_data = eval_data$holdout_data),
       synth_probs,
       eval_data$holdout_data
@@ -197,8 +204,8 @@ util_pred <- function(eval_data, workflow, equalize_data = FALSE) {
 #'
 #' @param pred A `pred` object created by `util_pred()`.
 #'
-#' @return A tibble with one row per data source (`confidential`/`synthetic`)
-#' and the ROC AUC for predictions from that source's model.
+#' @return A tibble with one row per `model`/`data` combination and the ROC
+#' AUC for those predictions.
 #'
 #' @family Predictive utility metrics
 #'
@@ -213,7 +220,7 @@ pred_auc <- function(pred) {
   prob_col <- paste0(".pred_", event_level)
 
   pred$predictions |>
-    dplyr::group_by(.data$source) |>
+    dplyr::group_by(.data$model, .data$data) |>
     yardstick::roc_auc(truth = !!rlang::sym(outcome), !!rlang::sym(prob_col)) |>
     dplyr::ungroup()
 
@@ -223,8 +230,8 @@ pred_auc <- function(pred) {
 #'
 #' @param pred A `pred` object created by `util_pred()`.
 #'
-#' @return A tibble with one row per data source (`confidential`/`synthetic`)
-#' and the precision of predictions from that source's model.
+#' @return A tibble with one row per `model`/`data` combination and the
+#' precision for those predictions.
 #'
 #' @family Predictive utility metrics
 #'
@@ -237,8 +244,8 @@ pred_precision <- function(pred) {
   outcome <- .pred_outcome_name(pred)
 
   pred$predictions |>
-    dplyr::group_by(.data$source) |>
-    yardstick::precision(truth = !!rlang::sym(outcome), estimate = .pred_class) |>
+    dplyr::group_by(.data$model, .data$data) |>
+    yardstick::precision(truth = !!rlang::sym(outcome), estimate = .data$.pred_class) |>
     dplyr::ungroup()
 
 }
@@ -247,8 +254,8 @@ pred_precision <- function(pred) {
 #'
 #' @param pred A `pred` object created by `util_pred()`.
 #'
-#' @return A tibble with one row per data source (`confidential`/`synthetic`)
-#' and the recall of predictions from that source's model.
+#' @return A tibble with one row per `model`/`data` combination and the
+#' recall for those predictions.
 #'
 #' @family Predictive utility metrics
 #'
@@ -261,8 +268,8 @@ pred_recall <- function(pred) {
   outcome <- .pred_outcome_name(pred)
 
   pred$predictions |>
-    dplyr::group_by(.data$source) |>
-    yardstick::recall(truth = !!rlang::sym(outcome), estimate = .pred_class) |>
+    dplyr::group_by(.data$model, .data$data) |>
+    yardstick::recall(truth = !!rlang::sym(outcome), estimate = .data$.pred_class) |>
     dplyr::ungroup()
 
 }
@@ -271,8 +278,8 @@ pred_recall <- function(pred) {
 #'
 #' @param pred A `pred` object created by `util_pred()`.
 #'
-#' @return A tibble with one row per data source (`confidential`/`synthetic`)
-#' and the RMSE of predictions from that source's model.
+#' @return A tibble with one row per `model`/`data` combination and the RMSE
+#' for those predictions.
 #'
 #' @family Predictive utility metrics
 #'
@@ -285,8 +292,8 @@ pred_rmse <- function(pred) {
   outcome <- .pred_outcome_name(pred)
 
   pred$predictions |>
-    dplyr::group_by(.data$source) |>
-    yardstick::rmse(truth = !!rlang::sym(outcome), estimate = .pred) |>
+    dplyr::group_by(.data$model, .data$data) |>
+    yardstick::rmse(truth = !!rlang::sym(outcome), estimate = .data$.pred) |>
     dplyr::ungroup()
 
 }
@@ -295,8 +302,8 @@ pred_rmse <- function(pred) {
 #'
 #' @param pred A `pred` object created by `util_pred()`.
 #'
-#' @return A tibble with one row per data source (`confidential`/`synthetic`)
-#' and the MAE of predictions from that source's model.
+#' @return A tibble with one row per `model`/`data` combination and the MAE
+#' for those predictions.
 #'
 #' @family Predictive utility metrics
 #'
@@ -309,8 +316,8 @@ pred_mae <- function(pred) {
   outcome <- .pred_outcome_name(pred)
 
   pred$predictions |>
-    dplyr::group_by(.data$source) |>
-    yardstick::mae(truth = !!rlang::sym(outcome), estimate = .pred) |>
+    dplyr::group_by(.data$model, .data$data) |>
+    yardstick::mae(truth = !!rlang::sym(outcome), estimate = .data$.pred) |>
     dplyr::ungroup()
 
 }
@@ -321,7 +328,9 @@ pred_mae <- function(pred) {
 #' synthetic predictions (y-axis). For classification models, plots
 #' confidential predicted probabilities (x-axis) against synthetic predicted
 #' probabilities (y-axis), colored by whether the predicted classes agree.
-#' Only binary classification models are supported.
+#' Only binary classification models are supported. For the split procedure,
+#' the plot is faceted by `data` to separate the confidential-data comparison
+#' from the synthetic-data diagnostic.
 #'
 #' @param pred A `pred` object created by `util_pred()`.
 #' @param coord_equal Boolean for whether to fix the aspect ratio to 1:1 with
@@ -339,10 +348,12 @@ pred_visualize <- function(pred, coord_equal = TRUE) {
 
   is_classification <- ".pred_class" %in% names(pred$predictions)
 
-  # a row identifier is needed to align each holdout observation's
-  # confidential and synthetic predictions, which are stored in long form
+  # a row identifier is needed to align each row's confidential and
+  # synthetic model predictions, which are stored in long form; rows only
+  # align within the same `data`/`model` group (e.g. confidential model vs.
+  # synthetic model, both predicting on the confidential data, in row order)
   predictions <- pred$predictions |>
-    dplyr::group_by(.data$source) |>
+    dplyr::group_by(.data$data, .data$model) |>
     dplyr::mutate(.id = dplyr::row_number()) |>
     dplyr::ungroup()
 
@@ -368,10 +379,10 @@ pred_visualize <- function(pred, coord_equal = TRUE) {
     prob_col <- paste0(".pred_", event_level)
 
     wide <- predictions |>
-      dplyr::select(".id", "source", ".pred_class", !!rlang::sym(prob_col)) |>
+      dplyr::select(".id", "data", "model", ".pred_class", !!rlang::sym(prob_col)) |>
       tidyr::pivot_wider(
-        id_cols = ".id",
-        names_from = "source",
+        id_cols = c(".id", "data"),
+        names_from = "model",
         values_from = c(".pred_class", prob_col)
       ) |>
       dplyr::mutate(
@@ -386,20 +397,23 @@ pred_visualize <- function(pred, coord_equal = TRUE) {
         color = .data$match
       )
     ) +
+      ggplot2::geom_abline(color = "red") +
       ggplot2::geom_point(alpha = 0.5) +
+      ggplot2::scale_x_continuous(limits = c(0, 1)) +
+      ggplot2::scale_y_continuous(limits = c(0, 1)) +
       ggplot2::labs(
         x = "Confidential predicted probability",
         y = "Synthetic predicted probability",
         color = "Predicted classes match"
       )
 
-  } else {
+  } else if (!is_classification) {
 
     wide <- predictions |>
-      dplyr::select(".id", "source", ".pred") |>
+      dplyr::select(".id", "data", "model", ".pred") |>
       tidyr::pivot_wider(
-        id_cols = ".id",
-        names_from = "source",
+        id_cols = c(".id", "data"),
+        names_from = "model",
         values_from = ".pred"
       )
 
@@ -407,11 +421,20 @@ pred_visualize <- function(pred, coord_equal = TRUE) {
       wide,
       ggplot2::aes(x = .data$confidential, y = .data$synthetic)
     ) +
+      ggplot2::geom_abline(color = "red") +
       ggplot2::geom_point(alpha = 0.5) +
       ggplot2::labs(
         x = "Confidential prediction",
         y = "Synthetic prediction"
       )
+
+  }
+
+  # the split procedure evaluates both models against confidential and
+  # synthetic data, so facet by `data` to separate the two comparisons
+  if (pred[["procedure"]] == "split") {
+
+    plot <- plot + ggplot2::facet_wrap(~ data)
 
   }
 
