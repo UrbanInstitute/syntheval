@@ -4,7 +4,7 @@
 \alias{util_pred}
 \title{Fit models and generate predictions comparing confidential and synthetic data}
 \usage{
-util_pred(eval_data, workflow, equalize_data = FALSE)
+util_pred(eval_data, workflow, equalize_data = FALSE, prop = 0.8)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}
@@ -14,6 +14,11 @@ util_pred(eval_data, workflow, equalize_data = FALSE)
 \item{equalize_data}{a logical evaluating to TRUE or FALSE indicating whether
 the number of rows in the data should be equalized. This functionality is
 only supported when holdout data are not used.}
+
+\item{prop}{a numeric value between 0 and 1 giving the proportion of data
+used for the modeling partition when splitting into modeling and
+implementation partitions. Only used when holdout data are not used.
+Defaults to 0.8.}
 }
 \value{
 A \code{pred} object, a list with:

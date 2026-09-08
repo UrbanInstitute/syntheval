@@ -15,6 +15,10 @@
 #' @param equalize_data a logical evaluating to TRUE or FALSE indicating whether
 #' the number of rows in the data should be equalized. This functionality is 
 #' only supported when holdout data are not used.
+#' @param prop a numeric value between 0 and 1 giving the proportion of data
+#' used for the modeling partition when splitting into modeling and
+#' implementation partitions. Only used when holdout data are not used.
+#' Defaults to 0.8.
 #'
 #' @return A `pred` object, a list with:
 #'   * `procedure`: `"holdout"` or `"split"`.
@@ -30,11 +34,12 @@
 #'
 #' @export
 #'
-util_pred <- function(eval_data, workflow, equalize_data = FALSE) {
+util_pred <- function(eval_data, workflow, equalize_data = FALSE, prop = 0.8) {
 
   stopifnot(inherits(workflow, "workflow"))
   # multiple synthetic replicates aren't supported yet
   stopifnot(eval_data$n_rep == 1)
+  stopifnot(is.numeric(prop), prop > 0, prop < 1)
   
   if (is.null(eval_data$holdout_data)) {
 
@@ -53,9 +58,11 @@ util_pred <- function(eval_data, workflow, equalize_data = FALSE) {
     
     # split the confidential data into modeling data and implementation data,
     # and split the synthetic data the same way so a synthetic implementation
-    # partition is available for the diagnostic comparison
-    conf_split <- rsample::initial_split(conf_data, prop = 0.8)
-    synth_split <- rsample::initial_split(synth_data, prop = 0.8)
+    # partition is available for the diagnostic comparison; stratify by the
+    # outcome so imbalanced classes aren't dropped from either partition
+    outcome <- .workflow_outcome_name(workflow)
+    conf_split <- rsample::initial_split(conf_data, prop = prop, strata = outcome)
+    synth_split <- rsample::initial_split(synth_data, prop = prop, strata = outcome)
     
     conf_modeling <- rsample::training(conf_split)
     conf_implementation <- rsample::testing(conf_split)
@@ -200,6 +207,25 @@ util_pred <- function(eval_data, workflow, equalize_data = FALSE) {
   names(workflows::extract_mold(pred$models$confidential)$outcomes)
 }
 
+# util_pred() needs the outcome name before fitting (to stratify the
+# train/test split), so it must be read from the unfitted workflow's
+# preprocessor instead of a fitted mold
+.workflow_outcome_name <- function(workflow) {
+
+  preprocessor <- workflows::extract_preprocessor(workflow)
+
+  if (inherits(preprocessor, "recipe")) {
+
+    preprocessor$var_info$variable[preprocessor$var_info$role == "outcome"]
+
+  } else {
+
+    all.vars(preprocessor[[2]])
+
+  }
+
+}
+
 #' Area under the ROC curve for a `pred` object
 #'
 #' @param pred A `pred` object created by `util_pred()`.
@@ -216,12 +242,25 @@ pred_auc <- function(pred) {
   stopifnot(inherits(pred, "pred"))
 
   outcome <- .pred_outcome_name(pred)
+
+  if (nlevels(pred$predictions[[outcome]]) != 2) {
+
+    stop("pred_auc() only supports binary classification models.", call. = FALSE)
+
+  }
+
   event_level <- levels(pred$predictions[[outcome]])[1]
   prob_col <- paste0(".pred_", event_level)
 
   pred$predictions |>
     dplyr::group_by(.data$model, .data$data) |>
-    yardstick::roc_auc(truth = !!rlang::sym(outcome), !!rlang::sym(prob_col)) |>
+    # event_level is pinned to "first" to match prob_col, regardless of the
+    # global options(yardstick.event_first) setting
+    yardstick::roc_auc(
+      truth = !!rlang::sym(outcome),
+      !!rlang::sym(prob_col),
+      event_level = "first"
+    ) |>
     dplyr::ungroup()
 
 }
