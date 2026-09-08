@@ -127,10 +127,12 @@
     # the "event" level, which defaults to the first factor level
     return(prob_matrix[, 1])
     
+  } else {
+    
+    # yardstick's multiclass _vec() metrics expect a matrix with one column per
+    # level, in level order, instead of a single vector
+    return(prob_matrix)
+    
   }
-  
-  # yardstick's multiclass _vec() metrics expect a matrix with one column per
-  # level, in level order, instead of a single vector
-  return(prob_matrix)
-  
+    
 }

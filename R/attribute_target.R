@@ -89,7 +89,7 @@
     
   } else {
     
-    folds <- rsample::vfold_cv(data = training_data, v = v)
+    folds <- rsample::vfold_cv(data = training_data, v = v, strata = strata)
     
     tune_metric <- if (mode == "classification") "roc_auc" else "rmse"
     
