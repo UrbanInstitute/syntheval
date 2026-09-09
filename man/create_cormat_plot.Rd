@@ -4,7 +4,7 @@
 \alias{create_cormat_plot}
 \title{Create a correlation heatmap for numeric random variables.}
 \usage{
-create_cormat_plot(data, cor_method = "pearson")
+create_cormat_plot(data, cor_method = "pearson", group_by_q = NULL)
 }
 \arguments{
 \item{data}{A data.frame/}

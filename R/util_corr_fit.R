@@ -1,4 +1,75 @@
+#' Calculate the lower triangle of a correlation matrix for numeric random variables.
 #' 
+#' @param x A data.frame
+#' @param use optional character string giving a method for computing
+#' covariances in the presence of missing values. This must be (an abbreviation
+#' of) one of the strings "everything", "all.obs", "complete.obs",
+#' "na.or.complete", or "pairwise.complete.obs".
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation matrix will be calculated
+#' for each group separately.
+#' 
+#' @return A data.frame with columns for the variable pairs and their correlation values.
+
+.lower_triangle <- function(x, use, group_by_q = NULL) {
+
+  # find the linear correlation matrix of numeric variables from a data set
+  if (!is.null(group_by_q)) {
+
+    correlation_matrix <-
+      x |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
+      dplyr::summarise(
+        cor = list({
+          m <-
+            stats::cor(
+              dplyr::pick(tidyselect::where(is.numeric)),
+              use = use
+            )
+          tibble::as_tibble(m, rownames = "var1")
+        }),
+        .groups = "drop"
+      ) |>
+      tidyr::unnest(cor)
+
+  } else {
+
+    # ungrouped version
+    correlation_matrix <-
+      x |>
+      dplyr::select(tidyselect::where(is.numeric)) |>
+      stats::cor(use = use)
+
+  }
+
+  # convert correlation matrix to long format to facilitate
+  # comparisons between original and synthetic data correlation matrices
+  # that are robust to the presence of grouping variables
+
+  # handle matrix (no groups) vs tibble (grouped) uniformly
+  if (is.matrix(correlation_matrix)) {
+    correlation_matrix <- tibble::as_tibble(correlation_matrix, rownames = "var1")
+  }
+
+  id_cols <- intersect(c("var1", group_by_q), names(correlation_matrix))
+
+  correlation_matrix <- correlation_matrix |>
+    tidyr::pivot_longer(
+      cols = -dplyr::all_of(id_cols),
+      names_to = "var2",
+      values_to = "correlation"
+    ) |>
+    dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation"))) |>
+    dplyr::filter(var1 != var2)
+
+  # delete duplicate correlations so it is a true lower triangle
+  correlation_matrix <- correlation_matrix |>
+    dplyr::filter(var1 > var2)
+
+  return(correlation_matrix)
+
+}
+
 #' Calculate the correlation fit metric of a confidential data set.
 #'
 #' @param synth_data A data.frame with synthetic data
@@ -19,7 +90,7 @@
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
 #'  cells in the correlation matrix.
-#' 
+
 .util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL) {
 
   # Create list of variables to subset synth_data and conf_data
@@ -33,7 +104,7 @@
       names()
   )
   # Second, add group_by variables to the list if supplied
-  if(!is.null(group_by_q)) {
+  if (!is.null(group_by_q)) {
     vars_select <- c(intersect_numeric, group_by_q)
   } else {
     vars_select <- intersect_numeric
@@ -43,71 +114,11 @@
   synth_data <- dplyr::select(synth_data, dplyr::all_of(vars_select))
   conf_data <- dplyr::select(conf_data, dplyr::all_of(vars_select))
 
-  # helper function to find a correlation matrix with the upper tri set to zeros
-  lower_triangle <- function(x, use) {
-
-    # find the linear correlation matrix of numeric variables from a data set
-    if (!is.null(group_by_q)) {
-
-      correlation_matrix <-
-        x |>
-        dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
-        dplyr::summarise(
-          cor = list({
-            m <-
-              stats::cor(
-                dplyr::pick(tidyselect::where(is.numeric)),
-                use = use
-              )
-            tibble::as_tibble(m, rownames = "var1")
-          }),
-          .groups = "drop"
-        ) |>
-        tidyr::unnest(cor)
-
-    } else {
-
-      # ungrouped version
-      correlation_matrix <-
-        x |>
-        dplyr::select(tidyselect::where(is.numeric)) |>
-        stats::cor(use = use)
-
-    }
-
-    # convert correlation matrix to long format to facilitate
-    # comparisons between original and synthetic data correlation matrices
-    # that are robust to the presence of grouping variables
-
-    # handle matrix (no groups) vs tibble (grouped) uniformly
-    if (is.matrix(correlation_matrix)) {
-      correlation_matrix <- tibble::as_tibble(correlation_matrix, rownames = "var1")
-    }
-
-    id_cols <- intersect(c("var1", group_by_q), names(correlation_matrix))
-
-    correlation_matrix <- correlation_matrix |>
-      tidyr::pivot_longer(
-        cols = -dplyr::all_of(id_cols),
-        names_to = "var2",
-        values_to = "correlation"
-      ) |>
-      dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation"))) |>
-      dplyr::filter(var1 != var2)
-
-    # delete duplicate correlations so it is a true lower triangle
-    correlation_matrix <- correlation_matrix |>
-      dplyr::filter(var1 > var2)
-
-    return(correlation_matrix)
-
-  }
-
   # find the lower triangle of the original data linear correlation matrix
-  original_lt <- lower_triangle(conf_data, use = use)
+  original_lt <- .lower_triangle(conf_data, use = use, group_by_q = group_by_q)
 
   # find the lower triangle of the synthetic data linear correlation matrix
-  synthetic_lt <- lower_triangle(synth_data, use = use)
+  synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q)
 
   # check that the variable pairs in the original and synthetic data correlation matrices are the same
   # replaces previous check on rownames and colnames of correlation matrices
