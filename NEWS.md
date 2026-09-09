@@ -3,6 +3,7 @@
 - Add `attribute_scan()` functionality for discovery attribute inference metrics.
 * Add `util_k_marginals()` to calculate the k-marginals metric for 1-, 2-, and 3-way marginals, with worst-marginal and worst-cell output, marginal sampling with priority variables, sample weights, a `synth_vars` flag to restrict marginals to synthesized variables, `na.rm` handling of missing values, `group_by` stratification with per-stratum scores, and discretization of numeric variables. (#20)
 * Add optional parallelization to the bootstrapped null pMSEs in `add_pmse_ratio()` via `furrr`; enable it with `future::plan()`. Results for a given seed change relative to earlier versions because bootstrap iterations now use parallel-safe L'Ecuyer-CMRG streams. (#113)
+* Add GLMs to confidence interval overlap in `util_ci_overlap()`. (#128)
 
 # syntheval 0.0.5 (release)
 

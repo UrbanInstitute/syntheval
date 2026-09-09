@@ -138,7 +138,7 @@ pred_precision <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$source) |>
-    yardstick::precision(truth = !!rlang::sym(outcome), estimate = .pred_class) |>
+    yardstick::precision(truth = !!rlang::sym(outcome), estimate = .data$.pred_class) |>
     dplyr::ungroup()
 
 }
@@ -162,7 +162,7 @@ pred_recall <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$source) |>
-    yardstick::recall(truth = !!rlang::sym(outcome), estimate = .pred_class) |>
+    yardstick::recall(truth = !!rlang::sym(outcome), estimate = .data$.pred_class) |>
     dplyr::ungroup()
 
 }
@@ -186,7 +186,7 @@ pred_rmse <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$source) |>
-    yardstick::rmse(truth = !!rlang::sym(outcome), estimate = .pred) |>
+    yardstick::rmse(truth = !!rlang::sym(outcome), estimate = .data$.pred) |>
     dplyr::ungroup()
 
 }
@@ -210,7 +210,7 @@ pred_mae <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$source) |>
-    yardstick::mae(truth = !!rlang::sym(outcome), estimate = .pred) |>
+    yardstick::mae(truth = !!rlang::sym(outcome), estimate = .data$.pred) |>
     dplyr::ungroup()
 
 }
