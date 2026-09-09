@@ -4,12 +4,72 @@ df <- data.frame(a = c(1, 2, 3),
                  c = c(1, 2, 3),
                  RECID = c("a", "b", "c"))
 
-# with diagonal elements removed (all off-diagonal pairs)
+# true lower triangle: diagonal elements removed and each pair appears only
+# once (var1 > var2), so no duplicate/mirrored pairings remain
 diff_table <- tibble::tibble(
-  var1 = c("a", "a", "b", "b", "c", "c"),
-  var2 = c("b", "c", "a", "c", "a", "b"),
-  difference = c(0, -2, 0, -2, -2, -2)
+  var1 = c("b", "c", "c"),
+  var2 = c("a", "a", "b"),
+  difference = c(0, -2, -2)
 )
+
+
+test_that("util_corr_fit returns a true lower triangle correlation matrix", {
+  
+  # create a synthetic data frame with the same structure as df
+  synth_data <- data.frame(a = c(1, 2, 3),
+                           b = c(1, 2, 3),
+                           c = c(3, 2, 1),
+                           RECID = c("a", "b", "c"))
+  
+  ed <- eval_data(conf_data = df, synth_data = synth_data)
+  
+  corr <- util_corr_fit(ed)
+  
+  original_lt <- corr$correlation_original
+  synthetic_lt <- corr$correlation_synthetic
+  
+  # check that the variable pairs in the original and synthetic data correlation matrices are the same
+  original_pairs <- original_lt |>
+    dplyr::distinct(var1, var2)
+  
+  synthetic_pairs <- synthetic_lt |>
+    dplyr::distinct(var1, var2)
+  
+  expect_true(dplyr::setequal(original_pairs, synthetic_pairs))
+  
+  # check that the diagonal elements are removed
+  expect_true(!any(original_lt$var1 == original_lt$var2))
+  expect_true(!any(synthetic_lt$var1 == synthetic_lt$var2))
+
+  # with 3 numeric variables (a, b, c) there are only 3 unique pairs in a true
+  # lower triangle (no mirrored/duplicate pairings like a-b and b-a)
+  expect_equal(nrow(original_lt), 3)
+  expect_equal(nrow(synthetic_lt), 3)
+
+  # now check pairs are distinct within groups if using group_by_q
+  df_grouped <- df |>
+    dplyr::mutate(group = c("A", "A", "B"))
+
+  ed_grouped <- eval_data(conf_data = df_grouped, synth_data = df_grouped)
+
+  corr_grouped <- util_corr_fit(ed_grouped, group_by_q = "group")
+
+  correlation_matrix <- corr_grouped$correlation_original
+
+  expect_true(!any(correlation_matrix$var1 == correlation_matrix$var2))
+
+  # check that the variable pairs are distinct within each group, and that
+  # each group only has the 3 unique lower-triangle pairs (no duplicates)
+  distinct_pairs <- correlation_matrix |>
+    dplyr::group_by(dplyr::across(dplyr::all_of("group"))) |>
+    dplyr::distinct(var1, var2)
+
+  expect_equal(nrow(distinct_pairs), nrow(correlation_matrix))
+  expect_true(all(correlation_matrix |>
+    dplyr::count(group) |>
+    dplyr::pull(n) == 3))
+  
+})
 
 # test with postsynth, ungrouped
 test_that("util_corr_fit is correct with postsynth, ungrouped", {

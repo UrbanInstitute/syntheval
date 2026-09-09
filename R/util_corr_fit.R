@@ -95,6 +95,10 @@
       dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation"))) |>
       dplyr::filter(var1 != var2)
 
+    # delete duplicate correlations so it is a true lower triangle
+    correlation_matrix <- correlation_matrix |>
+      dplyr::filter(var1 > var2)
+
     return(correlation_matrix)
 
   }
