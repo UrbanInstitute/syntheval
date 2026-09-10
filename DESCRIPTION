@@ -23,6 +23,7 @@ BugReports: https://github.com/UI-Research/syntheval/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Suggests: 
+    dials,
     forcats,
     future,
     glmnet,
