@@ -34,6 +34,13 @@
     lm_original <- stats::glm(formula = formula, data = conf_data, family = family)
   }
   
+  if (!is.null(family) && !isTRUE(lm_original$converged)) {
+    
+    stop("The GLM fit on the confidential data did not converge. ",
+         "Check `formula` and `family`.", call. = FALSE)
+    
+  }
+  
   # synthetic model ---------------------------------------------------------
   if (is.null(family)) {
     lm_synth <- stats::lm(formula = formula, data = synth_data)
@@ -41,7 +48,16 @@
     lm_synth <- stats::glm(formula = formula, data = synth_data, family = family)
   }
   
-  compute_ci_overlap(original_model = lm_original, synthetic_model = lm_synth)
+  if (!is.null(family) && !isTRUE(lm_synth$converged)) {
+    
+    stop("The GLM fit on the synthetic data did not converge. ",
+         "Check `formula` and `family`.", call. = FALSE)
+    
+  }
+  
+  ci_overlap <- compute_ci_overlap(original_model = lm_original, synthetic_model = lm_synth)
+  
+  return(ci_overlap)
   
 }
 

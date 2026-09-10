@@ -71,7 +71,7 @@ test_that("compute_ci_overlap works with pre-fit lm models ", {
 })
 
 # test with postsynth
-test_that("binomial overlap is zero for identical data ", {
+test_that("binomial overlap is 1 for identical data ", {
 
   cars_binomial <- cars
   cars_binomial$crash <- as.numeric(cars_binomial$dist > 22)
@@ -178,7 +178,10 @@ test_that("util_ci_overlap errors when a glm does not converge ", {
   eval_data <- eval_data(conf_data = separated_data, synth_data = separated_data)
   
   expect_error(
-    suppressWarnings(util_ci_overlap(eval_data, formula = y ~ x, family = binomial))
+    suppressWarnings(
+      util_ci_overlap(eval_data, formula = y ~ x, family = binomial)
+    ),
+    regexp = "did not converge"
   )
   
 })
