@@ -38,6 +38,7 @@ Other Utility metrics:
 \code{\link[=add_propensities]{add_propensities()}},
 \code{\link[=add_propensities_tuned]{add_propensities_tuned()}},
 \code{\link[=add_specks]{add_specks()}},
+\code{\link[=compute_ci_overlap]{compute_ci_overlap()}},
 \code{\link[=discrimination]{discrimination()}},
 \code{\link[=util_ci_overlap]{util_ci_overlap()}},
 \code{\link[=util_ks_distance]{util_ks_distance()}},
