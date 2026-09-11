@@ -23,12 +23,12 @@ probabilities (y-axis), colored by whether the predicted classes agree.
 Only binary classification models are supported.
 }
 \seealso{
-Other Predictive utility metrics:
-\code{\link[=pred_auc]{pred_auc()}},
-\code{\link[=pred_mae]{pred_mae()}},
-\code{\link[=pred_precision]{pred_precision()}},
-\code{\link[=pred_recall]{pred_recall()}},
-\code{\link[=pred_rmse]{pred_rmse()}},
-\code{\link[=util_pred]{util_pred()}}
+Other Predictive utility metrics: 
+\code{\link{pred_auc}()},
+\code{\link{pred_mae}()},
+\code{\link{pred_precision}()},
+\code{\link{pred_recall}()},
+\code{\link{pred_rmse}()},
+\code{\link{util_pred}()}
 }
 \concept{Predictive utility metrics}
