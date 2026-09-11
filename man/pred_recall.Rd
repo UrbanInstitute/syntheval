@@ -10,8 +10,8 @@ pred_recall(pred)
 \item{pred}{A \code{pred} object created by \code{util_pred()}.}
 }
 \value{
-A tibble with one row per data source (\code{confidential}/\code{synthetic})
-and the recall of predictions from that source's model.
+A tibble with one row per \code{model}/\code{data} combination and the
+recall for those predictions.
 }
 \description{
 Recall for a \code{pred} object

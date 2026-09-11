@@ -20,7 +20,9 @@ For regression models, plots confidential predictions (x-axis) against
 synthetic predictions (y-axis). For classification models, plots
 confidential predicted probabilities (x-axis) against synthetic predicted
 probabilities (y-axis), colored by whether the predicted classes agree.
-Only binary classification models are supported.
+Only binary classification models are supported. For the split procedure,
+the plot is faceted by \code{data} to separate the confidential-data comparison
+from the synthetic-data diagnostic.
 }
 \seealso{
 Other Predictive utility metrics:
