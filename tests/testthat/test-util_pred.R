@@ -128,6 +128,7 @@ test_that("util_pred equalize_data equalizes the confidential and synthetic row 
     synth_data = small_synth
   )
   
+  set.seed(1)
   pred <- util_pred(ed, workflow = test_wf, equalize_data = TRUE)
   
   # the confidential and synthetic implementation partitions come from
