@@ -15,6 +15,7 @@ export(aggregate_qid_eval)
 export(attribute_scan)
 export(attribute_target)
 export(common_data)
+export(compute_ci_overlap)
 export(convert_na_to_level)
 export(create_cormat_plot)
 export(disc_baseline)
@@ -78,7 +79,5 @@ export(util_pred)
 export(util_proportions)
 export(util_totals)
 importFrom(magrittr,"%>%")
-importFrom(rlang,
-  ":=",
-  .data
-)
+importFrom(rlang,":=")
+importFrom(rlang,.data)
