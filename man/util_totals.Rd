@@ -37,6 +37,7 @@ Other utility metrics:
 \code{\link[=util_corr_fit]{util_corr_fit()}},
 \code{\link[=util_moments]{util_moments()}},
 \code{\link[=util_na_amount]{util_na_amount()}},
+\code{\link[=util_na_cluster]{util_na_cluster()}},
 \code{\link[=util_percentiles]{util_percentiles()}}
 }
 \concept{utility metrics}

@@ -84,15 +84,10 @@ distinct from the numeric `util_corr_fit()` metric) keeps both use cases:
   instead of raw values.
   - `.util_na_cluster(conf_data, synth_data, holdout_data = NULL, na_values = NULL)`:
     build indicator matrices per source, compute a pairwise co-occurrence measure
-    for conf and synth (+holdout), then `*_difference`, `*_mae`, `*_rmse` following
-    the same naming scheme as `util_corr_fit()`. Only include columns with at
+    for conf and synth (+holdout). Only include columns with at
     least one missing value in conf or synth (skip fully-observed columns to avoid
     degenerate all-zero rows/columns) and document this in `@return`.
-  - Open question: should the co-occurrence measure be a simple joint-missingness
-    proportion (matches `util_co_occurrence()`'s existing style) or a phi
-    coefficient (correlation between binary missingness indicators, more standard
-    for "clustering" and consistent with `util_corr_fit()`'s correlation framing)?
-    Decide before implementing.
+  - The metric should use  phi coefficient (correlation between binary missingness indicators.
   - `util_na_cluster(eval_data, na_values = NULL)`: validate + dispatch as above.
   - Add roxygen (`@param`, `@return` describing the co-occurrence
     matrices/difference/mae/rmse, `@family utility metrics`, `@examples`,
