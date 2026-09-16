@@ -18,13 +18,19 @@ util_constraints(
 
 \item{constraints_df_cat}{A categorical constraints data frame in the style of \code{tidysynthesis}.}
 
-\item{na.rm}{a logical evaluating to \code{TRUE} or \code{FALSE} indicating whether \code{NA} values should be stripped
+\item{na.rm}{A logical evaluating to \code{TRUE} or \code{FALSE} indicating whether \code{NA} values should be stripped
 before the computation proceeds.}
 }
 \value{
-A list with data frame with summary statistics for how often constraints apply and how often
+A list of data frames with summary statistics for how often constraints apply and how often
 constraints are satisfied. Each summary data frame has a \code{source} column identifying whether the row
-summarizes \code{conf_data}, \code{synth_data}, or \code{holdout_data}.
+summarizes \code{conf_data}, \code{synth_data}, or \code{holdout_data}. For example, \code{constraints_num} for a single
+numeric constraint looks like:\tabular{lllllllll}{
+   source \tab var \tab min \tab max \tab conditions \tab n_constraints_applies \tab n_constraints_met \tab prop_constraint_applies \tab prop_constraints_met \cr
+   conf_data \tab var2 \tab 0 \tab 3 \tab var1 <= 2 \tab 2 \tab NA \tab 0.5 \tab NA \cr
+   synth_data \tab var2 \tab 0 \tab 3 \tab var1 <= 2 \tab 2 \tab NA \tab 0.5 \tab NA \cr
+   holdout_data \tab var2 \tab 0 \tab 3 \tab var1 <= 2 \tab 2 \tab NA \tab 0.5 \tab NA \cr
+}
 }
 \description{
 Evaluate constraints

@@ -3,12 +3,19 @@
 #' @param eval_data An `eval_data` object.
 #' @param constraints_df_num A numeric constraints data frame in the style of `tidysynthesis`.
 #' @param constraints_df_cat A categorical constraints data frame in the style of `tidysynthesis`.
-#' @param na.rm a logical evaluating to `TRUE` or `FALSE` indicating whether `NA` values should be stripped 
+#' @param na.rm A logical evaluating to `TRUE` or `FALSE` indicating whether `NA` values should be stripped 
 #' before the computation proceeds.
 #'
-#' @returns A list with data frame with summary statistics for how often constraints apply and how often
+#' @returns A list of data frames with summary statistics for how often constraints apply and how often
 #' constraints are satisfied. Each summary data frame has a `source` column identifying whether the row
-#' summarizes `conf_data`, `synth_data`, or `holdout_data`.
+#' summarizes `conf_data`, `synth_data`, or `holdout_data`. For example, `constraints_num` for a single
+#' numeric constraint looks like:
+#'
+#' | source | var | min | max | conditions | n_constraints_applies | n_constraints_met | prop_constraint_applies | prop_constraints_met |
+#' |---|---|---|---|---|---|---|---|---|
+#' | conf_data | var2 | 0 | 3 | var1 <= 2 | 2 | NA | 0.5 | NA |
+#' | synth_data | var2 | 0 | 3 | var1 <= 2 | 2 | NA | 0.5 | NA |
+#' | holdout_data | var2 | 0 | 3 | var1 <= 2 | 2 | NA | 0.5 | NA |
 #'
 #' @export
 #'
@@ -34,6 +41,8 @@
 #'   constraints_df_cat = constraints_df_cat
 #' )
 util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_df_cat = NULL, na.rm = FALSE) {
+  
+  stopifnot(is_eval_data(eval_data))
   
   if (eval_data[["n_rep"]] > 1) {
     
@@ -63,7 +72,11 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
     
     res_num <- purrr::map(
       .x = sources,
-      .f = ~ .util_constraints_num(.x, constraints_df_num, na.rm)
+      .f = ~ .util_constraints_num(
+        data = .x, 
+        constraints_df_num = constraints_df_num, 
+        na.rm = na.rm
+      )
     ) |>
       dplyr::bind_rows(.id = "source")
     
@@ -95,7 +108,11 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
     
     res_cat <- purrr::map(
       .x = sources,
-      .f = ~ .util_constraints_cat(.x, constraints_df_cat, na.rm)
+      .f = ~ .util_constraints_cat(
+        data = .x, 
+        constraints_df_cat = constraints_df_cat, 
+        na.rm = na.rm
+      )
     ) |>
       dplyr::bind_rows(.id = "source")
     
@@ -124,11 +141,20 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
       
       r <- tibble::tibble(...)
       
-      # append if the constraint applies and if the constraint is met
+      # evaluate whether the constraint applies with the condition,
+      # replacing NA with no applicable constraint. Worked example for
+      # var = "var2", min = 0, max = 3, conditions = "var1 <= 2":
+      #
+      #   var1  var2  .tidynum_cond  .num_constraint_met
+      #   1     NA    TRUE           NA     condition TRUE, var2 missing
+      #   2     2     TRUE           TRUE   condition TRUE, 2 in [0, 3]
+      #   3     3     FALSE          FALSE  condition FALSE, never checked
+      #   4     4     FALSE          FALSE  condition FALSE, never checked
       row_contraints <- data |>
         dplyr::mutate(
           # evaluate whether the constraint applies with the condition,
           # replacing NA with no applicable constraint
+          # `r$conditions` is a string such as "age <= 17"
           .tidynum_cond = tidyr::replace_na(eval(parse(text = r$conditions)), FALSE),
           
           .num_constraint_met = (.data[[".tidynum_cond"]]) & 
@@ -154,10 +180,12 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
   ) |>
     dplyr::bind_rows()
   
-  dplyr::bind_cols(
+  result <- dplyr::bind_cols(
     constraints_df_num,
     res_num
   )
+  
+  return(result)
   
 }
 
@@ -171,16 +199,31 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
       
       r <- tibble::tibble(...)
       
-      # append if the constraint applies and if the constraint is met
+      # evaluate whether the constraint applies with the condition,
+      # replacing NA with no applicable constraint. Worked example for
+      # var = "var2", allowed = c("a", "b"), forbidden = NA, conditions = "var1 <= 2":
+      #
+      #   var1  var2  .tidynum_cond  .num_constraint_met
+      #   1     NA    TRUE           NA     condition TRUE, var2 missing
+      #   2     "a"   TRUE           TRUE   condition TRUE, "a" in allowed
+      #   3     "c"   FALSE          FALSE  condition FALSE, never checked
+      #   4     "c"   FALSE          FALSE  condition FALSE, never checked
       row_contraints <- data |>
         dplyr::mutate(
           # evaluate whether the constraint applies with the condition,
           # replacing NA with no applicable constraint
+          # `r$conditions` is a string such as "age <= 17"
           .tidynum_cond = tidyr::replace_na(eval(parse(text = r$conditions)), FALSE),
           
+          # `%in%` treats NA as never matching, which would silently mark a
+          # missing target value as meeting an allowed/forbidden constraint;
+          # force NA target values to NA here so missingness is not counted as met
           .num_constraint_met = (.data[[".tidynum_cond"]]) & 
-            (is.na(r$allowed) | .data[[r$var]] %in% r$allowed) &
-            (is.na(r$forbidden) | !.data[[r$var]] %in% r$forbidden)
+            dplyr::if_else(
+              is.na(.data[[r$var]]),
+              NA,
+              if (is.na(r$allowed)) !.data[[r$var]] %in% r$forbidden else .data[[r$var]] %in% r$allowed
+            )
           
         )
       
@@ -201,10 +244,12 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
   ) |>
     dplyr::bind_rows()
   
-  dplyr::bind_cols(
+  result <- dplyr::bind_cols(
     constraints_df_cat,
     res_cat
   )
+  
+  return(result)
   
 }
 
