@@ -4,7 +4,7 @@
 \alias{.util_ci_overlap}
 \title{Regression confidence interval overlap for one synthetic data replicate}
 \usage{
-.util_ci_overlap(synth_data, conf_data, formula)
+.util_ci_overlap(synth_data, conf_data, formula, family = NULL)
 }
 \arguments{
 \item{synth_data}{A data.frame with synthetic data}
@@ -12,6 +12,10 @@
 \item{conf_data}{A data.frame with the confidential data}
 
 \item{formula}{A formula for a linear regression model}
+
+\item{family}{An optional family argument, exactly as accepted by
+\code{stats::glm()}. When \code{NULL} (the default), \code{stats::lm()} is used to fit
+the model.}
 }
 \value{
 A list of two dataframes:

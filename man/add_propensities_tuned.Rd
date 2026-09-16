@@ -50,6 +50,7 @@ Other Utility metrics:
 \code{\link{add_pmse_ratio}()},
 \code{\link{add_propensities}()},
 \code{\link{add_specks}()},
+\code{\link{compute_ci_overlap}()},
 \code{\link{discrimination}()},
 \code{\link{util_ci_overlap}()},
 \code{\link{util_co_occurrence}()},
