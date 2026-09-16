@@ -7,12 +7,48 @@
 #' before the computation proceeds.
 #'
 #' @returns A list with data frame with summary statistics for how often constraints apply and how often
-#' constraints are satisfied.
+#' constraints are satisfied. Each summary data frame has a `source` column identifying whether the row
+#' summarizes `conf_data`, `synth_data`, or `holdout_data`.
 #'
 #' @export
 #'
 #' @examples
+#' ed <- eval_data(conf_data = acs_conf, synth_data = acs_lr_synths[[1]])
+#'
+#' constraints_df_num <- tibble::tribble(
+#'   ~var, ~min, ~max, ~conditions,
+#'   "age", 0, 17, "age <= 17"
+#' )
+#'
+#' constraints_df_cat <- tibble::tribble(
+#'   ~var, ~allowed, ~forbidden, ~conditions,
+#'   # marst is always Single when age <= 18
+#'   "marst", "Single", NA, "age <= 18",
+#'   # empstat is never Employed when age <= 18
+#'   "empstat", NA, "Employed", "age <= 18"
+#' )
+#'
+#' util_constraints(
+#'   eval_data = ed,
+#'   constraints_df_num = constraints_df_num,
+#'   constraints_df_cat = constraints_df_cat
+#' )
 util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_df_cat = NULL, na.rm = FALSE) {
+  
+  if (eval_data[["n_rep"]] > 1) {
+    
+    stop("only one synthesis is supported for now")
+    
+  }
+  
+  # gather whichever of conf_data/synth_data/holdout_data are available
+  sources <- list(
+    conf_data = eval_data[["conf_data"]],
+    synth_data = eval_data[["synth_data"]],
+    holdout_data = eval_data[["holdout_data"]]
+  )
+  
+  sources <- purrr::compact(sources)
   
   # check input data frames
   if (!is.null(constraints_df_num)) {
@@ -25,48 +61,11 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
       
     }
     
-    # iterate over each constraint row
-    res_num <- purrr::pmap(
-      .l = constraints_df_num,
-      .f = function(...) {
-        
-        r <- tibble::tibble(...)
-        
-        # append if the constraint applies and if the constraint is met
-        row_contraints <- eval_data[["synth_data"]] |>
-          dplyr::mutate(
-            # evaluate whether the constraint applies with the condition,
-            # replacing NA with no applicable constraint
-            .tidynum_cond = tidyr::replace_na(eval(parse(text = r$conditions)), FALSE),
-            
-            .num_constraint_met = (.tidynum_cond) & 
-              (.data[[r$var]] <= r$max) &
-              (.data[[r$var]] >= r$min)
-            
-          )
-        
-        # summarize the row-level data to a summary table and combine so there is
-        # on row per variable
-        row_contraints |>
-          dplyr::summarize(
-            n_constraints_applies = sum(.tidynum_cond, na.rm = na.rm),
-            n_constraints_met = sum(.num_constraint_met, na.rm = na.rm),
-            prop_constraint_applies = mean(.tidynum_cond, na.rm = na.rm)
-          ) |>
-          dplyr::mutate(
-            prop_constraints_met = n_constraints_met / n_constraints_applies
-          )
-        
-      }
-      
+    res_num <- purrr::map(
+      .x = sources,
+      .f = ~ .util_constraints_num(.x, constraints_df_num, na.rm)
     ) |>
-      dplyr::bind_rows()
-    
-    res_num <- dplyr::bind_cols(
-      constraints_df_num,
-      res_num
-      
-    )
+      dplyr::bind_rows(.id = "source")
     
   } else {
     
@@ -94,47 +93,11 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
       
     }
     
-    # iterate over each constraint row
-    res_cat <- purrr::pmap(
-      .l = constraints_df_cat,
-      .f = function(...) {
-        
-        r <- tibble::tibble(...)
-        
-        # append if the constraint applies and if the constraint is met
-        row_contraints <- eval_data[["synth_data"]] |>
-          dplyr::mutate(
-            # evaluate whether the constraint applies with the condition,
-            # replacing NA with no applicable constraint
-            .tidynum_cond = tidyr::replace_na(eval(parse(text = r$conditions)), FALSE),
-            
-            .num_constraint_met = (.tidynum_cond) & 
-              (is.na(r$allowed) | .data[[r$var]] %in% r$allowed) &
-              (is.na(r$forbidden) | !.data[[r$var]] %in% r$forbidden)
-            
-          )
-        
-        # summarize the row-level data to a summary table and combine so there is
-        # on row per variable
-        row_contraints |>
-          dplyr::summarize(
-            n_constraints_applies = sum(.tidynum_cond, na.rm = na.rm),
-            n_constraints_met = sum(.num_constraint_met, na.rm = na.rm),
-            prop_constraint_applies = mean(.tidynum_cond, na.rm = na.rm)
-          ) |>
-          dplyr::mutate(
-            prop_constraints_met = n_constraints_met / n_constraints_applies
-          )
-        
-      }
-      
+    res_cat <- purrr::map(
+      .x = sources,
+      .f = ~ .util_constraints_cat(.x, constraints_df_cat, na.rm)
     ) |>
-      dplyr::bind_rows()
-    
-    res_cat <- dplyr::bind_cols(
-      constraints_df_cat,
-      res_cat
-    )
+      dplyr::bind_rows(.id = "source")
     
   } else {
     
@@ -151,4 +114,97 @@ util_constraints <- function(eval_data, constraints_df_num = NULL, constraints_d
   
 }
 
+# evaluate numeric constraints for a single data frame
+.util_constraints_num <- function(data, constraints_df_num, na.rm) {
+  
+  # iterate over each constraint row
+  res_num <- purrr::pmap(
+    .l = constraints_df_num,
+    .f = function(...) {
+      
+      r <- tibble::tibble(...)
+      
+      # append if the constraint applies and if the constraint is met
+      row_contraints <- data |>
+        dplyr::mutate(
+          # evaluate whether the constraint applies with the condition,
+          # replacing NA with no applicable constraint
+          .tidynum_cond = tidyr::replace_na(eval(parse(text = r$conditions)), FALSE),
+          
+          .num_constraint_met = (.data[[".tidynum_cond"]]) & 
+            (.data[[r$var]] <= r$max) &
+            (.data[[r$var]] >= r$min)
+          
+        )
+      
+      # summarize the row-level data to a summary table and combine so there is
+      # on row per variable
+      row_contraints |>
+        dplyr::summarize(
+          n_constraints_applies = sum(.data[[".tidynum_cond"]], na.rm = na.rm),
+          n_constraints_met = sum(.data[[".num_constraint_met"]], na.rm = na.rm),
+          prop_constraint_applies = mean(.data[[".tidynum_cond"]], na.rm = na.rm)
+        ) |>
+        dplyr::mutate(
+          prop_constraints_met = .data[["n_constraints_met"]] / .data[["n_constraints_applies"]]
+        )
+      
+    }
+    
+  ) |>
+    dplyr::bind_rows()
+  
+  dplyr::bind_cols(
+    constraints_df_num,
+    res_num
+  )
+  
+}
+
+# evaluate categorical constraints for a single data frame
+.util_constraints_cat <- function(data, constraints_df_cat, na.rm) {
+  
+  # iterate over each constraint row
+  res_cat <- purrr::pmap(
+    .l = constraints_df_cat,
+    .f = function(...) {
+      
+      r <- tibble::tibble(...)
+      
+      # append if the constraint applies and if the constraint is met
+      row_contraints <- data |>
+        dplyr::mutate(
+          # evaluate whether the constraint applies with the condition,
+          # replacing NA with no applicable constraint
+          .tidynum_cond = tidyr::replace_na(eval(parse(text = r$conditions)), FALSE),
+          
+          .num_constraint_met = (.data[[".tidynum_cond"]]) & 
+            (is.na(r$allowed) | .data[[r$var]] %in% r$allowed) &
+            (is.na(r$forbidden) | !.data[[r$var]] %in% r$forbidden)
+          
+        )
+      
+      # summarize the row-level data to a summary table and combine so there is
+      # on row per variable
+      row_contraints |>
+        dplyr::summarize(
+          n_constraints_applies = sum(.data[[".tidynum_cond"]], na.rm = na.rm),
+          n_constraints_met = sum(.data[[".num_constraint_met"]], na.rm = na.rm),
+          prop_constraint_applies = mean(.data[[".tidynum_cond"]], na.rm = na.rm)
+        ) |>
+        dplyr::mutate(
+          prop_constraints_met = .data[["n_constraints_met"]] / .data[["n_constraints_applies"]]
+        )
+      
+    }
+    
+  ) |>
+    dplyr::bind_rows()
+  
+  dplyr::bind_cols(
+    constraints_df_cat,
+    res_cat
+  )
+  
+}
 

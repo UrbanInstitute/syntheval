@@ -20,7 +20,7 @@ jth_synthesis_time = data.frame(
 ) |>
   structure(class = "postsynth")
 
-ed <- eval_data(conf_data = data, synth_data = syn)
+ed <- eval_data(conf_data = data, synth_data = syn, holdout_data = data)
 
 constraints_df_num <- 
   tibble::tribble(
@@ -45,14 +45,15 @@ test_that("categorical constraints are correct ", {
   )
   
   target <- tibble::tibble(
-    var = c("var3", "var3", "var4"),
-    allowed = c("a", "b", NA),
-    forbidden = c(NA, NA, "e"),
-    conditions = c("TRUE", "var4 %in% c('c', 'd', 'e')", "var1 >= 3"),
-    n_constraints_applies = c(4, 3, 2),
-    n_constraints_met = c(2, 2, 1),
-    prop_constraint_applies = c(1, 0.75, 0.5),
-    prop_constraints_met = c(0.5, 2 / 3, 0.5)
+    source = rep(c("conf_data", "synth_data", "holdout_data"), each = 3),
+    var = rep(c("var3", "var3", "var4"), times = 3),
+    allowed = rep(c("a", "b", NA), times = 3),
+    forbidden = rep(c(NA, NA, "e"), times = 3),
+    conditions = rep(c("TRUE", "var4 %in% c('c', 'd', 'e')", "var1 >= 3"), times = 3),
+    n_constraints_applies = rep(c(4, 3, 2), times = 3),
+    n_constraints_met = rep(c(2, 2, 1), times = 3),
+    prop_constraint_applies = rep(c(1, 0.75, 0.5), times = 3),
+    prop_constraints_met = rep(c(0.5, 2 / 3, 0.5), times = 3)
   )
   
   expect_equal(result[["constraints_cat"]], target)
@@ -70,6 +71,7 @@ test_that("numeric constraints are correct ", {
   )
   
   target <- tibble::tibble(
+    source = c("conf_data", "synth_data", "holdout_data"),
     var = "var2",
     min = 0,
     max = 3,
@@ -93,6 +95,7 @@ test_that("numeric constraints are correct with na.rm = TRUE ", {
   )
   
   target <- tibble::tibble(
+    source = c("conf_data", "synth_data", "holdout_data"),
     var = "var2",
     min = 0,
     max = 3,

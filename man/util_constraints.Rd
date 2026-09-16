@@ -23,8 +23,31 @@ before the computation proceeds.}
 }
 \value{
 A list with data frame with summary statistics for how often constraints apply and how often
-constraints are satisfied.
+constraints are satisfied. Each summary data frame has a \code{source} column identifying whether the row
+summarizes \code{conf_data}, \code{synth_data}, or \code{holdout_data}.
 }
 \description{
 Evaluate constraints
+}
+\examples{
+ed <- eval_data(conf_data = acs_conf, synth_data = acs_lr_synths[[1]])
+
+constraints_df_num <- tibble::tribble(
+  ~var, ~min, ~max, ~conditions,
+  "age", 0, 17, "age <= 17"
+)
+
+constraints_df_cat <- tibble::tribble(
+  ~var, ~allowed, ~forbidden, ~conditions,
+  # marst is always Single when age <= 18
+  "marst", "Single", NA, "age <= 18",
+  # empstat is never Employed when age <= 18
+  "empstat", NA, "Employed", "age <= 18"
+)
+
+util_constraints(
+  eval_data = ed,
+  constraints_df_num = constraints_df_num,
+  constraints_df_cat = constraints_df_cat
+)
 }
