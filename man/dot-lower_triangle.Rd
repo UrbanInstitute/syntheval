@@ -4,7 +4,7 @@
 \alias{.lower_triangle}
 \title{Calculate the lower triangle of a correlation matrix for numeric random variables.}
 \usage{
-.lower_triangle(x, use, group_by_q = NULL)
+.lower_triangle(x, use, group_by_q = NULL, method = "pearson")
 }
 \arguments{
 \item{x}{A data.frame}
@@ -17,6 +17,10 @@ of) one of the strings "everything", "all.obs", "complete.obs",
 \item{group_by_q}{optional quoted character string of a variable name to
 group the data by. If provided, the correlation matrix will be calculated
 for each group separately.}
+
+\item{method}{optional character string indicating which correlation
+coefficient is to be computed. One of "pearson" (default), "kendall", or
+"spearman".}
 }
 \value{
 A data.frame with columns for the variable pairs and their correlation values.

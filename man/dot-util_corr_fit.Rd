@@ -4,7 +4,13 @@
 \alias{.util_corr_fit}
 \title{Calculate the correlation fit metric of a confidential data set.}
 \usage{
-.util_corr_fit(synth_data, conf_data, use = "everything", group_by_q = NULL)
+.util_corr_fit(
+  synth_data,
+  conf_data,
+  use = "everything",
+  group_by_q = NULL,
+  method = "pearson"
+)
 }
 \arguments{
 \item{synth_data}{A data.frame with synthetic data}
@@ -19,6 +25,10 @@ of) one of the strings "everything", "all.obs", "complete.obs",
 \item{group_by_q}{optional quoted character string of a variable name to
 group the data by. If provided, the correlation fit metric will be calculated
 for each group separately.}
+
+\item{method}{optional character string indicating which correlation
+coefficient is to be computed. One of "pearson" (default), "kendall", or
+"spearman".}
 }
 \value{
 A \code{list} of fit metrics:

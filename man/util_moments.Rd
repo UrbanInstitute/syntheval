@@ -38,6 +38,7 @@ Calculate summary statistics for original and synthetic data.
 \seealso{
 Other utility metrics: 
 \code{\link{util_corr_fit}()},
+\code{\link{util_cov}()},
 \code{\link{util_percentiles}()},
 \code{\link{util_totals}()}
 }

@@ -5,13 +5,16 @@
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
 #' "na.or.complete", or "pairwise.complete.obs".
+#' @param method optional character string indicating which correlation
+#' coefficient is to be computed. One of "pearson" (default), "kendall", or
+#' "spearman".
 #' @param group_by_q optional quoted character string of a variable name to
 #' group the data by. If provided, the correlation matrix will be calculated
 #' for each group separately.
 #' 
 #' @return A data.frame with columns for the variable pairs and their correlation values.
 
-.lower_triangle <- function(x, use, group_by_q = NULL) {
+.lower_triangle <- function(x, use, group_by_q = NULL, method = "pearson") {
 
   # find the linear correlation matrix of numeric variables from a data set
   if (!is.null(group_by_q)) {
@@ -24,7 +27,8 @@
           m <-
             stats::cor(
               dplyr::pick(tidyselect::where(is.numeric)),
-              use = use
+              use = use,
+              method = method
             )
           tibble::as_tibble(m, rownames = "var1")
         }),
@@ -38,7 +42,7 @@
     correlation_matrix <-
       x |>
       dplyr::select(tidyselect::where(is.numeric)) |>
-      stats::cor(use = use)
+      stats::cor(use = use, method = method)
 
   }
 
@@ -78,6 +82,9 @@
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
 #' "na.or.complete", or "pairwise.complete.obs".
+#' @param method optional character string indicating which correlation
+#' coefficient is to be computed. One of "pearson" (default), "kendall", or
+#' "spearman".
 #' @param group_by_q optional quoted character string of a variable name to
 #' group the data by. If provided, the correlation fit metric will be calculated
 #' for each group separately.
@@ -91,7 +98,7 @@
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
 #'  cells in the correlation matrix.
 
-.util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL) {
+.util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL, method = "pearson") {
 
   # Create list of variables to subset synth_data and conf_data
   # First, get numeric variables present in both data sets
@@ -115,10 +122,10 @@
   conf_data <- dplyr::select(conf_data, dplyr::all_of(vars_select))
 
   # find the lower triangle of the original data linear correlation matrix
-  original_lt <- .lower_triangle(conf_data, use = use, group_by_q = group_by_q)
+  original_lt <- .lower_triangle(conf_data, use = use, group_by_q = group_by_q, method = method)
 
   # find the lower triangle of the synthetic data linear correlation matrix
-  synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q)
+  synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q, method = method)
 
   # check that the variable pairs in the original and synthetic data correlation matrices are the same
   # replaces previous check on rownames and colnames of correlation matrices
@@ -204,6 +211,12 @@
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
 #' "na.or.complete", or "pairwise.complete.obs".
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
+#' @param method optional character string indicating which correlation
+#' coefficient is to be computed. One of "pearson" (default), "kendall", or
+#' "spearman".
 #'
 #' @return A `list` of fit metrics (one per each synthetic data replicate):
 #'  - `correlation_original`: correlation matrix of the original data.
@@ -218,7 +231,7 @@
 #'
 #' @export
 #'
-util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL) {
+util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL, method = "pearson") {
 
   stopifnot(is_eval_data(eval_data))
 
@@ -229,7 +242,8 @@ util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL) {
         conf_data = eval_data$conf_data,
         synth_data = eval_data$synth_data,
         use = use,
-        group_by_q = group_by_q
+        group_by_q = group_by_q,
+        method = method
       )
     )
 
@@ -243,7 +257,8 @@ util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL) {
           conf_data = eval_data$conf_data,
           synth_data = sd,
           use = use,
-          group_by_q = group_by_q
+          group_by_q = group_by_q,
+          method = method
         )
 
       }
