@@ -44,6 +44,7 @@ Other Utility metrics:
 \code{\link[=add_pmse_ratio]{add_pmse_ratio()}},
 \code{\link[=add_propensities_tuned]{add_propensities_tuned()}},
 \code{\link[=add_specks]{add_specks()}},
+\code{\link[=compute_ci_overlap]{compute_ci_overlap()}},
 \code{\link[=discrimination]{discrimination()}},
 \code{\link[=util_ci_overlap]{util_ci_overlap()}},
 \code{\link[=util_co_occurrence]{util_co_occurrence()}},
