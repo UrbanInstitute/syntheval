@@ -189,7 +189,8 @@ create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) 
   cmat_raw <- .lower_triangle(
     data,
     use = "pairwise.complete.obs",
-    group_by_q = group_by_q
+    group_by_q = group_by_q,
+    method = cor_method
   )
 
   # .lower_triangle assigns var1/var2 based on alphabetical order, which can
@@ -230,7 +231,7 @@ create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) 
       midpoint = 0,
       limit = c(-1, 1),
       space = "Lab",
-      name = "Correlation"
+      name = paste0("Correlation (", cor_method, ")")
     ) +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(angle = 90, vjust = 1),
