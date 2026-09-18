@@ -4,7 +4,7 @@
 \alias{plot_cormat}
 \title{Create side-by-side correlation heatmaps for numeric random variables.}
 \usage{
-plot_cormat(eval_data, cor_method = "pearson")
+plot_cormat(eval_data, cor_method = "pearson", group_by_q = NULL)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}

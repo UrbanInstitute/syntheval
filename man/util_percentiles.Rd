@@ -43,9 +43,9 @@ A \code{tibble} of summary statistics (one per synthetic data replicate)
 Calculate summary statistics for original and synthetic data.
 }
 \seealso{
-Other utility metrics:
-\code{\link[=util_corr_fit]{util_corr_fit()}},
-\code{\link[=util_moments]{util_moments()}},
-\code{\link[=util_totals]{util_totals()}}
+Other utility metrics: 
+\code{\link{util_corr_fit}()},
+\code{\link{util_moments}()},
+\code{\link{util_totals}()}
 }
 \concept{utility metrics}
