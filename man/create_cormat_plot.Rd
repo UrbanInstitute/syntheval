@@ -10,6 +10,10 @@ create_cormat_plot(data, cor_method = "pearson", group_by_q = NULL)
 \item{data}{A data.frame/}
 
 \item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}}
+
+\item{group_by_q}{optional quoted character string of a variable name to
+group the data by. If provided, the correlation fit metric will be calculated
+for each group separately.}
 }
 \value{
 A \code{ggplot2} plot

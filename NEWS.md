@@ -1,5 +1,6 @@
 # syntheval 0.1.0 (development)
 
+- Added `group_by_q` parameter to `util_corr_fit()` and `plot_cormat` (#135). `util_corr_fit()` now returns correlations as long tibbles showing each unique variable pairing rowwise with a column for its respective correlation or correlation difference value and a column for grouping variables if provided. If util_corr_fit is supplied with an `eval_data` object with fewer than two shared numeric variables across conf_data and synth_data, `util_corr_fit()` returns a list of empty tibbles plus `NA_real_` summary metrics formatted consistently with valid `util_corr_fit()` outputs
 - Add `attribute_target()` functionality for target attribute inference metrics. (#15)
 - Add `attribute_scan()` functionality for discovery attribute inference metrics. (#15)
 * Add `util_k_marginals()` to calculate the k-marginals metric for 1-, 2-, and 3-way marginals, with worst-marginal and worst-cell output, marginal sampling with priority variables, sample weights, a `synth_vars` flag to restrict marginals to synthesized variables, `na.rm` handling of missing values, `group_by` stratification with per-stratum scores, and discretization of numeric variables. (#20)

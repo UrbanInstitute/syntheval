@@ -164,11 +164,26 @@ plot_categorical_bar <- function(eval_data,
 #'
 #' @param data A data.frame/
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
 #' 
 #' @return A `ggplot2` plot
 #' 
 #' @export
 create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) {
+
+  if (!is.null(group_by_q)) {
+    if (!is.character(group_by_q)) {
+      stop("group_by_q must be a quoted string", call. = FALSE)
+    }
+    if (length(group_by_q) != 1) {
+      stop("only one variable is supported in group_by_q", call. = FALSE)
+    }
+    if (!(group_by_q %in% names(data))) {
+      stop("variable provided for group_by_q was not found in data", call. = FALSE)
+    }
+  }
 
   # get numeric variables -- this also defines the order used for the axes so
   # the heatmap renders as a clean triangle sloping downward left to right
@@ -192,25 +207,12 @@ create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) 
     group_by_q = group_by_q
   )
 
-  # .lower_triangle assigns var1/var2 based on alphabetical order, which can
-  # place a pair on the wrong side of the diagonal relative to var_order
-  # (the original column order). Since correlation is symmetric, swap var1
-  # and var2 wherever needed so var1 always comes earlier than var2 in
-  # var_order -- this puts the triangle's right angle in the lower-left
-  # corner (empty top-right), with the hypotenuse sloping down left to right.
-  pos1 <- match(cmat_raw$var1, var_order)
-  pos2 <- match(cmat_raw$var2, var_order)
-  needs_swap <- pos1 > pos2
-
   cmat <- cmat_raw |>
     dplyr::mutate(
-      var1_tmp = dplyr::if_else(needs_swap, .data$var2, .data$var1),
-      var2_tmp = dplyr::if_else(needs_swap, .data$var1, .data$var2),
       correlation = round(.data$correlation, digits = 2),
-      var1 = factor(.data$var1_tmp, levels = var_order),
-      var2 = factor(.data$var2_tmp, levels = rev(var_order))
+      var1 = factor(.data$var1, levels = var_order),
+      var2 = factor(.data$var2, levels = rev(var_order))
     ) |>
-    dplyr::select(-"var1_tmp", -"var2_tmp") |>
     as.data.frame()
 
   plot <-
@@ -250,10 +252,10 @@ create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) 
 
   if (!is.null(group_by_q)) {
     plot <- plot +
-      ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(group_by_q)), ncol = 1)
+      ggplot2::facet_wrap(ggplot2::vars(.data[[group_by_q]]), ncol = 1)
   }
 
-  return(plot)
+return(plot)
 
 }
 
@@ -261,6 +263,9 @@ create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) 
 #'
 #' @param eval_data An `eval_data` object.
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
 #'
 #' @return A `ggplot2` plot
 #'
@@ -271,8 +276,8 @@ plot_cormat <- function(eval_data, cor_method = "pearson", group_by_q = NULL) {
 
   # subset datasets to numeric variables present in both datasets + grouping variable if supplied
   intersect_numeric <- intersect(
-    names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], is.numeric)],
-    names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], is.numeric)]
+    names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], tidyselect::where(is.numeric))],
+    names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], tidyselect::where(is.numeric))]
   )
   if (!is.null(group_by_q)) {
     intersect_numeric <- c(intersect_numeric, group_by_q)

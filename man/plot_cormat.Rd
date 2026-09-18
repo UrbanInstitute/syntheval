@@ -10,6 +10,10 @@ plot_cormat(eval_data, cor_method = "pearson", group_by_q = NULL)
 \item{eval_data}{An \code{eval_data} object.}
 
 \item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}}
+
+\item{group_by_q}{optional quoted character string of a variable name to
+group the data by. If provided, the correlation fit metric will be calculated
+for each group separately.}
 }
 \value{
 A \code{ggplot2} plot

@@ -6,12 +6,16 @@
 #' of) one of the strings "everything", "all.obs", "complete.obs",
 #' "na.or.complete", or "pairwise.complete.obs".
 #' @param group_by_q optional quoted character string of a variable name to
-#' group the data by. If provided, the correlation matrix will be calculated
-#' for each group separately.
+#' group the data by. If provided, the correlations will be calculated
+#' for each group separately
 #' 
 #' @return A data.frame with columns for the variable pairs and their correlation values.
 
 .lower_triangle <- function(x, use, group_by_q = NULL) {
+
+    var_order <- x |>
+      dplyr::select(tidyselect::where(is.numeric)) |>
+      names()
 
   # find the linear correlation matrix of numeric variables from a data set
   if (!is.null(group_by_q)) {
@@ -30,7 +34,7 @@
         }),
         .groups = "drop"
       ) |>
-      tidyr::unnest(cor)
+      tidyr::unnest("cor")
 
   } else {
 
@@ -51,6 +55,7 @@
     correlation_matrix <- tibble::as_tibble(correlation_matrix, rownames = "var1")
   }
 
+  # capture before pivot
   id_cols <- intersect(c("var1", group_by_q), names(correlation_matrix))
 
   correlation_matrix <- correlation_matrix |>
@@ -59,12 +64,13 @@
       names_to = "var2",
       values_to = "correlation"
     ) |>
-    dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation"))) |>
-    dplyr::filter(var1 != var2)
+    dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation")))
 
   # delete duplicate correlations so it is a true lower triangle
   correlation_matrix <- correlation_matrix |>
-    dplyr::filter(var1 > var2)
+    dplyr::filter(
+      match(.data$var1, var_order) > match(.data$var2, var_order)
+    )
 
   return(correlation_matrix)
 
@@ -83,13 +89,17 @@
 #' for each group separately.
 #'
 #' @return A `list` of fit metrics:
-#'  - `correlation_original`: correlation matrix of the original data.
-#'  - `correlation_synthetic`: correlation matrix of the synthetic data.
+#'  - `correlation_original`: correlation values from original data of pairs of
+#'        numeric variables that appear in both original and synthetic datasets,
+#'        formatted in a long tibble
+#'  - `correlation_synthetic`: correlation values from synthetic data of pairs of
+#'        numeric variables that appear in both original and synthetic datasets,
+#'        formatted in a long tibble
 #'  - `correlation_difference`: difference between `correlation_synthetic` and
-#'  `correlation_original`.
+#'  `correlation_original`, formatted in a long tibble.
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
-#'  cells in the correlation matrix.
+#'  cells in the complete correlation matrix prior to conversion to long tibbles
 
 .util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL) {
 
@@ -103,6 +113,35 @@
       dplyr::select(tidyselect::where(is.numeric)) |>
       names()
   )
+
+  # Edge case: correlation needs at least 2 numeric variables
+  if (length(intersect_numeric) < 2) {
+    empty_tibble <- tibble::tibble(var1 = character(), var2 = character(), correlation = numeric())
+
+    # add empty group_by_q column with correct type when provided
+    if (!is.null(group_by_q)) {
+      group_cols_empty <- conf_data |>
+        dplyr::select(dplyr::all_of(group_by_q)) |>
+        dplyr::slice(0)
+      empty_tibble <- dplyr::bind_cols(group_cols_empty, empty_tibble)
+    }
+
+    empty_tibble_diff <- empty_tibble |>
+      dplyr::rename(difference = correlation)
+
+    return(list(
+      correlation_original =  empty_tibble,
+      correlation_synthetic =  empty_tibble,
+      correlation_difference = empty_tibble_diff,
+      correlation_fit = NA_real_,
+      correlation_difference_mae = NA_real_,
+      correlation_difference_rmse = NA_real_
+    ))
+  }
+
+  # get number of matrix cells for correlation_fit
+  n_matrix_cells <- length(intersect_numeric) ^ 2
+
   # Second, add group_by variables to the list if supplied
   if (!is.null(group_by_q)) {
     vars_select <- c(intersect_numeric, group_by_q)
@@ -120,27 +159,15 @@
   # find the lower triangle of the synthetic data linear correlation matrix
   synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q)
 
-  # check that the variable pairs in the original and synthetic data correlation matrices are the same
-  # replaces previous check on rownames and colnames of correlation matrices
-  original_pairs <- original_lt |>
-    dplyr::distinct(var1, var2)
-
-  synthetic_pairs <- synthetic_lt |>
-    dplyr::distinct(var1, var2)
-
-  if (!dplyr::setequal(original_pairs, synthetic_pairs)) {
-    stop("The variable pairs in the original and synthetic data correlation matrices do not match.")
-  }
-
   # find the difference between the matrices
   difference_lt <-
-    dplyr::left_join(
+    dplyr::full_join(
       original_lt,
       synthetic_lt,
       by = c("var1", "var2", group_by_q),
       suffix = c("_original", "_synthetic")
     ) |>
-    dplyr::mutate(difference = correlation_synthetic - correlation_original) |>
+    dplyr::mutate(difference = .data$correlation_synthetic - .data$correlation_original) |>
     dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "difference")))
 
   if (!is.null(group_by_q)) {
@@ -148,33 +175,56 @@
     metrics <- difference_lt |>
       dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
       dplyr::summarise(
-        n = sum(!is.na(difference)),
-        correlation_fit = dplyr::if_else(n == 0, NA_real_, sqrt(sum(difference ^ 2, na.rm = TRUE)) / n),
-        correlation_difference_mae = mean(abs(difference), na.rm = TRUE),
-        correlation_difference_rmse = sqrt(mean(difference ^ 2, na.rm = TRUE)),
+        n = sum(!is.na(.data$difference)),
+        correlation_fit = if (n_matrix_cells == 0 || n == 0) {
+          NA_real_
+        } else {
+          sqrt(sum(.data$difference ^ 2, na.rm = TRUE)) / n_matrix_cells
+        },
+        correlation_difference_mae = if (n == 0) {
+          NA_real_
+        } else {
+          mean(abs(.data$difference), na.rm = TRUE)
+        },
+        correlation_difference_rmse = if (n == 0) {
+          NA_real_
+        } else {
+          sqrt(mean(.data$difference ^ 2, na.rm = TRUE))
+        },
         .groups = "drop"
       )
 
     correlation_fit <- metrics |>
-      dplyr::select(dplyr::any_of(group_by_q), correlation_fit)
+      dplyr::select(dplyr::any_of(c(group_by_q, "correlation_fit")))
 
     correlation_difference_mae <- metrics |>
-      dplyr::select(dplyr::any_of(group_by_q), correlation_difference_mae)
+      dplyr::select(dplyr::any_of(c(group_by_q, "correlation_difference_mae")))
 
     correlation_difference_rmse <- metrics |>
-      dplyr::select(dplyr::any_of(group_by_q), correlation_difference_rmse)
+      dplyr::select(dplyr::any_of(c(group_by_q, "correlation_difference_rmse")))
+
 
   } else {
 
     n <- sum(!is.na(difference_lt$difference))
-    if (n == 0) {
-      correlation_fit <- NA_real_
+    correlation_fit <- if (n_matrix_cells == 0 || n == 0) {
+      NA_real_
     } else {
-      correlation_fit <- sqrt(sum(difference_lt$difference ^ 2, na.rm = TRUE)) / n
+      sqrt(sum(difference_lt$difference ^ 2, na.rm = TRUE)) / n_matrix_cells
     }
+
     difference_vec <- difference_lt$difference[!is.na(difference_lt$difference)]
-    correlation_difference_mae <- mean(abs(difference_vec))
-    correlation_difference_rmse <- sqrt(mean(difference_vec ^ 2))
+    correlation_difference_mae <- if (length(difference_vec) == 0) {
+      NA_real_
+    } else {
+      mean(abs(difference_lt$difference), na.rm = TRUE)
+    }
+
+    correlation_difference_rmse <- if (length(difference_vec) == 0) {
+      NA_real_
+    } else {
+      sqrt(mean(difference_lt$difference ^ 2, na.rm = TRUE))
+    }
 
   }
 
@@ -204,15 +254,22 @@
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
 #' "na.or.complete", or "pairwise.complete.obs".
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
 #'
 #' @return A `list` of fit metrics (one per each synthetic data replicate):
-#'  - `correlation_original`: correlation matrix of the original data.
-#'  - `correlation_synthetic`: correlation matrix of the synthetic data.
+#'  - `correlation_original`: correlation values from original data of pairs of
+#'        numeric variables that appear in both original and synthetic datasets,
+#'        formatted in a long tibble
+#'  - `correlation_synthetic`: correlation values from synthetic data of pairs of
+#'        numeric variables that appear in both original and synthetic datasets,
+#'        formatted in a long tibble
 #'  - `correlation_difference`: difference between `correlation_synthetic` and
 #'  `correlation_original`.
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
-#'  cells in the correlation matrix.
+#'  cells in the complete correlation matrix prior to conversion to long tibbles
 #'
 #' @family utility metrics
 #'
@@ -237,7 +294,7 @@ util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL) {
 
     result <- purrr::map(
       .x = eval_data$synth_data,
-      .f = \(sd) {
+      .f = \(sd) { 
 
         .util_corr_fit(
           conf_data = eval_data$conf_data,

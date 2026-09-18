@@ -70,9 +70,11 @@ test_that("create_cormat_plot creates the right ggplot", {
   
   # synth_df has only 2 numeric variables (n1, n2), so a true lower triangle
   # (no mirrored/duplicate pairings) should only have 1 row
+  # we've also reversed the direction of the triangle and keep pairings where
+  # var1 > var2 so we expect var1 == n2 and var2 == n1
   expect_equal(nrow(plot$data), 1)
-  expect_equal(as.character(plot$data$var1), "n1")
-  expect_equal(as.character(plot$data$var2), "n2")
+  expect_equal(as.character(plot$data$var1), "n2")
+  expect_equal(as.character(plot$data$var2), "n1")
   
 })
 
@@ -105,24 +107,52 @@ test_that("plot_cormat uses the same variable set for conf and synth plots", {
 
   ed2 <- eval_data(conf_data = conf_df, synth_data = synth_df2)
 
-  # plot_cormat should run without error even though the numeric variable
-  # sets differ between conf_data and synth_data
+  captured <- list()
+
+  testthat::local_mocked_bindings(
+    create_cormat_plot = function(data, cor_method = "pearson", group_by_q = NULL) {
+      captured[[length(captured) + 1]] <<- names(data)
+      ggplot2::ggplot()
+    },
+    .package = "syntheval"
+  )
   expect_no_error(plot_cormat(ed2))
 
-  # replicate the intersection logic plot_cormat uses internally and confirm
-  # both heatmaps would be built from the same (intersected) variable set
-  intersect_numeric <- intersect(
+  expected <- intersect(
     names(conf_df)[sapply(conf_df, is.numeric)],
     names(synth_df2)[sapply(synth_df2, is.numeric)]
   )
 
-  p1 <- create_cormat_plot(conf_df[intersect_numeric])
-  p2 <- create_cormat_plot(synth_df2[intersect_numeric])
+  expect_length(captured, 2)
+  expect_equal(captured[[1]], expected)
+  expect_equal(captured[[2]], expected)
 
-  conf_vars <- sort(unique(c(as.character(p1$data$var1), as.character(p1$data$var2))))
-  synth_vars <- sort(unique(c(as.character(p2$data$var1), as.character(p2$data$var2))))
+})
 
-  expect_true(!("n3" %in% synth_vars))
-  expect_equal(conf_vars, synth_vars)
+test_that("plot_cormat works with grouping variable", {
+
+  captured_group <- list()
+
+  label_group <- function(x) {
+    if (is.null(x)) return(NULL)
+    if (is.character(x)) return(x[[1]])
+    tryCatch(rlang::as_label(x), error = function(e) as.character(x)[1])
+  }
+
+  testthat::local_mocked_bindings(
+    create_cormat_plot = function(data, cor_method = "pearson", group_by_q = NULL) {
+      captured_group[[length(captured_group) + 1]] <<- group_by_q
+      ggplot2::ggplot()
+    },
+    .package = "syntheval"
+  )
+
+  expect_no_error(plot_cormat(ed, group_by_q = "c1"))
+  expect_length(captured_group, 2)
+
+  # grouping argument should be forwarded both times
+  expect_false(any(vapply(captured_group, is.null, logical(1))))
+  expect_match(label_group(captured_group[[1]]), "c1")
+  expect_match(label_group(captured_group[[2]]), "c1")
 
 })

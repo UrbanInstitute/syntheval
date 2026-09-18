@@ -15,8 +15,8 @@ of) one of the strings "everything", "all.obs", "complete.obs",
 "na.or.complete", or "pairwise.complete.obs".}
 
 \item{group_by_q}{optional quoted character string of a variable name to
-group the data by. If provided, the correlation matrix will be calculated
-for each group separately.}
+group the data by. If provided, the correlations will be calculated
+for each group separately}
 }
 \value{
 A data.frame with columns for the variable pairs and their correlation values.
