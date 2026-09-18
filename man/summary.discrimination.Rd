@@ -5,8 +5,6 @@
 \title{Summarise the metrics computed on a discrimination object}
 \usage{
 \method{summary}{discrimination}(object, ...)
-
-\method{summary}{discrimination}(object, ...)
 }
 \arguments{
 \item{object}{A \code{discrimination} object.}
@@ -18,14 +16,7 @@ A \code{tibble} with columns \code{.metric}, \code{.sample}, and \code{.value}, 
 row per computed metric and sample split. Metrics are \code{pmse}, \code{null_pmse},
 \code{pmse_ratio}, \code{specks}, and \code{discriminator_auc}. The tibble has zero rows
 if no metrics have been computed.
-
-A \code{tibble} with columns \code{.metric}, \code{.sample}, and \code{.value}, with one
-row per computed metric and sample split. Metrics are \code{pmse}, \code{null_pmse},
-\code{pmse_ratio}, \code{specks}, and \code{discriminator_auc}. The tibble has zero rows
-if no metrics have been computed.
 }
 \description{
-Summarise the metrics computed on a discrimination object
-
 Summarise the metrics computed on a discrimination object
 }

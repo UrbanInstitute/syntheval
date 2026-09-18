@@ -164,13 +164,13 @@ test_that("add_specks returns 1 for perfectly different data (split) " , {
   
 })
 
-test_that("add_pmse errors on non-discrimination input", {
+test_that("add_specks errors on non-discrimination input", {
 
     expect_error(add_specks(list()), regexp = "discrimination object")
 
 })
 
-test_that("add_pmse errors when propensities are missing", {
+test_that("add_specks errors when propensities are missing", {
 
     ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
 

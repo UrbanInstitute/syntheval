@@ -253,7 +253,7 @@ Discriminant-based metrics build models to predict if an observation is original
 Discriminant-based metrics are built a `discrimination` object created by `discrimination()`. 
 
 ```{r}
-disc1 <- discrimination(eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth))
+disc1 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
 
 ```
 
@@ -325,7 +325,7 @@ Let's repeat the workflow from above with LASSO logistic regression and hyperpar
 
 ```{r}
 # create discrimination
-disc2 <- discrimination(eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth))
+disc2 <- discrimination(postsynth = penguins_postsynth, data = penguins_conf)
 
 # create a recipe that includes 2nd-degree polynomials, dummy variables, and
 # standardization

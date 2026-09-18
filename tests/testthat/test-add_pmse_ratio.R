@@ -158,3 +158,9 @@ test_that("add_pmse returns perfect value for identical data without variation "
   expect_equal(disc$pmse$.pmse_ratio, c(NaN, NaN))
   
 })
+
+test_that("add_pmse_ratio errors on non-discrimination input", {
+
+  expect_error(add_pmse_ratio(list(), times = 5), regexp = "discrimination object")
+
+})
