@@ -25,12 +25,12 @@ the plot is faceted by \code{data} to separate the confidential-data comparison
 from the synthetic-data diagnostic.
 }
 \seealso{
-Other Predictive utility metrics:
-\code{\link[=pred_auc]{pred_auc()}},
-\code{\link[=pred_mae]{pred_mae()}},
-\code{\link[=pred_precision]{pred_precision()}},
-\code{\link[=pred_recall]{pred_recall()}},
-\code{\link[=pred_rmse]{pred_rmse()}},
-\code{\link[=util_pred]{util_pred()}}
+Other Predictive utility metrics: 
+\code{\link{pred_auc}()},
+\code{\link{pred_mae}()},
+\code{\link{pred_precision}()},
+\code{\link{pred_recall}()},
+\code{\link{pred_rmse}()},
+\code{\link{util_pred}()}
 }
 \concept{Predictive utility metrics}

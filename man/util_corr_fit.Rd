@@ -4,7 +4,12 @@
 \alias{util_corr_fit}
 \title{Calculate the correlation fit metric of a confidential data set.}
 \usage{
-util_corr_fit(eval_data, use = "everything")
+util_corr_fit(
+  eval_data,
+  use = "everything",
+  group_by_q = NULL,
+  method = "pearson"
+)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object}
@@ -13,6 +18,14 @@ util_corr_fit(eval_data, use = "everything")
 covariances in the presence of missing values. This must be (an abbreviation
 of) one of the strings "everything", "all.obs", "complete.obs",
 "na.or.complete", or "pairwise.complete.obs".}
+
+\item{group_by_q}{optional quoted character string of a variable name to
+group the data by. If provided, the correlation fit metric will be calculated
+for each group separately.}
+
+\item{method}{optional character string indicating which correlation
+coefficient is to be computed. One of "pearson" (default), "kendall", or
+"spearman".}
 }
 \value{
 A \code{list} of fit metrics (one per each synthetic data replicate):
@@ -30,9 +43,10 @@ cells in the correlation matrix.
 Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
-Other utility metrics:
-\code{\link[=util_moments]{util_moments()}},
-\code{\link[=util_percentiles]{util_percentiles()}},
-\code{\link[=util_totals]{util_totals()}}
+Other utility metrics: 
+\code{\link{util_cov}()},
+\code{\link{util_moments}()},
+\code{\link{util_percentiles}()},
+\code{\link{util_totals}()}
 }
 \concept{utility metrics}
