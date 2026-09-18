@@ -14,37 +14,37 @@ test_that("add_pmse returns ideal value for identical data with variation " , {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  dt_mod <- parsnip::decision_tree() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  dt_mod <- parsnip::decision_tree() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "rpart")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = dt_mod
       ) 
   )
   
-  expect_error(add_pmse_ratio(disc))
+  expect_error(add_pmse_ratio(disc), regexp = "add_pmse\\(\\)")
   
-  disc <- disc %>%
-    add_pmse(split = FALSE) %>%
+  disc <- disc |>
+    add_pmse(split = FALSE) |>
     add_pmse_ratio(split = FALSE, times = 25)
   
   expect_equal(round(disc$pmse$.pmse, digit = 1), 0)
   # this is a bad test but will at least tell us when the code logic changes
   expect_equal(round(disc$pmse$.pmse_ratio, 5), 0.59907)
   
-  disc <- disc %>%
-    add_pmse() %>%
+  disc <- disc |>
+    add_pmse() |>
     add_pmse_ratio(times = 25)
   
   expect_equal(round(disc$pmse$.pmse, digit = 2), c(0, 0))
@@ -69,23 +69,23 @@ test_that("add_pmse_ratio is reproducible and plan-independent", {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
 
   ed <- eval_data(conf_data = data, synth_data = postsynth)
 
-  dt_mod <- parsnip::decision_tree() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  dt_mod <- parsnip::decision_tree() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "rpart")
 
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
 
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = dt_mod
-      ) %>%
+      ) |>
       add_pmse(split = FALSE)
   )
 
@@ -132,24 +132,24 @@ test_that("add_pmse returns perfect value for identical data without variation "
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  dt_mod <- parsnip::decision_tree() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  dt_mod <- parsnip::decision_tree() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "rpart")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = dt_mod
-      ) %>%
-      add_pmse() %>%
+      ) |>
+      add_pmse() |>
       add_pmse_ratio(times = 25)
   )
   
@@ -157,4 +157,10 @@ test_that("add_pmse returns perfect value for identical data without variation "
   expect_equal(disc$pmse$.null_pmse, c(0, 0))
   expect_equal(disc$pmse$.pmse_ratio, c(NaN, NaN))
   
+})
+
+test_that("add_pmse_ratio errors on non-discrimination input", {
+
+  expect_error(add_pmse_ratio(list(), times = 5), regexp = "discrimination object")
+
 })

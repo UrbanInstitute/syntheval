@@ -22,24 +22,23 @@
 #' @export
 add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
 
-  if (is.null(discrimination$pmse)) {
-
-    stop("Error: discrimination must have a pmse. Use add_pmse() before add_pmse_ratio()")
-
-  }
+  .validate_discrimination(
+    discrimination,
+    requires = c(pmse = "add_pmse()")
+  )
 
   calc_pmse <- function(propensities) {
 
     # calculate the expected propensity
-    prop_synthetic <- propensities %>%
+    prop_synthetic <- propensities |>
       dplyr::summarize(
         n_synthetic = sum(.data$.source_label == "synthetic"),
         n_total = dplyr::n()
-      ) %>%
-      dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) %>%
+      ) |>
+      dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) |>
       dplyr::pull("prop_synthetic")
 
-    propensities_vec <- propensities %>%
+    propensities_vec <- propensities |>
       dplyr::pull(".pred_synthetic")
 
     # calculate the observed pMSE
@@ -61,11 +60,11 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     # data
     # append the original labels so the proportions match
     bootstrap_sample <- dplyr::bind_cols(
-      discrimination$combined_data %>%
-        dplyr::filter(.data$.source_label == "original") %>%
-        dplyr::slice_sample(n = nrow(discrimination$combined_data), replace = TRUE) %>%
+      discrimination$combined_data |>
+        dplyr::filter(.data$.source_label == "original") |>
+        dplyr::slice_sample(n = nrow(discrimination$combined_data), replace = TRUE) |>
         dplyr::select(-".source_label"),
-      discrimination$combined_data %>%
+      discrimination$combined_data |>
         dplyr::select(".source_label")
     )
 
@@ -88,7 +87,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
       propensities_df <- dplyr::bind_cols(
         stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
         discrimination$combined_data
-      ) %>%
+      ) |>
         dplyr::mutate(
           .sample = dplyr::if_else(
             dplyr::row_number() %in% data_split$in_id,
@@ -100,11 +99,11 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
       # calculate the pmse for each bootstrap
       pmse_null <- list(
         overall = calc_pmse(propensities_df),
-        training = propensities_df %>%
-          dplyr::filter(.data$.sample == "training") %>%
+        training = propensities_df |>
+          dplyr::filter(.data$.sample == "training") |>
           calc_pmse(),
-        testing = propensities_df %>%
-          dplyr::filter(.data$.sample == "testing") %>%
+        testing = propensities_df |>
+          dplyr::filter(.data$.sample == "testing") |>
           calc_pmse()
       )
 
@@ -167,7 +166,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     pmse <- dplyr::bind_cols(
       discrimination$pmse,
       tibble::tibble(.null_pmse = c(mean_null_pmse_training, mean_null_pmse_testing))
-    ) %>%
+    ) |>
       dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
 
   } else {
@@ -175,7 +174,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     pmse <- dplyr::bind_cols(
       discrimination$pmse,
       tibble::tibble(.null_pmse = mean_null_pmse_overall)
-    ) %>%
+    ) |>
       dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
 
   }
