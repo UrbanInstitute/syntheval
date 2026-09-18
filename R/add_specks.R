@@ -11,14 +11,18 @@
 #' @export
 add_specks <- function(discrimination, split = TRUE) {
   
+  .validate_discrimination(discrimination, 
+                           requires = c(propensities = "add_propensities()"))
+
+
   calc_specks <- function(propensities) {
     
-    propensities_original <- propensities %>%
-      dplyr::filter(.data$.source_label == "original") %>%
+    propensities_original <- propensities |>
+      dplyr::filter(.data$.source_label == "original") |>
       dplyr::pull(".pred_synthetic")
     
-    propensities_synthetic <- propensities %>%
-      dplyr::filter(.data$.source_label == "synthetic") %>%
+    propensities_synthetic <- propensities |>
+      dplyr::filter(.data$.source_label == "synthetic") |>
       dplyr::pull(".pred_synthetic")
     
     # Calculate KS Distance of the original and synthetic ECDFS
@@ -37,12 +41,12 @@ add_specks <- function(discrimination, split = TRUE) {
   
   if (split) {
     
-    specks_training <- discrimination$propensities %>%
-      dplyr::filter(.data$.sample == "training") %>%
+    specks_training <- discrimination$propensities |>
+      dplyr::filter(.data$.sample == "training") |>
       calc_specks()
     
-    specks_testing <- discrimination$propensities %>%
-      dplyr::filter(.data$.sample == "testing") %>%
+    specks_testing <- discrimination$propensities |>
+      dplyr::filter(.data$.sample == "testing") |>
       calc_specks()
     
     specks <- tibble::tibble(
@@ -52,7 +56,7 @@ add_specks <- function(discrimination, split = TRUE) {
     
   } else {
     
-    specks_overall <- discrimination$propensities %>%
+    specks_overall <- discrimination$propensities |>
       calc_specks()
     
     specks <- tibble::tibble(

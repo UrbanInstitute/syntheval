@@ -32,11 +32,7 @@ add_propensities_tuned <- function(
     save_fit = TRUE
 ) {
   
-  if (!is_discrimination(discrimination)) {
-    
-    stop("Error: discrimination must be of class discrimination. Use discrimination() before add_propensities()")
-    
-  }
+  .validate_discrimination(discrimination)
   
   if (!is.null(recipe) & !is.null(formula)) {
     
@@ -59,8 +55,8 @@ add_propensities_tuned <- function(
   }
   
   # set up workflow
-  wf <- workflows::workflow() %>%
-    workflows::add_model(spec = spec) %>%
+  wf <- workflows::workflow() |>
+    workflows::add_model(spec = spec) |>
     workflows::add_recipe(recipe = recipe) 
   
   # make training/testing split
@@ -77,7 +73,7 @@ add_propensities_tuned <- function(
   )
 
   # hyperparameter tune
-  vfold_results <- wf %>%
+  vfold_results <- wf |>
     tune::tune_grid(
       resamples = folds,
       grid = grid
@@ -85,12 +81,12 @@ add_propensities_tuned <- function(
 
   # add the tuned hyperparameters to the workflow
   tuned_wf <- 
-    wf %>% 
+    wf |> 
     tune::finalize_workflow(tune::select_best(x = vfold_results, metric = "roc_auc"))
   
   # fit the model with the best hyperparameters on all of the training data
   final_fit <- 
-    tuned_wf %>%
+    tuned_wf |>
     tune::last_fit(split = data_split) 
   
   # finalize the workflow for predictions
@@ -100,14 +96,14 @@ add_propensities_tuned <- function(
   propensities_df <- dplyr::bind_cols(
      stats::predict(final_wf, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
      discrimination$combined_data
-  ) %>%
+  ) |>
     dplyr::mutate(
       .sample = dplyr::if_else(
         dplyr::row_number() %in% data_split$in_id, 
         true = "training", 
         false = "testing"
       )
-    ) %>%
+    ) |>
     dplyr::relocate(
       dplyr::all_of(c(".pred_synthetic", ".source_label", ".sample")), 
       dplyr::everything()

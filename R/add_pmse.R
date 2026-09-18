@@ -14,18 +14,21 @@
 #' 
 add_pmse <- function(discrimination, split = TRUE) {
   
+  .validate_discrimination(discrimination, 
+                           requires = c(propensities = "add_propensities()"))
+
   calc_pmse <- function(propensities) {
     
     # calculate the expected propensity
-    prop_synthetic <- propensities %>%
+    prop_synthetic <- propensities |>
       dplyr::summarize(
         n_synthetic = sum(.data$.source_label == "synthetic"),
         n_total = dplyr::n()
-      ) %>%
-      dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) %>%
+      ) |>
+      dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) |>
       dplyr::pull("prop_synthetic")
     
-    propensities_vec <- propensities %>%
+    propensities_vec <- propensities |>
       dplyr::pull(".pred_synthetic")
     
     # calculate the observed pMSE
@@ -37,12 +40,12 @@ add_pmse <- function(discrimination, split = TRUE) {
   
   if (split) {
     
-    pmse_training <- discrimination$propensities %>%
-      dplyr::filter(.data$.sample == "training") %>%
+    pmse_training <- discrimination$propensities |>
+      dplyr::filter(.data$.sample == "training") |>
       calc_pmse()
     
-    pmse_testing <- discrimination$propensities %>%
-      dplyr::filter(.data$.sample == "testing") %>%
+    pmse_testing <- discrimination$propensities |>
+      dplyr::filter(.data$.sample == "testing") |>
       calc_pmse()
     
     pmse <- tibble::tibble(
@@ -52,7 +55,7 @@ add_pmse <- function(discrimination, split = TRUE) {
     
   } else {
     
-    pmse_overall <- discrimination$propensities %>%
+    pmse_overall <- discrimination$propensities |>
       calc_pmse()
     
     pmse <- tibble::tibble(

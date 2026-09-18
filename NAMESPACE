@@ -2,8 +2,10 @@
 
 S3method(print,attribute_scan)
 S3method(print,attribute_target)
+S3method(print,discrimination)
 S3method(print,eval_data)
 S3method(print,k_marginals)
+S3method(summary,discrimination)
 export("%>%")
 export(add_discriminator_auc)
 export(add_pmse)

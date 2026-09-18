@@ -12,19 +12,22 @@
 #'
 add_discriminator_auc <- function(discrimination, split = TRUE) {
   
+  .validate_discrimination(discrimination, 
+                          requires = c(propensities = "add_propensities()"))
+
   if (split) {
     
-    discriminator_auc <- discrimination$propensities %>%
-      dplyr::group_by(.data$.sample) %>%
-      yardstick::roc_auc(".source_label", ".pred_synthetic") %>%
-      dplyr::mutate(.sample = factor(.data$.sample, levels = c("training", "testing"))) %>%
-      dplyr::arrange(.data$.sample) %>%
+    discriminator_auc <- discrimination$propensities |>
+      dplyr::group_by(.data$.sample) |>
+      yardstick::roc_auc(".source_label", ".pred_synthetic") |>
+      dplyr::mutate(.sample = factor(.data$.sample, levels = c("training", "testing"))) |>
+      dplyr::arrange(.data$.sample) |>
       dplyr::ungroup()
     
   } else {
     
-    discriminator_auc <- discrimination$propensities %>%
-      yardstick::roc_auc(".source_label", ".pred_synthetic") %>%
+    discriminator_auc <- discrimination$propensities |>
+      yardstick::roc_auc(".source_label", ".pred_synthetic") |>
       dplyr::mutate(.sample = factor("overall", levels = "overall"))
     
   }
