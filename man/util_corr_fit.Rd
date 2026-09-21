@@ -30,13 +30,17 @@ coefficient is to be computed. One of "pearson" (default), "kendall", or
 \value{
 A \code{list} of fit metrics (one per each synthetic data replicate):
 \itemize{
-\item \code{correlation_original}: correlation matrix of the original data.
-\item \code{correlation_synthetic}: correlation matrix of the synthetic data.
+\item \code{correlation_original}: correlation values from original data of pairs of
+numeric variables that appear in both original and synthetic datasets,
+formatted in a long tibble
+\item \code{correlation_synthetic}: correlation values from synthetic data of pairs of
+numeric variables that appear in both original and synthetic datasets,
+formatted in a long tibble
 \item \code{correlation_difference}: difference between \code{correlation_synthetic} and
 \code{correlation_original}.
 \item \code{correlation_fit}: square root of the sum of squared differences between
 \code{correlation_synthetic} and \code{correlation_original}, divided by the number of
-cells in the correlation matrix.
+cells in the complete correlation matrix prior to conversion to long tibbles
 }
 }
 \description{
@@ -44,7 +48,7 @@ Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
 Other utility metrics: 
-\code{\link{util_cov}()},
+\code{\link{util_bivariate}()},
 \code{\link{util_moments}()},
 \code{\link{util_percentiles}()},
 \code{\link{util_totals}()}

@@ -4,12 +4,30 @@
 \alias{create_cormat_plot}
 \title{Create a correlation heatmap for numeric random variables.}
 \usage{
-create_cormat_plot(data, cor_method = "pearson", group_by_q = NULL)
+create_cormat_plot(
+  data,
+  statistic,
+  cor_method = "pearson",
+  group_by_q = NULL,
+  fill_limits = NULL
+)
 }
 \arguments{
 \item{data}{A data.frame/}
 
+\item{statistic}{a character string specifying which bivariate statistic
+to be returned by the function. One of "correlation", "covariance", or "rmi" or an
+abbreviation}
+
 \item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}}
+
+\item{group_by_q}{optional quoted character string of a variable name to
+group the data by. If provided, the correlation fit metric will be calculated
+for each group separately.}
+
+\item{fill_limits}{Optional numeric length-2 vector giving the lower and upper
+limits for the heatmap fill scale. If \code{NULL}, defaults are used by statistic
+(\code{c(-1, 1)} for correlation, \code{c(0, 1)} for RMI, and data-driven limits for covariance).}
 }
 \value{
 A \code{ggplot2} plot

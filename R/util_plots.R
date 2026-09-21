@@ -163,76 +163,100 @@ plot_categorical_bar <- function(eval_data,
 #' Create a correlation heatmap for numeric random variables.
 #'
 #' @param data A data.frame/
+#' @param statistic a character string specifying which bivariate statistic
+#' to be returned by the function. One of "correlation", "covariance", or "rmi" or an
+#' abbreviation
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
+#' @param fill_limits Optional numeric length-2 vector giving the lower and upper
+#'   limits for the heatmap fill scale. If `NULL`, defaults are used by statistic
+#'   (`c(-1, 1)` for correlation, `c(0, 1)` for RMI, and data-driven limits for covariance).
 #' 
 #' @return A `ggplot2` plot
 #' 
 #' @export
-create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) {
+create_cormat_plot <- function(data, statistic, cor_method = "pearson", group_by_q = NULL, fill_limits = NULL) {
+
+  # parameter validation
+  valid_statistics <- c("correlation", "covariance", "rmi")
+  na.statistic <- pmatch(x = tolower(statistic), table = valid_statistics)
+  if (is.na(na.statistic)) stop("invalid 'statistic' argument")
+  statistic <- match.arg(arg = tolower(statistic), choice = valid_statistics)
+
+  if (!is.null(group_by_q)) {
+    if (!is.character(group_by_q)) {
+      stop("group_by_q must be a quoted string", call. = FALSE)
+    }
+    if (length(group_by_q) != 1) {
+      stop("only one variable is supported in group_by_q", call. = FALSE)
+    }
+    if (!(group_by_q %in% names(data))) {
+      stop("variable provided for group_by_q was not found in data", call. = FALSE)
+    }
+  }
 
   # get numeric variables -- this also defines the order used for the axes so
   # the heatmap renders as a clean triangle sloping downward left to right
-  var_order <- data |>
-    dplyr::select(tidyselect::where(is.numeric)) |>
-    names()
 
-  num_vars <- var_order
-  if (!is.null(group_by_q)) {
-    num_vars <- c(num_vars, group_by_q)
+  if (statistic != "rmi") {
+    var_order <- data |>
+      dplyr::select(tidyselect::where(is.numeric)) |>
+      names()
+
+    vars_select <- var_order
+    if (!is.null(group_by_q)) {
+      vars_select <- c(vars_select, group_by_q)
+    }
+  } else {
+    var_order <- data |>
+      dplyr::select(tidyselect::where(is.factor)) |>
+      names()
+
+    vars_select <- var_order
+    if (!is.null(group_by_q)) {
+      vars_select <- c(vars_select, group_by_q)
+    }
   }
 
   # subset to numeric variables and grouping variable if supplied
   data <- data |>
-    dplyr::select(dplyr::all_of(num_vars))
+    dplyr::select(dplyr::all_of(vars_select))
 
-  # get lower triangular correlation matrix
-  cmat_raw <- .lower_triangle(
-    data,
-    use = "pairwise.complete.obs",
-    group_by_q = group_by_q,
-    method = cor_method
-  )
+  if (statistic != "rmi") {
+    mat_raw <- .lower_triangle(
+      data,
+      statistic = statistic,
+      use = "pairwise.complete.obs",
+      group_by_q = group_by_q,
+      method = cor_method
+    )
+  } else {
+    mat_raw <- .calc_rmi_tibble(
+      data,
+      group_by_q = group_by_q
+    )
+  }
 
-  # .lower_triangle assigns var1/var2 based on alphabetical order, which can
-  # place a pair on the wrong side of the diagonal relative to var_order
-  # (the original column order). Since correlation is symmetric, swap var1
-  # and var2 wherever needed so var1 always comes earlier than var2 in
-  # var_order -- this puts the triangle's right angle in the lower-left
-  # corner (empty top-right), with the hypotenuse sloping down left to right.
-  pos1 <- match(cmat_raw$var1, var_order)
-  pos2 <- match(cmat_raw$var2, var_order)
-  needs_swap <- pos1 > pos2
-
-  cmat <- cmat_raw |>
+  mat <- mat_raw |>
     dplyr::mutate(
-      var1_tmp = dplyr::if_else(needs_swap, .data$var2, .data$var1),
-      var2_tmp = dplyr::if_else(needs_swap, .data$var1, .data$var2),
-      correlation = round(.data$correlation, digits = 2),
-      var1 = factor(.data$var1_tmp, levels = var_order),
-      var2 = factor(.data$var2_tmp, levels = rev(var_order))
+      statistic = round(.data$statistic, digits = 2),
+      var1 = factor(.data$var1, levels = rev(var_order)),
+      var2 = factor(.data$var2, levels = var_order)
     ) |>
-    dplyr::select(-"var1_tmp", -"var2_tmp") |>
     as.data.frame()
 
   plot <-
     ggplot2::ggplot(
-      data = cmat,
+      data = mat,
       mapping = ggplot2::aes(
         x = .data$var1,
         y = .data$var2,
-        fill = .data$correlation
+        fill = .data$statistic
       )
     ) +
     ggplot2::geom_tile(color = "white") +
-    ggplot2::scale_fill_gradient2(
-      low = "firebrick",
-      high = "chartreuse4",
-      mid = "white",
-      midpoint = 0,
-      limit = c(-1, 1),
-      space = "Lab",
-      name = paste0("Correlation (", cor_method, ")")
-    ) +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(angle = 90, vjust = 1),
       axis.title.x = ggplot2::element_blank(),
@@ -244,48 +268,142 @@ create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) 
     ) +
     ggplot2::coord_fixed() +
     ggplot2::geom_text(
-      ggplot2::aes(label = .data$correlation),
+      ggplot2::aes(label = .data$statistic),
       color = "black",
       size = 4
     )
 
+    if (statistic == "correlation") {
+      plot <- plot +
+        ggplot2::scale_fill_gradient2(
+          low = "firebrick",
+          high = "chartreuse4",
+          mid = "white",
+          midpoint = 0,
+          limits = fill_limits %||% c(-1, 1),
+          space = "Lab",
+          name = paste0(statistic, ": ", cor_method, " method")
+        )
+    } else if (statistic == "covariance") {
+      plot <- plot +
+        ggplot2::scale_fill_gradient2(
+          low = "firebrick",
+          high = "chartreuse4",
+          mid = "white",
+          midpoint = 0,
+          limits = fill_limits,
+          space = "Lab",
+          name = paste0(statistic, ": ", cor_method, " method")
+        )
+    } else if (statistic == "rmi") {
+      plot <- plot +
+        ggplot2::scale_fill_gradient(
+          low = "white",
+          high = "chartreuse4",
+          limits = fill_limits %||% c(0, 1),
+          space = "Lab",
+          name = "Relative Mutual Information"
+        )
+    }
+
   if (!is.null(group_by_q)) {
     plot <- plot +
-      ggplot2::facet_wrap(ggplot2::vars(!!rlang::sym(group_by_q)), ncol = 1)
+      ggplot2::facet_wrap(ggplot2::vars(.data[[group_by_q]]), ncol = 1)
   }
 
-  return(plot)
+return(plot)
 
 }
 
-#' Create side-by-side correlation heatmaps for numeric random variables.
+#' Create side-by-side bivariate heatmaps for numeric random variables.
 #'
 #' @param eval_data An `eval_data` object.
+#' @param statistic a character string specifying which bivariate statistic
+#' to be used by the function. One of "correlation", "covariance", or "rmi" or an
+#' abbreviation
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
 #'
 #' @return A `ggplot2` plot
 #'
 #' @export
-plot_cormat <- function(eval_data, cor_method = "pearson", group_by_q = NULL) {
+plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q = NULL) {
 
   stopifnot(is_eval_data(eval_data))
 
-  # subset datasets to numeric variables present in both datasets + grouping variable if supplied
-  intersect_numeric <- intersect(
-    names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], is.numeric)],
-    names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], is.numeric)]
+  # subset datasets to numeric or factor variables present in both datasets + grouping variable if supplied
+  if (statistic != "rmi") {
+    intersect_vars <- intersect(
+      names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], tidyselect::where(is.numeric))],
+      names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], tidyselect::where(is.numeric))]
+    )
+  } else {
+    intersect_vars <- intersect(
+      names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], tidyselect::where(is.factor))],
+      names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], tidyselect::where(is.factor))]
   )
+  }
+  
+  if(length(intersect_vars) < 2 & statistic != "rmi") stop("Must supply at least two numeric variables shared by synth_data and conf_data")
+  if(length(intersect_vars) < 2 & statistic == "rmi") stop("Must supply at least two factor variables shared by synth_data and conf_data")
+  
+
   if (!is.null(group_by_q)) {
-    intersect_numeric <- c(intersect_numeric, group_by_q)
+    intersect_vars <- c(intersect_vars, group_by_q)
   }
 
-  p1 <- create_cormat_plot(eval_data[["conf_data"]][intersect_numeric], cor_method = cor_method, group_by_q = group_by_q) +
-    ggplot2::ggtitle("Confidential data")
-  p2 <- create_cormat_plot(eval_data[["synth_data"]][intersect_numeric], cor_method = cor_method, group_by_q = group_by_q) +
-    ggplot2::ggtitle("Synthetic data")
+  # one shared scale for both panels
+  if (statistic == "correlation") {
+    shared_limits <- c(-1, 1)
+  } else if (statistic == "rmi") {
+    shared_limits <- c(0, 1)
+  } else {
+    conf_vals <- .lower_triangle(
+      eval_data$conf_data[intersect_vars],
+      statistic = "covariance",
+      use = "pairwise.complete.obs",
+      method = cor_method
+    )
+    syn_vals <- .lower_triangle(
+      eval_data$synth_data[intersect_vars],
+      statistic = "covariance",
+      use = "pairwise.complete.obs",
+      method = cor_method
+    )
+    shared_limits <- range(c(conf_vals$statistic, syn_vals$statistic), na.rm = TRUE)
+  }
+
+  p1 <- create_cormat_plot(
+    eval_data$conf_data[intersect_vars],
+    statistic = statistic,
+    cor_method = cor_method,
+    group_by_q = group_by_q,
+    fill_limits = shared_limits
+  ) + ggplot2::ggtitle("Confidential data")
+
+  p2 <- create_cormat_plot(
+    eval_data$synth_data[intersect_vars],
+    statistic = statistic,
+    cor_method = cor_method,
+    group_by_q = group_by_q,
+    fill_limits = shared_limits
+  ) + ggplot2::ggtitle("Synthetic data")
 
   plot <- gridExtra::grid.arrange(p1, p2, nrow = 1)
 
   return(plot)
 
+}
+
+#' @rdname plot_cormat
+#' @export
+plot_bivariate <- function(eval_data, statistic, cor_method = "pearson", group_by_q = NULL) {
+  plot_cormat(
+    eval_data = eval_data,
+    statistic = statistic,
+    cor_method = cor_method,
+    group_by_q = group_by_q
+  )
 }

@@ -28,6 +28,10 @@
   if (is.na(na.statistic)) stop("invalid 'statistic' argument")
   statistic <- match.arg(arg = statistic, choice = valid_statistics)
 
+  var_order <- x |>
+    dplyr::select(tidyselect::where(is.numeric)) |>
+    names()
+
   # find the linear correlation or covariance matrix of numeric variables from a data set
   if (!is.null(group_by_q)) {
 
@@ -49,7 +53,7 @@
           }),
           .groups = "drop"
         ) |>
-        tidyr::unnest(cor)
+        tidyr::unnest("cor")
 
     } else if (statistic == "covariance") {
 
@@ -59,14 +63,14 @@
             m <-
               stats::cov(
                 dplyr::pick(tidyselect::where(is.numeric)),
-                  use = use,
-                  method = method
+                use = use,
+                method = method
               )
             tibble::as_tibble(m, rownames = "var1")
           }),
           .groups = "drop"
         ) |>
-        tidyr::unnest(cov)
+        tidyr::unnest("cov")
 
     }
 
@@ -88,33 +92,32 @@
   # that are robust to the presence of grouping variables
 
   # handle matrix (no groups) vs tibble (grouped) uniformly
-  if (is.matrix(cmatrix)) {
+  if (is.matrix(matrix)) {
     matrix <- tibble::as_tibble(matrix, rownames = "var1")
   }
 
   id_cols <- intersect(c("var1", group_by_q), names(matrix))
 
-matrix <- matrix |>
+  matrix <- matrix |>
     tidyr::pivot_longer(
       cols = -dplyr::all_of(id_cols),
       names_to = "var2",
-      values_to = statistic
+      values_to = "statistic"
     ) |>
-    dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", statistic))) |>
-    dplyr::filter(var1 != var2)
+    dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "statistic")))
 
   # for correlation matrices only, delete diagonal
-
+  # for covariance matrix, keep diagonal
   if (statistic == "correlation") {
     matrix <- matrix |>
-      dplyr::filter(var1 == var2)
+      dplyr::filter(match(.data$var1, var_order) > match(.data$var2, var_order)
+    )
+  } else if (statistic == "covariance") {
+    matrix <- matrix |>
+      dplyr::filter(var1 >= var2)
   }
 
-  # both correlation and covariance, delete duplicate pairings
-  matrix <- matrix |>
-    dplyr::filter(var1 > var2)
-
-  return(correlation_matrix)
+  return(matrix)
 
 }
 
@@ -157,11 +160,77 @@ matrix <- matrix |>
 
 }
 
+#' Calculate relative mutual information
+#'
+#' @param df a dataframe containing factor variables
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation matrix will be calculated
+#' for each group separately.
+#' @return A long tibble with relative mutual information
+#
+.calc_rmi_tibble <- function(df, group_by_q) {
+
+  calc_one_rmi <- function(df) {
+    p <- ncol(df)
+
+    rmi_matrix <- matrix(0, nrow = p, ncol = p)
+    for (col in seq_len(p)) {
+      for (row in seq_len(p)) {
+        rmi_matrix[row, col] <- .relative_mutual_information(
+          x = df[, row, drop = TRUE],
+          y = df[, col, drop = TRUE]
+        )
+      }
+    }
+
+    rownames(rmi_matrix) <- names(df)
+    colnames(rmi_matrix) <- names(df)
+
+    out <- rmi_matrix |>
+      tibble::as_tibble(rownames = "var1") |>
+      tidyr::pivot_longer(
+        cols = -dplyr::all_of("var1"),
+        names_to = "var2",
+        values_to = "statistic"
+      ) |>
+      dplyr::filter(.data$var1 != .data$var2)
+
+    return(out)
+  }
+
+  if (is.null(group_by_q)) {
+
+    return(calc_one_rmi(df))
+
+  } else {
+
+    grouped_df <- df |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q)))
+
+    keys <- dplyr::group_keys(grouped_df)
+    list_of_df <- dplyr::group_split(grouped_df, .keep = FALSE)
+
+    list_of_tibbles <- purrr::map2_dfr(
+      .x = list_of_df,
+      .y = seq_along(list_of_df),
+      .f = \(dat, i) {
+        dplyr::bind_cols(keys[i, , drop = FALSE], calc_one_rmi(dat))
+      }
+    )
+
+    return(list_of_tibbles)
+
+  }
+
+}
+
 
 #' Calculate bivariate statistics  of a confidential data set.
 #'
 #' @param synth_data A data.frame with synthetic data
 #' @param conf_data A data.frame with the confidential data
+#' @param statistic a character string specifying which bivariate statistic
+#' to be returned by the function. One of "correlation", "covariance", or "RMI"
 #' @param use optional character string giving a method for computing
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
@@ -178,89 +247,172 @@ matrix <- matrix |>
                             statistic, use = "everything",
                             group_by_q = NULL, method = "pearson") {
 
+  # parameter validation
+  valid_statistics <- c("correlation", "covariance", "rmi")
+  na.statistic <- pmatch(x = tolower(statistic), table = valid_statistics)
+  if (is.na(na.statistic)) stop("invalid 'statistic' argument")
+  statistic <- match.arg(arg = tolower(statistic), choice = valid_statistics)
+
+  if (statistic == "rmi" && (!is.null(method) || !is.null(use))) message("NOTE: RMI ignores the 'method' and 'use' arguments")
+
   # Create list of variables to subset synth_data and conf_data
   # First, get numeric variables present in both data sets
-  intersect_numeric <- intersect(
-    synth_data |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      names(),
-    conf_data |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      names()
-  )
+
+  if (statistic %in% c("correlation", "covariance")) {
+    intersect_vars <- intersect(
+      synth_data |>
+        dplyr::select(tidyselect::where(is.numeric)) |>
+        names(),
+      conf_data |>
+        dplyr::select(tidyselect::where(is.numeric)) |>
+        names()
+    )
+  } else {
+    intersect_vars <- intersect(
+      synth_data |>
+        dplyr::select(tidyselect::where(is.factor)) |>
+        names(),
+      conf_data |>
+        dplyr::select(tidyselect::where(is.factor)) |>
+        names()
+    )
+  }
+
+  # build names for returned list
+  name_original <- paste0(statistic, "_original")
+  name_synthetic <- paste0(statistic, "_synthetic")
+  name_difference <- paste0(statistic, "_difference")
+  name_fit <- paste0(statistic, "_fit")
+  name_mae <- paste0(statistic, "_difference_mae")
+  name_rmse <- paste0(statistic, "_difference_rmse")
+
+  # Edge case: correlation and covariance need at least 2 numeric variables
+  if (length(intersect_vars) < 2) {
+    empty_tibble <- tibble::tibble(var1 = character(), var2 = character())
+    empty_tibble[[statistic]] <- numeric()
+
+    # add empty group_by_q column with correct type when provided
+    if (!is.null(group_by_q)) {
+      group_cols_empty <- conf_data |>
+        dplyr::select(dplyr::all_of(group_by_q)) |>
+        dplyr::slice(0)
+      empty_tibble <- dplyr::bind_cols(group_cols_empty, empty_tibble)
+    }
+
+    empty_tibble_diff <- empty_tibble |>
+      dplyr::rename(difference = dplyr::all_of(statistic))
+
+    out <- list(
+      empty_tibble,
+      empty_tibble,
+      empty_tibble_diff,
+      NA_real_,
+      NA_real_,
+      NA_real_
+    )
+    names(out) <- c(name_original, name_synthetic, name_difference, name_fit, name_mae, name_rmse)
+    return(out)
+  }
+
+
   # Second, add group_by variables to the list if supplied
   if (!is.null(group_by_q)) {
-    vars_select <- c(intersect_numeric, group_by_q)
+    vars_select <- c(intersect_vars, group_by_q)
   } else {
-    vars_select <- intersect_numeric
+    vars_select <- intersect_vars
   }
 
   # reorder data names
   synth_data <- dplyr::select(synth_data, dplyr::all_of(vars_select))
   conf_data <- dplyr::select(conf_data, dplyr::all_of(vars_select))
 
-  # find the lower triangle of the original data linear correlation matrix
-  original_lt <- .lower_triangle(conf_data, use = use, group_by_q = group_by_q, method = method, statistic = statistic)
+  if (statistic %in% c("correlation", "covariance")) {
+    # find the lower triangle of the original data linear correlation matrix
+    original_lt <- .lower_triangle(conf_data, use = use, group_by_q = group_by_q, method = method, statistic = statistic)
 
-  # find the lower triangle of the synthetic data linear correlation matrix
-  synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q, method = method, statistic = statistic)
-
-  # check that the variable pairs in the original and synthetic data correlation matrices are the same
-  # replaces previous check on rownames and colnames of correlation matrices
-  original_pairs <- original_lt |>
-    dplyr::distinct(var1, var2)
-
-  synthetic_pairs <- synthetic_lt |>
-    dplyr::distinct(var1, var2)
-
-  if (!dplyr::setequal(original_pairs, synthetic_pairs)) {
-    stop("The variable pairs in the original and synthetic data correlation matrices do not match.")
+    # find the lower triangle of the synthetic data linear correlation matrix
+    synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q, method = method, statistic = statistic)
+  } else if (statistic == "rmi") {
+    original_lt <- .calc_rmi_tibble(conf_data, group_by_q = group_by_q)
+    synthetic_lt <- .calc_rmi_tibble(synth_data, group_by_q = group_by_q)
   }
 
+  
   # find the difference between the matrices
   difference_lt <-
-    dplyr::left_join(
+    dplyr::full_join(
       original_lt,
       synthetic_lt,
       by = c("var1", "var2", group_by_q),
       suffix = c("_original", "_synthetic")
     ) |>
-    dplyr::mutate(difference = correlation_synthetic - correlation_original) |>
+    dplyr::mutate(difference = .data$statistic_synthetic - .data$statistic_original) |>
     dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "difference")))
+
+  # find the number of non-zero cells in the "lower triangle" for correlation_fit
+  # (aka among unique non-diagonal pairs)
+  # this matches the existing behavior of util_corr_fit
+  n_nonzero_cells <- difference_lt |>
+    dplyr::filter(.data$difference != 0) |>
+    nrow()
 
   if (!is.null(group_by_q)) {
 
     metrics <- difference_lt |>
       dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
       dplyr::summarise(
-        n = sum(!is.na(difference)),
-        correlation_fit = dplyr::if_else(n == 0, NA_real_, sqrt(sum(difference ^ 2, na.rm = TRUE)) / n),
-        correlation_difference_mae = mean(abs(difference), na.rm = TRUE),
-        correlation_difference_rmse = sqrt(mean(difference ^ 2, na.rm = TRUE)),
+        n = sum(!is.na(.data$difference)),
+        # sum of squared errors
+        sse = sum(.data$difference ^ 2, na.rm = TRUE),
+        fit = dplyr::case_when(
+          n == 0 ~ NA_real_,
+          sse == 0 ~ 0,
+          n_nonzero_cells == 0 ~ NA_real_,
+          TRUE ~ sqrt(sse) / n_nonzero_cells
+        ),
+        difference_mae = if (n == 0) {
+          NA_real_
+        } else {
+          mean(abs(.data$difference), na.rm = TRUE)
+        },
+        difference_rmse = if (n == 0) {
+          NA_real_
+        } else {
+          sqrt(mean(.data$difference ^ 2, na.rm = TRUE))
+        },
         .groups = "drop"
       )
 
-    correlation_fit <- metrics |>
-      dplyr::select(dplyr::any_of(group_by_q), correlation_fit)
+    fit <- metrics |>
+      dplyr::select(dplyr::any_of(group_by_q), fit)
 
-    correlation_difference_mae <- metrics |>
-      dplyr::select(dplyr::any_of(group_by_q), correlation_difference_mae)
+    difference_mae <- metrics |>
+      dplyr::select(dplyr::any_of(group_by_q), difference_mae)
 
-    correlation_difference_rmse <- metrics |>
-      dplyr::select(dplyr::any_of(group_by_q), correlation_difference_rmse)
+    difference_rmse <- metrics |>
+      dplyr::select(dplyr::any_of(group_by_q), difference_rmse)
 
   } else {
 
     n <- sum(!is.na(difference_lt$difference))
-    if (n == 0) {
-      correlation_fit <- NA_real_
-    } else {
-      correlation_fit <- sqrt(sum(difference_lt$difference ^ 2, na.rm = TRUE)) / n
-    }
+    sse <- sum(difference_lt$difference ^ 2, na.rm = TRUE)
+    fit <- dplyr::case_when(
+      n == 0 ~ NA_real_,
+      sse == 0 ~ 0,
+      n_nonzero_cells == 0 ~ NA_real_,
+      TRUE ~ sqrt(sse) / n_nonzero_cells
+    )
     difference_vec <- difference_lt$difference[!is.na(difference_lt$difference)]
-    correlation_difference_mae <- mean(abs(difference_vec))
-    correlation_difference_rmse <- sqrt(mean(difference_vec ^ 2))
-
+    difference_mae <- if (length(difference_vec) == 0) {
+      NA_real_
+    } else {
+      mean(abs(difference_lt$difference), na.rm = TRUE)
+    }
+    difference_rmse <- if (length(difference_vec) == 0) {
+      NA_real_
+    } else {
+      sqrt(mean(difference_lt$difference ^ 2, na.rm = TRUE))
+    }
   }
 
   # now that we're done with operations, convert all the data frames to tibbles for consistency
@@ -268,25 +420,27 @@ matrix <- matrix |>
   synthetic_lt <- tibble::as_tibble(synthetic_lt)
   difference_lt <- tibble::as_tibble(difference_lt)
 
-  return(
-    list(
-      correlation_original = original_lt,
-      correlation_synthetic = synthetic_lt,
-      correlation_difference = difference_lt,
-      correlation_fit = correlation_fit,
-      correlation_difference_mae = correlation_difference_mae,
-      correlation_difference_rmse = correlation_difference_rmse
-    )
+  names(original_lt)[names(original_lt) == "statistic"] <- statistic
+  names(synthetic_lt)[names(synthetic_lt) == "statistic"] <- statistic
+
+  out <- list(
+    original = original_lt,
+    synthetic = synthetic_lt,
+    difference = difference_lt,
+    fit = fit,
+    difference_mae = difference_mae,
+    difference_rmse = difference_rmse
   )
-
-}
-
+  names(out) <- c(name_original, name_synthetic, name_difference, name_fit, name_mae, name_rmse)
+  return(out)
 
 }
 
 #' Calculate the covariance matrix of a confidential data set.
 #'
 #' @param eval_data An `eval_data` object
+#' @param statistic a character string specifying which bivariate statistic
+#' to be returned by the function. One of "correlation", "covariance", or "RMI"
 #' @param use Optional character string giving a method for computing
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
@@ -304,16 +458,17 @@ matrix <- matrix |>
 #'
 #' @export
 #'
-util_cov <- function(eval_data, use = "everything", group_by_q = NULL, method = "pearson") {
+util_bivariate <- function(eval_data, statistic, use = "everything", group_by_q = NULL, method = "pearson") {
 
   stopifnot(is_eval_data(eval_data))
 
   if (eval_data$n_rep == 1) {
 
     return(
-      .util_cov(
+      .util_bivariate(
         conf_data = eval_data$conf_data,
         synth_data = eval_data$synth_data,
+        statistic = statistic,
         use = use,
         group_by_q = group_by_q,
         method = method
@@ -326,9 +481,10 @@ util_cov <- function(eval_data, use = "everything", group_by_q = NULL, method = 
       .x = eval_data$synth_data,
       .f = \(sd) {
 
-        .util_cov(
+        .util_bivariate(
           conf_data = eval_data$conf_data,
           synth_data = sd,
+          statistic = statistic,
           use = use,
           group_by_q = group_by_q,
           method = method
@@ -340,4 +496,5 @@ util_cov <- function(eval_data, use = "everything", group_by_q = NULL, method = 
     return(result)
 
   }
+
 }

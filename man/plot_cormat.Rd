@@ -2,18 +2,29 @@
 % Please edit documentation in R/util_plots.R
 \name{plot_cormat}
 \alias{plot_cormat}
-\title{Create side-by-side correlation heatmaps for numeric random variables.}
+\alias{plot_bivariate}
+\title{Create side-by-side bivariate heatmaps for numeric random variables.}
 \usage{
-plot_cormat(eval_data, cor_method = "pearson", group_by_q = NULL)
+plot_cormat(eval_data, statistic, cor_method = "pearson", group_by_q = NULL)
+
+plot_bivariate(eval_data, statistic, cor_method = "pearson", group_by_q = NULL)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}
 
+\item{statistic}{a character string specifying which bivariate statistic
+to be used by the function. One of "correlation", "covariance", or "rmi" or an
+abbreviation}
+
 \item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}}
+
+\item{group_by_q}{optional quoted character string of a variable name to
+group the data by. If provided, the correlation fit metric will be calculated
+for each group separately.}
 }
 \value{
 A \code{ggplot2} plot
 }
 \description{
-Create side-by-side correlation heatmaps for numeric random variables.
+Create side-by-side bivariate heatmaps for numeric random variables.
 }
