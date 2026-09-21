@@ -13,17 +13,17 @@ create_cormat_plot(
 )
 }
 \arguments{
-\item{data}{A data.frame/}
+\item{data}{A data.frame}
 
-\item{statistic}{a character string specifying which bivariate statistic
+\item{statistic}{A character string specifying which bivariate statistic
 to be returned by the function. One of "correlation", "covariance", or "rmi" or an
 abbreviation}
 
-\item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}}
+\item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}
+or \code{stats::cov()}. Ignored when statistic = "rmi"}
 
-\item{group_by_q}{optional quoted character string of a variable name to
-group the data by. If provided, the correlation fit metric will be calculated
-for each group separately.}
+\item{group_by_q}{Optional quoted character string of a variable name to
+group the data by. If provided, the statistics will be plotted for each group separately}
 
 \item{fill_limits}{Optional numeric length-2 vector giving the lower and upper
 limits for the heatmap fill scale. If \code{NULL}, defaults are used by statistic

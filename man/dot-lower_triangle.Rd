@@ -19,10 +19,10 @@ of) one of the strings "everything", "all.obs", "complete.obs",
 "na.or.complete", or "pairwise.complete.obs".}
 
 \item{group_by_q}{optional quoted character string of a variable name to
-group the data by. If provided, the correlation matrix will be calculated
+group the data by. If provided, the correlation/covariance matrix will be calculated
 for each group separately.}
 
-\item{method}{optional character string indicating which correlation
+\item{method}{optional character string indicating which correlation/covariance
 coefficient is to be computed. One of "pearson" (default),
 "kendall", or "spearman".}
 }

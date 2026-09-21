@@ -24,7 +24,11 @@
 #'  `correlation_original`, formatted in a long tibble.
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
-#'  cells in the complete correlation matrix prior to conversion to long tibbles
+#'  cells in the complete correlation matrix prior to conversion to long tibbles.
+#'  - `correlation_difference_mae`: mean absolute error of pairwise correlation
+#'    differences.
+#'  - `correlation_difference_rmse`: root mean squared error of pairwise
+#'    correlation differences.
 
 .util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL, method = "pearson") {
 

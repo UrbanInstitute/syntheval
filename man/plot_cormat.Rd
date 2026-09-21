@@ -12,13 +12,13 @@ plot_bivariate(eval_data, statistic, cor_method = "pearson", group_by_q = NULL)
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}
 
-\item{statistic}{a character string specifying which bivariate statistic
-to be used by the function. One of "correlation", "covariance", or "rmi" or an
-abbreviation}
+\item{statistic}{A character string specifying which bivariate statistic.
+One of "correlation", "covariance", or "rmi"}
 
-\item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}}
+\item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}
+or \code{stats::cov}. Ignored when statistic = "rmi".}
 
-\item{group_by_q}{optional quoted character string of a variable name to
+\item{group_by_q}{Optional quoted character string of a variable name to
 group the data by. If provided, the correlation fit metric will be calculated
 for each group separately.}
 }

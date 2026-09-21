@@ -8,11 +8,11 @@
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
 #' "na.or.complete", or "pairwise.complete.obs".
-#' @param method optional character string indicating which correlation
+#' @param method optional character string indicating which correlation/covariance
 #' coefficient is to be computed. One of "pearson" (default),
 #' "kendall", or "spearman".
 #' @param group_by_q optional quoted character string of a variable name to
-#' group the data by. If provided, the correlation matrix will be calculated
+#' group the data by. If provided, the correlation/covariance matrix will be calculated
 #' for each group separately.
 #'
 #' @return A data.frame with columns for deduplicated variable pairs and their
@@ -164,8 +164,7 @@
 #'
 #' @param df a dataframe containing factor variables
 #' @param group_by_q optional quoted character string of a variable name to
-#' group the data by. If provided, the correlation matrix will be calculated
-#' for each group separately.
+#' group the data by. If provided, the RMI will be calculated by group
 #' @return A long tibble with relative mutual information
 #
 .calc_rmi_tibble <- function(df, group_by_q) {
@@ -225,23 +224,37 @@
 }
 
 
-#' Calculate bivariate statistics  of a confidential data set.
+#' Calculate bivariate statistics of a confidential data set.
 #'
 #' @param synth_data A data.frame with synthetic data
 #' @param conf_data A data.frame with the confidential data
-#' @param statistic a character string specifying which bivariate statistic
-#' to be returned by the function. One of "correlation", "covariance", or "RMI"
-#' @param use optional character string giving a method for computing
-#' covariances in the presence of missing values. This must be (an abbreviation
+#' @param statistic A character string specifying which bivariate statistic.
+#'  One of "correlation", "covariance", or "rmi"
+#' @param use Optional character string giving a method for computing correlations
+#' or covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
-#' "na.or.complete", or "pairwise.complete.obs".
-#' @param method optional character string indicating which covariance
+#' "na.or.complete", or "pairwise.complete.obs". Ignored for statistic = "rmi"
+#' @param method Optional character string indicating which correlation/covariance
 #' is to be computed. One of "pearson" (default), "kendall", or "spearman".
-#' @param group_by_q optional quoted character string of a variable name to
-#' group the data by. If provided, the covariance matrix will be calculated
+#' Ignored for statistic = "rmi"
+#' @param group_by_q Optional quoted character string of a variable name to
+#' group the data by. If provided, the selected statistic will be calculated
 #' for each group separately.
 #'
-#' @return A long dataset with var1, var2, group_by_q if provided, and covariance
+#' @return A `list` of fit metrics:
+#'  - `<statistic>_original`: <statistic> values from original data of pairs of
+#'        numeric variables that appear in both original and synthetic datasets,
+#'        formatted in a long tibble
+#'  - `<statistic>_synthetic`: <statistic> values from synthetic data of pairs of
+#'        numeric variables that appear in both original and synthetic datasets,
+#'        formatted in a long tibble
+#'  - `<statistic>_difference`: difference between `<statistic>_synthetic` and
+#'  `<statistic>_original`, formatted in a long tibble.
+#'  - `<statistic>_fit`: square root of the sum of squared differences between
+#'  `<statistic>_synthetic` and `<statistic>_original`, divided by the number of
+#'  ????
+#'  - `<statistic>_difference_mae`: mean absolute error of pairwise differences.
+#'  - `<statistic>_difference_rmse`: root mean squared error of pairwise differences.
 
 .util_bivariate <- function(synth_data = synth_data, conf_data,
                             statistic, use = "everything",
@@ -436,23 +449,38 @@
 
 }
 
-#' Calculate the covariance matrix of a confidential data set.
+#' Calculate bivariate utility metrics
+#'
+#' Computes pairwise bivariate summaries comparing confidential and synthetic
+#' data from an `eval_data` object.
+#'
+#' Supported statistics:
+#' - `"correlation"`: lower triangle (diagonal excluded) of numeric correlation matrices
+#' - `"covariance"`: lower triangle (diagonal included) of numeric covariance matrices
+#' - `"rmi"`: non-diagonal pairwise relative mutual information for factor variables
+#'
 #'
 #' @param eval_data An `eval_data` object
-#' @param statistic a character string specifying which bivariate statistic
-#' to be returned by the function. One of "correlation", "covariance", or "RMI"
-#' @param use Optional character string giving a method for computing
-#' covariances in the presence of missing values. This must be (an abbreviation
+#' @param statistic a character string specifying the bivariate statistic.
+#'  One of "correlation", "covariance", or "rmi"
+#' @param use Optional character string giving a method for computing correlations
+#' or covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
-#' "na.or.complete", or "pairwise.complete.obs".
+#' "na.or.complete", or "pairwise.complete.obs". Ignored for statistic = "rmi"
 #' @param group_by_q Optional quoted character string of a variable name to
-#' group the data by. If provided, the covariance matrix will be calculated
+#' group the data by. If provided, the selected statistic will be calculated
 #' for each group separately.
-#' @param method optional character string indicating which covariance is to
-#' be computed. One of "pearson" (default), "kendall", or
-#' "spearman".
+#' @param method Optional character string indicating which correlation/covariance
+#' is to be computed. One of "pearson" (default), "kendall", or "spearman".
+#' Ignored for statistic = "rmi"
 #'
-#' @return A long dataset with var1, var2, group_by_q if provided, and covariance
+#' @return
+#' If `eval_data$n_rep == 1`, a named list with:
+#' `"<statistic>_original"`, `"<statistic>_synthetic"`,
+#' `"<statistic>_difference"`, `"<statistic>_fit"`,
+#' `"<statistic>_difference_mae"`, and `"<statistic>_difference_rmse"`.
+#'
+#' If `eval_data$n_rep > 1`, a list of such results (one per synthetic replicate).
 #' 
 #' @family utility metrics
 #'

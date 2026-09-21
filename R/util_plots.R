@@ -162,14 +162,14 @@ plot_categorical_bar <- function(eval_data,
 
 #' Create a correlation heatmap for numeric random variables.
 #'
-#' @param data A data.frame/
-#' @param statistic a character string specifying which bivariate statistic
+#' @param data A data.frame
+#' @param statistic A character string specifying which bivariate statistic
 #' to be returned by the function. One of "correlation", "covariance", or "rmi" or an
 #' abbreviation
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
-#' @param group_by_q optional quoted character string of a variable name to
-#' group the data by. If provided, the correlation fit metric will be calculated
-#' for each group separately.
+#' or `stats::cov()`. Ignored when statistic = "rmi"
+#' @param group_by_q Optional quoted character string of a variable name to
+#' group the data by. If provided, the statistics will be plotted for each group separately
 #' @param fill_limits Optional numeric length-2 vector giving the lower and upper
 #'   limits for the heatmap fill scale. If `NULL`, defaults are used by statistic
 #'   (`c(-1, 1)` for correlation, `c(0, 1)` for RMI, and data-driven limits for covariance).
@@ -318,11 +318,11 @@ return(plot)
 #' Create side-by-side bivariate heatmaps for numeric random variables.
 #'
 #' @param eval_data An `eval_data` object.
-#' @param statistic a character string specifying which bivariate statistic
-#' to be used by the function. One of "correlation", "covariance", or "rmi" or an
-#' abbreviation
+#' @param statistic A character string specifying which bivariate statistic.
+#' One of "correlation", "covariance", or "rmi"
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
-#' @param group_by_q optional quoted character string of a variable name to
+#' or `stats::cov`. Ignored when statistic = "rmi".
+#' @param group_by_q Optional quoted character string of a variable name to
 #' group the data by. If provided, the correlation fit metric will be calculated
 #' for each group separately.
 #'

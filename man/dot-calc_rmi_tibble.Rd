@@ -10,8 +10,7 @@
 \item{df}{a dataframe containing factor variables}
 
 \item{group_by_q}{optional quoted character string of a variable name to
-group the data by. If provided, the correlation matrix will be calculated
-for each group separately.}
+group the data by. If provided, the RMI will be calculated by group}
 }
 \value{
 A long tibble with relative mutual information

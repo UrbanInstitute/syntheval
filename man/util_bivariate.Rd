@@ -2,7 +2,7 @@
 % Please edit documentation in R/util_bivariate.r
 \name{util_bivariate}
 \alias{util_bivariate}
-\title{Calculate the covariance matrix of a confidential data set.}
+\title{Calculate bivariate utility metrics}
 \usage{
 util_bivariate(
   eval_data,
@@ -15,27 +15,41 @@ util_bivariate(
 \arguments{
 \item{eval_data}{An \code{eval_data} object}
 
-\item{statistic}{a character string specifying which bivariate statistic
-to be returned by the function. One of "correlation", "covariance", or "RMI"}
+\item{statistic}{a character string specifying the bivariate statistic.
+One of "correlation", "covariance", or "rmi"}
 
-\item{use}{Optional character string giving a method for computing
-covariances in the presence of missing values. This must be (an abbreviation
+\item{use}{Optional character string giving a method for computing correlations
+or covariances in the presence of missing values. This must be (an abbreviation
 of) one of the strings "everything", "all.obs", "complete.obs",
-"na.or.complete", or "pairwise.complete.obs".}
+"na.or.complete", or "pairwise.complete.obs". Ignored for statistic = "rmi"}
 
 \item{group_by_q}{Optional quoted character string of a variable name to
-group the data by. If provided, the covariance matrix will be calculated
+group the data by. If provided, the selected statistic will be calculated
 for each group separately.}
 
-\item{method}{optional character string indicating which covariance is to
-be computed. One of "pearson" (default), "kendall", or
-"spearman".}
+\item{method}{Optional character string indicating which correlation/covariance
+is to be computed. One of "pearson" (default), "kendall", or "spearman".
+Ignored for statistic = "rmi"}
 }
 \value{
-A long dataset with var1, var2, group_by_q if provided, and covariance
+If \code{eval_data$n_rep == 1}, a named list with:
+\code{"<statistic>_original"}, \code{"<statistic>_synthetic"},
+\code{"<statistic>_difference"}, \code{"<statistic>_fit"},
+\code{"<statistic>_difference_mae"}, and \code{"<statistic>_difference_rmse"}.
+
+If \code{eval_data$n_rep > 1}, a list of such results (one per synthetic replicate).
 }
 \description{
-Calculate the covariance matrix of a confidential data set.
+Computes pairwise bivariate summaries comparing confidential and synthetic
+data from an \code{eval_data} object.
+}
+\details{
+Supported statistics:
+\itemize{
+\item \code{"correlation"}: lower triangle (diagonal excluded) of numeric correlation matrices
+\item \code{"covariance"}: lower triangle (diagonal included) of numeric covariance matrices
+\item \code{"rmi"}: non-diagonal pairwise relative mutual information for factor variables
+}
 }
 \seealso{
 Other utility metrics: 
