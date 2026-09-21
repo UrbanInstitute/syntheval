@@ -84,20 +84,15 @@ test_that("util_corr_fit is correct with postsynth object, ungrouped", {
     structure(class = "postsynth")
   ed <- eval_data(conf_data = df, synth_data = syn)
 
-  intersect_numeric <- intersect(
-    ed$conf_data |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      names(),
-    ed$synth_data |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      names()
-  )
-
   corr <- util_corr_fit(ed)
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
+
+  n_nonzero_cells <- corr$correlation_difference |>
+    dplyr::filter(.data$difference != 0) |>
+    nrow()
 
   expected_diff <- diff_table |>
     dplyr::arrange(var1, var2)
@@ -108,7 +103,7 @@ test_that("util_corr_fit is correct with postsynth object, ungrouped", {
   expect_true(!any(actual_diff$var1 == actual_diff$var2))
   expect_equal(
     corr$correlation_fit,
-    sqrt(sum(expected_diff$difference ^ 2)) / length(intersect_numeric) ^ 2
+    sqrt(sum(expected_diff$difference ^ 2)) / n_nonzero_cells
   )
   expect_equal(
     corr$correlation_difference_mae,
@@ -131,20 +126,16 @@ test_that("util_corr_fit is correct with eval_data object, ungrouped", {
   
   ed <- eval_data(conf_data = df, synth_data = syn)
 
-  intersect_numeric <- intersect(
-    ed$conf_data |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      names(),
-    ed$synth_data |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      names()
-  )
-  
   corr <- util_corr_fit(ed)
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
+
+  n_nonzero_cells <- corr$correlation_difference |>
+    dplyr::filter(.data$difference != 0) |>
+    nrow()
+
   expected_diff <- diff_table |>
     dplyr::arrange(var1, var2)
 
@@ -153,7 +144,7 @@ test_that("util_corr_fit is correct with eval_data object, ungrouped", {
   expect_true(!any(actual_diff$var1 == actual_diff$var2))
   expect_equal(
     corr$correlation_fit,
-    sqrt(sum(expected_diff$difference ^ 2)) / length(intersect_numeric) ^ 2
+    sqrt(sum(expected_diff$difference ^ 2)) / n_nonzero_cells
   )
   expect_equal(
     corr$correlation_difference_mae,

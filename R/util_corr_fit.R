@@ -127,7 +127,7 @@
     }
 
     empty_tibble_diff <- empty_tibble |>
-      dplyr::rename(difference = correlation)
+      dplyr::rename(difference = "correlation")
 
     return(list(
       correlation_original =  empty_tibble,
@@ -138,9 +138,6 @@
       correlation_difference_rmse = NA_real_
     ))
   }
-
-  # get number of matrix cells for correlation_fit
-  n_matrix_cells <- length(intersect_numeric) ^ 2
 
   # Second, add group_by variables to the list if supplied
   if (!is.null(group_by_q)) {
@@ -170,17 +167,27 @@
     dplyr::mutate(difference = .data$correlation_synthetic - .data$correlation_original) |>
     dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "difference")))
 
+  # find the number of non-zero cells in the "lower triangle" for correlation_fit
+  # (aka among unique non-diagonal pairs)
+  # this matches the existing behavior of util_corr_fit
+  n_nonzero_cells <- difference_lt |>
+    dplyr::filter(.data$difference != 0) |>
+    nrow()
+
   if (!is.null(group_by_q)) {
 
     metrics <- difference_lt |>
       dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
       dplyr::summarise(
         n = sum(!is.na(.data$difference)),
-        correlation_fit = if (n_matrix_cells == 0 || n == 0) {
-          NA_real_
-        } else {
-          sqrt(sum(.data$difference ^ 2, na.rm = TRUE)) / n_matrix_cells
-        },
+        # sum of squared errors
+        sse = sum(.data$difference ^ 2, na.rm = TRUE),
+        correlation_fit = dplyr::case_when(
+          n == 0 ~ NA_real_,
+          sse == 0 ~ 0,
+          n_nonzero_cells == 0 ~ NA_real_,
+          TRUE ~ sqrt(sse) / n_nonzero_cells
+        ),
         correlation_difference_mae = if (n == 0) {
           NA_real_
         } else {
@@ -192,7 +199,9 @@
           sqrt(mean(.data$difference ^ 2, na.rm = TRUE))
         },
         .groups = "drop"
-      )
+      ) |>
+      dplyr::select(-dplyr::any_of("sse"))
+
 
     correlation_fit <- metrics |>
       dplyr::select(dplyr::any_of(c(group_by_q, "correlation_fit")))
@@ -207,12 +216,13 @@
   } else {
 
     n <- sum(!is.na(difference_lt$difference))
-    correlation_fit <- if (n_matrix_cells == 0 || n == 0) {
-      NA_real_
-    } else {
-      sqrt(sum(difference_lt$difference ^ 2, na.rm = TRUE)) / n_matrix_cells
-    }
-
+    sse <- sum(difference_lt$difference ^ 2, na.rm = TRUE)
+    correlation_fit <- dplyr::case_when(
+      n == 0 ~ NA_real_,
+      sse == 0 ~ 0,
+      n_nonzero_cells == 0 ~ NA_real_,
+      TRUE ~ sqrt(sse) / n_nonzero_cells
+    )
     difference_vec <- difference_lt$difference[!is.na(difference_lt$difference)]
     correlation_difference_mae <- if (length(difference_vec) == 0) {
       NA_real_
