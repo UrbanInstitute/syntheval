@@ -186,7 +186,8 @@ is_discrimination <- function(x) {
       # rename the split column .source to .sample to match the AUC element
       dplyr::mutate(.sample = as.character(.data$.source)) |>
       dplyr::select(-".source") |>
-      # turn each metric column into rows, so one or three columns both work
+      # turn each metric column into rows, however many add_*() steps have
+      # added so far
       tidyr::pivot_longer(
         cols = -".sample",
         names_to = ".metric",
@@ -206,7 +207,7 @@ is_discrimination <- function(x) {
   )
   metrics <- dplyr::bind_rows(c(list(empty), unname(pieces)))
 
-  # impose the display order: metrics as in `labels`, training before testing
+  # set the display order: metrics as in `labels`, training before testing
   # within each metric; attach the display label for print()
   metrics <- metrics |>
     dplyr::mutate(
