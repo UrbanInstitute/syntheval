@@ -1,31 +1,55 @@
 #' Add pMSE ratio to discrimination object
 #'
-#' The null pMSEs in the denominator of the ratio are estimated with bootstrap
-#' samples that can be computed in parallel. The bootstrap iterations are
-#' evaluated with `furrr::future_map()`, so they run sequentially by default
-#' and in parallel under a non-sequential [future::plan()] (for example,
+#' `method = "perm"` estimates the null pMSEs in the denominator of the ratio
+#' by randomly permuting the confidential/synthetic labels, which can be computed
+#' in parallel. The permutation iterations are evaluated with
+#' `furrr::future_map()`, so they run sequentially by default and in parallel
+#' under a non-sequential [future::plan()] (for example,
 #' `future::plan(future::multisession)`). Results are reproducible for a given
 #' seed and identical under sequential and parallel plans.
+#'
+#' `method = "logistic"` instead calculates the null pMSE with the closed-form
+#' approximation for logistic regression discriminators from Snoke et al.
+#' (2018): \eqn{(k - 1)(1 - c)^2 / N}, where \eqn{k} is the number of
+#' coefficients in the fitted model (including the intercept), \eqn{c} is the
+#' proportion of synthetic records, and \eqn{N} is the number of records. This
+#' requires the discriminator to be a `parsnip::logistic_reg()` model with the
+#' `"glm"` engine and does not require `times`.
 #'
 #' @param discrimination A discrimination with added propensities
 #' @param split A logical for if the metric should be calculated separately for
 #' the training/testing split. Defaults to TRUE.
 #' @param prop The proportion of data to be retained for modeling/analysis in
-#' the training/testing split. The sampling is stratified by the original and
+#' the training/testing split. The sampling is stratified by the confidential and
 #' synthetic data.
-#' @param times The number of bootstrap samples.
+#' @param times The number of permutations. Only used when `method = "perm"`.
+#' @param method The method used to estimate the null pMSE. `"perm"` (the
+#' default) permutes the confidential/synthetic labels. `"logistic"` uses the
+#' closed-form approximation for logistic regression discriminators from
+#' Snoke et al. (2018).
 #'
 #' @return A discrimination with pMSE
 #'
 #' @family Utility metrics
 #'
 #' @export
-add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
+add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = NULL, method = "perm") {
 
-  .validate_discrimination(
-    discrimination,
-    requires = c(pmse = "add_pmse()")
-  )
+  .validate_discrimination(discrimination, requires = c(pmse = "add_pmse()"))
+
+  method <- match.arg(method, choices = c("perm", "logistic"))
+
+  if (method == "perm" && (is.null(times) || times %% 1 != 0 || times < 1)) {
+
+    stop('Error: times must be a positive integer when method is "perm"')
+
+  }
+
+  if (method == "logistic") {
+
+    return(.add_pmse_ratio_logistic(discrimination))
+
+  }
 
   calc_pmse <- function(propensities) {
 
@@ -47,37 +71,30 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     return(pmse)
 
   }
-  # calculate the null pMSE for one bootstrap sample
+  # calculate the null pMSE for one permutation
   #
-  # param: iteration_index The bootstrap iteration number. Unused because each
-  # iteration draws a fresh bootstrap sample from its own random seed.
+  # param: iteration_index The permutation iteration number. Unused because
+  # each iteration draws a fresh label permutation from its own random seed.
   #
   # return: A named list with the overall, training, and testing null pMSEs.
   # The training and testing elements are NA when split = FALSE.
   calc_null_pmse <- function(iteration_index) {
 
-    # bootstrap sample original observations to equal the size of the combined
-    # data
-    # append the original labels so the proportions match
-    bootstrap_sample <- dplyr::bind_cols(
-      discrimination$combined_data |>
-        dplyr::filter(.data$.source_label == "original") |>
-        dplyr::slice_sample(n = nrow(discrimination$combined_data), replace = TRUE) |>
-        dplyr::select(-".source_label"),
-      discrimination$combined_data |>
-        dplyr::select(".source_label")
-    )
+    # shuffle the confidential/synthetic labels so they carry no information,
+    # keeping every other column and the label proportions unchanged
+    permuted_sample <- discrimination$combined_data |>
+      dplyr::mutate(.source_label = sample(.data$.source_label))
 
     if (split) {
 
       # make training/testing split
       data_split <- rsample::initial_split(
-        data = bootstrap_sample,
+        data = permuted_sample,
         prop = prop,
         strata = ".source_label"
       )
 
-      # fit the model from the pMSE on the bootstrap sample
+      # fit the model from the pMSE on the permuted sample
       fitted_model <- parsnip::fit(
         discrimination$discriminator,
         data = rsample::training(data_split)
@@ -96,7 +113,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
           )
         )
 
-      # calculate the pmse for each bootstrap
+      # calculate the pmse for each permutation
       pmse_null <- list(
         overall = calc_pmse(propensities_df),
         training = propensities_df |>
@@ -109,10 +126,10 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
 
     } else {
 
-      # fit the model from the pMSE on the bootstrap sample
+      # fit the model from the pMSE on the permuted sample
       fitted_model <- parsnip::fit(
         discrimination$discriminator,
-        data = bootstrap_sample
+        data = permuted_sample
       )
 
       # calculate the propensities
@@ -121,7 +138,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
         discrimination$combined_data
       )
 
-      # calculate the pmse for each bootstrap
+      # calculate the pmse for each permutation
       pmse_null <- list(
         overall = calc_pmse(propensities_df),
         training = NA_real_,
@@ -134,7 +151,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
 
   }
 
-  # calculate the null pMSE for each bootstrap sample, in parallel when a
+  # calculate the null pMSE for each permutation, in parallel when a
   # non-sequential future::plan() is set
   # seed = TRUE assigns every iteration its own random seed up front, so
   # results are reproducible and identical across plans for a given seed;
@@ -145,7 +162,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     .options = furrr::furrr_options(seed = TRUE, packages = "workflows")
   )
 
-  # find the mean of the bootstrapped pMSEs
+  # find the mean of the permuted pMSEs
   mean_null_pmse_overall <- mean(purrr::map_dbl(pmse_null, "overall"))
   mean_null_pmse_training <- mean(purrr::map_dbl(pmse_null, "training"))
   mean_null_pmse_testing <- mean(purrr::map_dbl(pmse_null, "testing"))
@@ -157,7 +174,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
 
       stop(
         "Error: discrimination$pmse contains training/testing pMSEs but ",
-        "split = FALSE, so no training/testing null pMSEs were bootstrapped. ",
+        "split = FALSE, so no training/testing null pMSEs were permuted. ",
         "Call add_pmse_ratio() with split = TRUE."
       )
 
@@ -174,6 +191,68 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times) {
     pmse <- dplyr::bind_cols(
       discrimination$pmse,
       tibble::tibble(.null_pmse = mean_null_pmse_overall)
+    ) |>
+      dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+
+  }
+
+  discrimination$pmse <- pmse
+
+  return(discrimination)
+
+}
+
+# calculate the null pMSE with the closed-form logistic regression
+# approximation from Snoke et al. (2018): (k - 1)(1 - c)^2 / N
+.add_pmse_ratio_logistic <- function(discrimination) {
+
+  spec <- workflows::extract_spec_parsnip(discrimination$discriminator)
+
+  if (!inherits(spec, "logistic_reg") || spec$engine != "glm") {
+
+    stop(
+      "Error: method = \"logistic\" requires the discriminator to be a ",
+      "parsnip::logistic_reg() model with the \"glm\" engine."
+    )
+
+  }
+
+  # number of coefficients in the fitted model, including the intercept
+  k <- length(stats::coef(workflows::extract_fit_engine(discrimination$discriminator)))
+
+  # null pMSE for one subset of propensities (training, testing, or overall)
+  calc_null_pmse <- function(propensities) {
+
+    n <- nrow(propensities)
+    c <- mean(propensities$.source_label == "synthetic")
+
+    (k - 1) * (1 - c) ^ 2 / n
+
+  }
+
+  if (all(c("training", "testing") %in% discrimination$pmse$.source)) {
+
+    null_pmse_training <- discrimination$propensities |>
+      dplyr::filter(.data$.sample == "training") |>
+      calc_null_pmse()
+
+    null_pmse_testing <- discrimination$propensities |>
+      dplyr::filter(.data$.sample == "testing") |>
+      calc_null_pmse()
+
+    pmse <- dplyr::bind_cols(
+      discrimination$pmse,
+      tibble::tibble(.null_pmse = c(null_pmse_training, null_pmse_testing))
+    ) |>
+      dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+
+  } else {
+
+    null_pmse_overall <- calc_null_pmse(discrimination$propensities)
+
+    pmse <- dplyr::bind_cols(
+      discrimination$pmse,
+      tibble::tibble(.null_pmse = null_pmse_overall)
     ) |>
       dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
 

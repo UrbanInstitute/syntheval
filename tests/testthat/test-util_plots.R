@@ -82,6 +82,6 @@ test_that("plot_cormat creates the right ggplot", {
 
   plot <- plot_cormat(ed)
 
-  expect_equal(length(plot$grobs), 2)
+  expect_equal(length(plot), 2)
 
 })
