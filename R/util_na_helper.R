@@ -200,3 +200,33 @@ convert_na_to_level <- function(data) {
   return(data_converted)
   
 }
+
+#'
+#' Recode user-specified sentinel values to `NA`
+#'
+#' @param data A data frame or tibble
+#' @param na_values An optional scalar or vector of values (in addition to `NA`)
+#' that should be treated as missing. If `NULL`, `data` is returned unchanged.
+#'
+#' @return A data frame or tibble with any values matching `na_values` replaced
+#' with `NA` across all columns
+#'
+.recode_custom_na <- function(data, na_values = NULL) {
+  
+  if (is.null(na_values)) {
+    
+    return(data)
+    
+  }
+  
+  data <- data |>
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::everything(),
+        \(x) replace(x, x %in% na_values, NA)
+      )
+    )
+  
+  return(data)
+  
+}
