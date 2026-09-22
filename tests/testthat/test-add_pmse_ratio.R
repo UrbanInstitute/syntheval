@@ -49,7 +49,7 @@ test_that("add_pmse returns ideal value for identical data with variation " , {
   
   expect_equal(round(disc$pmse$.pmse, digit = 2), c(0, 0))
   # this is a bad test but will at least tell us when the code logic changes
-  expect_equal(round(disc$pmse$.pmse_ratio, 5), c(0.27909, 0.60349))
+  expect_equal(round(disc$pmse$.pmse_ratio, 5), c(0.39300, 0.78869))
   
 })
 
@@ -151,6 +151,87 @@ test_that("add_pmse_ratio method = 'logistic' errors for non-logistic/non-glm di
     add_pmse_ratio(disc, split = FALSE, method = "logistic"),
     regexp = "logistic_reg"
   )
+
+})
+
+test_that("add_pmse_ratio errors for an invalid times", {
+
+  set.seed(1)
+
+  data <-
+    data.frame(
+      x = rnorm(n = 50, mean = 0, sd = 1),
+      y = rnorm(n = 50, mean = 0, sd = 1)
+    )
+
+  postsynth <-
+    list(
+      synthetic_data = data,
+      jth_synthesis_time = data.frame(
+        variable = factor(c("x", "y"))
+      )
+    ) |>
+    structure(class = "postsynth")
+
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+
+  dt_mod <- parsnip::decision_tree() |>
+    parsnip::set_mode(mode = "classification") |>
+    parsnip::set_engine(engine = "rpart")
+
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
+
+  disc <-
+    discrimination(ed) |>
+    add_propensities(
+      recipe = rec,
+      spec = dt_mod
+    ) |>
+    add_pmse(split = FALSE)
+
+  expect_error(add_pmse_ratio(disc, split = FALSE, times = 1.5), regexp = "times must be a positive integer")
+  expect_error(add_pmse_ratio(disc, split = FALSE, times = 0), regexp = "times must be a positive integer")
+  expect_error(add_pmse_ratio(disc, split = FALSE, times = -1), regexp = "times must be a positive integer")
+  expect_error(add_pmse_ratio(disc, split = FALSE), regexp = "times must be a positive integer")
+
+})
+
+test_that("add_pmse_ratio does not require times for method = 'logistic'", {
+
+  set.seed(1)
+
+  data <-
+    data.frame(
+      x = rnorm(n = 50, mean = 0, sd = 1),
+      y = rnorm(n = 50, mean = 0, sd = 1)
+    )
+
+  postsynth <-
+    list(
+      synthetic_data = data,
+      jth_synthesis_time = data.frame(
+        variable = factor(c("x", "y"))
+      )
+    ) |>
+    structure(class = "postsynth")
+
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+
+  log_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
+    parsnip::set_engine(engine = "glm")
+
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
+
+  disc <-
+    discrimination(ed) |>
+    add_propensities(
+      recipe = rec,
+      spec = log_mod
+    ) |>
+    add_pmse(split = FALSE)
+
+  expect_no_error(add_pmse_ratio(disc, split = FALSE, method = "logistic"))
 
 })
 

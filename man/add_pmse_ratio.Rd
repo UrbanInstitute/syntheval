@@ -7,8 +7,8 @@
 add_pmse_ratio(
   discrimination,
   split = TRUE,
-  prop = 3/4,
-  times,
+  prop = 4/5,
+  times = NULL,
   method = "perm"
 )
 }
@@ -19,13 +19,13 @@ add_pmse_ratio(
 the training/testing split. Defaults to TRUE.}
 
 \item{prop}{The proportion of data to be retained for modeling/analysis in
-the training/testing split. The sampling is stratified by the original and
+the training/testing split. The sampling is stratified by the confidential and
 synthetic data.}
 
 \item{times}{The number of permutations. Only used when \code{method = "perm"}.}
 
 \item{method}{The method used to estimate the null pMSE. \code{"perm"} (the
-default) permutes the original/synthetic labels. \code{"logistic"} uses the
+default) permutes the confidential/synthetic labels. \code{"logistic"} uses the
 closed-form approximation for logistic regression discriminators from
 Snoke et al. (2018).}
 }
@@ -34,7 +34,7 @@ A discrimination with pMSE
 }
 \description{
 \code{method = "perm"} estimates the null pMSEs in the denominator of the ratio
-by randomly permuting the original/synthetic labels, which can be computed
+by randomly permuting the confidential/synthetic labels, which can be computed
 in parallel. The permutation iterations are evaluated with
 \code{furrr::future_map()}, so they run sequentially by default and in parallel
 under a non-sequential \code{\link[future:plan]{future::plan()}} (for example,

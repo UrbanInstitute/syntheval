@@ -1,7 +1,7 @@
 #' Add pMSE ratio to discrimination object
 #'
 #' `method = "perm"` estimates the null pMSEs in the denominator of the ratio
-#' by randomly permuting the original/synthetic labels, which can be computed
+#' by randomly permuting the confidential/synthetic labels, which can be computed
 #' in parallel. The permutation iterations are evaluated with
 #' `furrr::future_map()`, so they run sequentially by default and in parallel
 #' under a non-sequential [future::plan()] (for example,
@@ -20,11 +20,11 @@
 #' @param split A logical for if the metric should be calculated separately for
 #' the training/testing split. Defaults to TRUE.
 #' @param prop The proportion of data to be retained for modeling/analysis in
-#' the training/testing split. The sampling is stratified by the original and
+#' the training/testing split. The sampling is stratified by the confidential and
 #' synthetic data.
 #' @param times The number of permutations. Only used when `method = "perm"`.
 #' @param method The method used to estimate the null pMSE. `"perm"` (the
-#' default) permutes the original/synthetic labels. `"logistic"` uses the
+#' default) permutes the confidential/synthetic labels. `"logistic"` uses the
 #' closed-form approximation for logistic regression discriminators from
 #' Snoke et al. (2018).
 #'
@@ -33,9 +33,15 @@
 #' @family Utility metrics
 #'
 #' @export
-add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times, method = "perm") {
+add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = NULL, method = "perm") {
 
   method <- match.arg(method, choices = c("perm", "logistic"))
+
+  if (method == "perm" && (is.null(times) || times %% 1 != 0 || times < 1)) {
+
+    stop('Error: times must be a positive integer when method is "perm"')
+
+  }
 
   if (is.null(discrimination$pmse)) {
 
@@ -78,7 +84,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 3 / 4, times, me
   # The training and testing elements are NA when split = FALSE.
   calc_null_pmse <- function(iteration_index) {
 
-    # shuffle the original/synthetic labels so they carry no information,
+    # shuffle the confidential/synthetic labels so they carry no information,
     # keeping every other column and the label proportions unchanged
     permuted_sample <- discrimination$combined_data |>
       dplyr::mutate(.source_label = sample(.data$.source_label))
