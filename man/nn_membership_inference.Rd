@@ -9,7 +9,13 @@ nn_membership_inference(
   conf_data,
   holdout_data,
   threshold_percentile = NULL,
-  summary = TRUE
+  summary = TRUE,
+  variables = NULL,
+  blocked_variables = NULL,
+  sampling_strata = NULL,
+  sample_prop = NULL,
+  sampling_seed = NULL,
+  chunk_size = NULL
 )
 }
 \arguments{
@@ -28,6 +34,33 @@ following formula: \code{nrow(data)/(nrow(data) + nrow(holdout_data))}}
 
 \item{summary}{Boolean if TRUE, returns summary statistics, if FALSE, returns
 two disaggregated dataframes of individual distances and ROC curve points.}
+
+\item{variables}{An optional character vector of variable names (for example,
+quasi-identifiers) used to calculate Gower distance. Defaults to all
+variables common to \code{conf_data}/\code{holdout_data} and \code{synth_data}.}
+
+\item{blocked_variables}{An optional character vector of variable names that
+must match exactly before two records are compared. Blended records are only
+compared to synthetic records sharing the same \code{blocked_variables} values,
+and these variables are excluded from the Gower distance calculation. A
+blended record whose block has no matching synthetic records is assigned
+the maximum possible Gower distance (\code{1}).}
+
+\item{sampling_strata}{An optional character vector of variable names (in
+addition to \code{source}) whose proportions are preserved when \code{sample_prop} is
+used to subsample the blended data.}
+
+\item{sample_prop}{An optional number in (0, 1]. If provided, only this
+proportion of blended records (stratified by \code{source} and
+\code{sampling_strata}) are scored, which reduces the number of Gower distance
+comparisons at the cost of an approximate result.}
+
+\item{sampling_seed}{An optional integer seed so \code{sample_prop} sampling is
+reproducible. Has no effect if \code{sample_prop} is \code{NULL}.}
+
+\item{chunk_size}{An optional integer controlling how many blended records
+are compared to the synthetic data per \code{gower::gower_topn()} call. Lowering
+this bounds peak memory use for large data without changing the result.}
 }
 \value{
 Either a list with precision, recall, the confusion matrix, and ROC AUC
