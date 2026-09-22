@@ -1,6 +1,6 @@
 # syntheval 0.1.0 (development)
 
-- Add `print()` and `summary()` methods for `discrimination` objects. `summary()` returns all computed discriminant metrics in one tibble with columns `.metric`, `.sample`, and `.value`. (#111)
+- Add a `print()` method for `discrimination` objects that shows the combined data size, the fitted discriminator, and a table of every computed metric by sample split. (#111)
 - `add_pmse()`, `add_specks()`, `add_discriminator_auc()`, and `add_pmse_ratio()` now error with a clear message when called on a non-`discrimination` object or before their prerequisite step. (#111)
 - Add `util_pred()` functionality for prediction accuracy metrics. (#129)
 - Add `attribute_target()` functionality for target attribute inference metrics. (#15)

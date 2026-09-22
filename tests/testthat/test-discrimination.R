@@ -43,17 +43,16 @@ test_that(".validate_discrimination passes a valid object through invisibly", {
 })
 
 
-test_that("print.discrimination reports what has been computed", {
+test_that("print.discrimination shows the computed metric values", {
 
   ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
   disc <- discrimination(ed)
 
-  expect_output(print(disc), regexp = "Discrimination object")
+  # nothing fitted or computed yet
+  expect_output(print(disc), regexp = "^Discrimination\\n")
+  expect_output(print(disc), regexp = "original: 333, synthetic: 333")
   expect_output(print(disc), regexp = "Discriminator: not fitted")
-  expect_output(print(disc), regexp = "pMSE: not computed")
-  expect_output(print(disc), regexp = "pMSE ratio: not computed")
-  expect_output(print(disc), regexp = "SPECKS: not computed")
-  expect_output(print(disc), regexp = "Discriminator AUC: not computed")
+  expect_output(print(disc), regexp = "Metrics: none computed")
   expect_invisible(print(disc))
 
   set.seed(1)
@@ -66,82 +65,45 @@ test_that("print.discrimination reports what has been computed", {
 
   disc <- disc |>
     add_propensities(recipe = rec, spec = logistic_mod) |>
-    add_pmse(split = FALSE)
-
-  expect_output(print(disc), regexp = "Discriminator: workflow")
-  expect_output(print(disc), regexp = "pMSE: computed")
-  expect_output(print(disc), regexp = "pMSE ratio: not computed")
-
-  disc <- add_pmse_ratio(disc, split = FALSE, times = 5)
-
-  expect_output(print(disc), regexp = "pMSE ratio: computed")
-
-})
-
-test_that("summary.discrimination returns a stable three-column tibble", {
-
-  ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
-  disc <- discrimination(ed)
-
-  empty <- summary(disc)
-
-  expect_s3_class(empty, "tbl_df")
-  expect_equal(nrow(empty), 0)
-  expect_named(empty, c(".metric", ".sample", ".value"))
-
-  set.seed(1)
-
-  logistic_mod <- parsnip::logistic_reg() |>
-    parsnip::set_mode(mode = "classification") |>
-    parsnip::set_engine(engine = "glm")
-
-  rec <- recipes::recipe(.source_label ~ ., data = disc$combined_data)
-
-  disc <- disc |>
-    add_propensities(recipe = rec, spec = logistic_mod) |>
-    add_pmse() |>
+    add_discriminator_auc() |>
     add_specks() |>
-    add_discriminator_auc()
+    add_pmse()
 
-  out <- summary(disc)
+  out <- utils::capture.output(print(disc))
 
-  expect_named(out, c(".metric", ".sample", ".value"))
-  expect_setequal(unique(out$.metric), c("pmse", "specks", "discriminator_auc"))
-  expect_setequal(unique(out$.sample), c("training", "testing"))
-  expect_equal(nrow(out), 6)
+  expect_true(any(grepl("Discriminator: logistic_reg \\(glm\\), fitted", out)))
+  expect_false(any(grepl("none computed", out)))
 
-  expect_equal(
-    out$.value[out$.metric == "pmse" & out$.sample == "training"],
-    disc$pmse$.pmse[disc$pmse$.source == "training"]
-  )
+  # column headers for the split
+  expect_true(any(grepl("training", out) & grepl("testing", out)))
 
-  expect_equal(
-    out$.value[out$.metric == "specks" & out$.sample == "testing"],
-    disc$specks$.specks[disc$specks$.source == "testing"]
-  )
+  # rows appear in README order, and pmse ratio rows are absent before
+  # add_pmse_ratio() runs
+  auc_row <- grep("^Discriminator AUC", out)
+  specks_row <- grep("^SPECKS", out)
+  pmse_row <- grep("^pMSE\\s+[0-9]", out)
 
-  expect_equal(
-    out$.value[out$.metric == "discriminator_auc" & out$.sample == "testing"],
-    disc$discriminator_auc$.estimate[disc$discriminator_auc$.sample == "testing"]
-  )
+  expect_length(auc_row, 1)
+  expect_length(specks_row, 1)
+  expect_length(pmse_row, 1)
+  expect_true(auc_row < specks_row && specks_row < pmse_row)
+  expect_false(any(grepl("pMSE ratio", out)))
+
+  # the printed AUC matches the element, to 3 significant digits
+  auc_training <- disc$discriminator_auc$.estimate[disc$discriminator_auc$.sample == "training"]
+  expect_true(grepl(formatC(auc_training, digits = 3, format = "g"), out[auc_row], fixed = TRUE))
 
   disc <- add_pmse_ratio(disc, times = 5)
-  out <- summary(disc)
+  out <- utils::capture.output(print(disc))
 
-  expect_setequal(
-    unique(out$.metric),
-    c("pmse", "null_pmse", "pmse_ratio", "specks", "discriminator_auc")
-  )
-  expect_equal(nrow(out), 10)
-
-  expect_equal(
-    out$.value[out$.metric == "pmse_ratio" & out$.sample == "testing"],
-    disc$pmse$.pmse_ratio[disc$pmse$.source == "testing"]
-  )
+  expect_true(any(grepl("^null pMSE", out)))
+  expect_true(any(grepl("^pMSE ratio", out)))
+  expect_true(grep("^pMSE\\s+[0-9]", out) < grep("^null pMSE", out))
+  expect_true(grep("^null pMSE", out) < grep("^pMSE ratio", out))
 
 })
 
-test_that("summary.discrimination uses 'overall' when split = FALSE", {
+test_that("print.discrimination uses an 'overall' column when split = FALSE", {
 
   ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
   disc <- discrimination(ed)
@@ -157,14 +119,66 @@ test_that("summary.discrimination uses 'overall' when split = FALSE", {
   disc <- disc |>
     add_propensities(recipe = rec, spec = logistic_mod) |>
     add_pmse(split = FALSE) |>
-    add_specks(split = FALSE) |>
-    add_discriminator_auc(split = FALSE)
+    add_specks(split = FALSE)
 
-  out <- summary(disc)
+  out <- utils::capture.output(print(disc))
 
-  expect_equal(unique(out$.sample), "overall")
-  expect_equal(nrow(out), 3)
+  expect_true(any(grepl("overall", out)))
+  expect_false(any(grepl("training", out)))
 
 })
 
+test_that(".discrimination_metrics returns an empty three-column tibble before any metric is added", {
 
+  ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
+  disc <- discrimination(ed)
+
+  empty <- .discrimination_metrics(disc)
+
+  expect_s3_class(empty, "tbl_df")
+  expect_equal(nrow(empty), 0)
+  expect_named(empty, c(".metric", ".sample", ".value"))
+
+})
+
+test_that(".discrimination_metrics orders rows by metric label, not by the order add_*() was called", {
+
+  ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
+  disc <- discrimination(ed)
+
+  set.seed(1)
+
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
+    parsnip::set_engine(engine = "glm")
+
+  rec <- recipes::recipe(.source_label ~ ., data = disc$combined_data)
+
+  # add in the opposite order to the display order
+  disc <- disc |>
+    add_propensities(recipe = rec, spec = logistic_mod) |>
+    add_pmse() |>
+    add_pmse_ratio(times = 5) |>
+    add_specks() |>
+    add_discriminator_auc()
+
+  out <- .discrimination_metrics(disc)
+
+  expect_named(out, c(".metric", ".sample", ".value"))
+  expect_equal(nrow(out), 10)
+
+  # display order is AUC, SPECKS, pMSE, null pMSE, pMSE ratio, with training
+  # before testing within each metric
+  expect_equal(
+    out$.metric,
+    rep(c("discriminator_auc", "specks", "pmse", "null_pmse", "pmse_ratio"), each = 2)
+  )
+  expect_equal(out$.sample, rep(c("training", "testing"), times = 5))
+
+  # values are copied from the element tibbles unchanged
+  expect_equal(
+    out$.value[out$.metric == "pmse_ratio" & out$.sample == "testing"],
+    disc$pmse$.pmse_ratio[disc$pmse$.source == "testing"]
+  )
+
+})

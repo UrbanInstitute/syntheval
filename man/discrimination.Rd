@@ -10,12 +10,11 @@ discrimination(eval_data)
 \item{eval_data}{An \code{eval_data} object.}
 }
 \value{
-A list of class \code{discrimination} with slots \code{combined_data},
+A list of class \code{discrimination} with elements \code{combined_data},
 \code{propensities}, \code{discriminator}, \code{discriminator_auc}, \code{pmse}, and \code{specks}.
-Slots other than \code{combined_data} are \code{NULL} until populated by the
-corresponding \verb{add_*()} function. \code{print()} reports which slots are
-populated and \code{summary()} returns all computed metrics as a tibble with
-columns \code{.metric}, \code{.sample}, and \code{.value}.
+Elements other than \code{combined_data} are \code{NULL} until populated by the
+corresponding \verb{add_*()} function. \code{print()} shows the size of the combined
+data, the fitted discriminator, and a table of every computed metric.
 }
 \description{
 Combine synthetic data and data for a discriminant based metric

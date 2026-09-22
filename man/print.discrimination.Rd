@@ -15,5 +15,8 @@
 \code{x}, invisibly.
 }
 \description{
-Print a discrimination object
+Shows the size of the combined data, which discriminator has been fitted,
+and a table of every metric computed so far with one column per sample
+split (\code{training}/\code{testing}, or \code{overall} when the metrics were computed
+with \code{split = FALSE}). Metrics that have not been computed are omitted.
 }
