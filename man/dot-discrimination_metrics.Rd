@@ -10,9 +10,10 @@
 \item{x}{A \code{discrimination} object.}
 }
 \value{
-A \code{tibble} with columns \code{.metric}, \code{.sample}, and \code{.value}, one row
-per computed metric and sample split, ordered by
-\code{.discrimination_metric_labels}. Zero rows if nothing has been computed.
+A \code{tibble} with columns \code{.metric}, \code{.label}, \code{.sample}, and \code{.value},
+one row per computed metric and sample split, in display order. \code{.label} is
+the metric name as shown by \code{print()}. Zero rows if nothing has been
+computed.
 }
 \description{
 The metrics live in three elements with different shapes: \code{pmse} and \code{specks}

@@ -127,17 +127,6 @@ is_discrimination <- function(x) {
 
 }
 
-# display order and labels for the discriminant metrics. The order follows the
-# README's discriminant-based metrics example (AUC, SPECKS, pMSE, pMSE ratio),
-# so the printed table does not depend on which add_*() the user ran first
-.discrimination_metric_labels <- c(
-  discriminator_auc = "Discriminator AUC",
-  specks = "SPECKS",
-  pmse = "pMSE",
-  null_pmse = "null pMSE",
-  pmse_ratio = "pMSE ratio"
-)
-
 #' Collect the computed discriminant metrics into one tibble
 #'
 #' The metrics live in three elements with different shapes: `pmse` and `specks`
@@ -149,11 +138,24 @@ is_discrimination <- function(x) {
 #'
 #' @param x A `discrimination` object.
 #'
-#' @return A `tibble` with columns `.metric`, `.sample`, and `.value`, one row
-#' per computed metric and sample split, ordered by
-#' `.discrimination_metric_labels`. Zero rows if nothing has been computed.
+#' @return A `tibble` with columns `.metric`, `.label`, `.sample`, and `.value`,
+#' one row per computed metric and sample split, in display order. `.label` is
+#' the metric name as shown by `print()`. Zero rows if nothing has been
+#' computed.
 #'
 .discrimination_metrics <- function(x) {
+
+  # display order and labels for the discriminant metrics. The order follows
+  # the README's discriminant-based metrics example (AUC, SPECKS, pMSE, pMSE
+  # ratio), so the printed table does not depend on which add_*() the user
+  # ran first
+  labels <- c(
+    discriminator_auc = "Discriminator AUC",
+    specks = "SPECKS",
+    pmse = "pMSE",
+    null_pmse = "null pMSE",
+    pmse_ratio = "pMSE ratio"
+  )
 
   pieces <- list()
 
@@ -178,13 +180,13 @@ is_discrimination <- function(x) {
   }
   if (!is.null(x$pmse)) {
 
-    # the pmse element holds .pmse, and after add_pmse_ratio() also .null_pmse
-    # and .pmse_ratio; pivot whichever are present so both cases share a path.
-    # .source is the split label; copy it to .sample (the unified name) and
-    # drop it so the pivot below only sees the metric columns
+    # x$pmse has one row per split and one column per pMSE metric: .pmse
+    # always, plus .null_pmse and .pmse_ratio once add_pmse_ratio() has run
     pieces$pmse <- x$pmse |>
+      # rename the split column .source to .sample to match the AUC element
       dplyr::mutate(.sample = as.character(.data$.source)) |>
       dplyr::select(-".source") |>
+      # turn each metric column into rows, so one or three columns both work
       tidyr::pivot_longer(
         cols = -".sample",
         names_to = ".metric",
@@ -195,22 +197,29 @@ is_discrimination <- function(x) {
 
   }
 
-  # start from an empty typed tibble so the schema is the same when nothing
-  # has been computed yet. Bind as one flat list: passing the named list
-  # `pieces` directly would be read as columns, and unname() stops the list
-  # names becoming an .id column
-  empty <- tibble::tibble(.metric = character(), .sample = character(), .value = double())
+  # start from an empty tibble with the four columns already present, so the
+  # result has the same columns even when nothing has been computed yet.
+  # Bind as one flat list: passing the named list `pieces` directly would be
+  # read as columns, and unname() stops the list names becoming an .id column
+  empty <- tibble::tibble(
+    .metric = character(), .label = character(), .sample = character(), .value = double()
+  )
   metrics <- dplyr::bind_rows(c(list(empty), unname(pieces)))
 
-  # impose the display order: metrics as in .discrimination_metric_labels,
-  # training before testing within each metric
+  # impose the display order: metrics as in `labels`, training before testing
+  # within each metric; attach the display label for print()
   metrics <- metrics |>
     dplyr::mutate(
-      .metric = factor(.data$.metric, levels = names(.discrimination_metric_labels)),
+      .metric = factor(.data$.metric, levels = names(labels)),
       .sample = factor(.data$.sample, levels = c("training", "testing", "overall"))
     ) |>
     dplyr::arrange(.data$.metric, .data$.sample) |>
-    dplyr::mutate(.metric = as.character(.data$.metric), .sample = as.character(.data$.sample))
+    dplyr::mutate(
+      .metric = as.character(.data$.metric),
+      .label = unname(labels[.data$.metric]),
+      .sample = as.character(.data$.sample)
+    ) |>
+    dplyr::select(".metric", ".label", ".sample", ".value")
 
   return(metrics)
 
@@ -275,15 +284,15 @@ print.discrimination <- function(x, ...) {
     # values are formatted to three significant digits each so the columns do
     # not get padded to a common number of decimals
     table <- metrics |>
+      dplyr::select(-".metric") |>
       tidyr::pivot_wider(names_from = ".sample", values_from = ".value") |>
       dplyr::mutate(
-        .metric = .discrimination_metric_labels[.data$.metric],
-        dplyr::across(-".metric", \(v) formatC(v, digits = 3, format = "g"))
+        dplyr::across(-".label", \(v) formatC(v, digits = 3, format = "g"))
       ) |>
       as.data.frame()
 
-    rownames(table) <- table$.metric
-    table$.metric <- NULL
+    rownames(table) <- table$.label
+    table$.label <- NULL
 
     cat("\n")
     print(table, right = TRUE)

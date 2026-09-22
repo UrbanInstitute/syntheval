@@ -128,7 +128,7 @@ test_that("print.discrimination uses an 'overall' column when split = FALSE", {
 
 })
 
-test_that(".discrimination_metrics returns an empty three-column tibble before any metric is added", {
+test_that(".discrimination_metrics returns an empty four-column tibble before any metric is added", {
 
   ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
   disc <- discrimination(ed)
@@ -137,7 +137,7 @@ test_that(".discrimination_metrics returns an empty three-column tibble before a
 
   expect_s3_class(empty, "tbl_df")
   expect_equal(nrow(empty), 0)
-  expect_named(empty, c(".metric", ".sample", ".value"))
+  expect_named(empty, c(".metric", ".label", ".sample", ".value"))
 
 })
 
@@ -164,7 +164,8 @@ test_that(".discrimination_metrics orders rows by metric label, not by the order
 
   out <- .discrimination_metrics(disc)
 
-  expect_named(out, c(".metric", ".sample", ".value"))
+  expect_named(out, c(".metric", ".label", ".sample", ".value"))
+  expect_equal(unique(out$.label), c("Discriminator AUC", "SPECKS", "pMSE", "null pMSE", "pMSE ratio"))
   expect_equal(nrow(out), 10)
 
   # display order is AUC, SPECKS, pMSE, null pMSE, pMSE ratio, with training
