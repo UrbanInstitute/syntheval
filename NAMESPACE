@@ -72,6 +72,7 @@ export(target_spearman)
 export(target_truth_probability)
 export(util_ci_overlap)
 export(util_co_occurrence)
+export(util_constraints)
 export(util_corr_fit)
 export(util_k_marginals)
 export(util_ks_distance)
@@ -83,5 +84,7 @@ export(util_pred)
 export(util_proportions)
 export(util_totals)
 importFrom(magrittr,"%>%")
-importFrom(rlang,":=")
-importFrom(rlang,.data)
+importFrom(rlang,
+  ":=",
+  .data
+)

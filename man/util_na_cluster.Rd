@@ -9,25 +9,25 @@ util_na_cluster(eval_data, na_values = NULL)
 \arguments{
 \item{eval_data}{An \code{eval_data} object}
 
-\item{na_values}{An optional scalar or vector of values (in addition to \code{NA})
-that should be treated as missing}
+\item{na_values}{A character vector of values that should be treated as
+missing in addition to \code{NA}}
 }
 \value{
 A \code{list} of fit metrics (one per each synthetic data replicate),
 restricted to variables with at least one missing value in
 \code{eval_data$conf_data} or \code{eval_data$synth_data}:
 \itemize{
-\item \code{na_cluster_original}: phi coefficient matrix (correlation of binary
-missingness indicators) of the original data.
+\item \code{na_cluster_confidential}: phi coefficient matrix (correlation of binary
+missingness indicators) of the confidential data.
 \item \code{na_cluster_synthetic}: phi coefficient matrix of the synthetic data.
 \item \code{na_cluster_holdout}: phi coefficient matrix of the holdout data (if
 \code{eval_data$holdout_data} is supplied).
 \item \code{na_cluster_difference}: difference between \code{na_cluster_synthetic} and
-\code{na_cluster_original}.
+\code{na_cluster_confidential}.
 \item \code{na_cluster_difference_mae}: mean absolute error between
-\code{na_cluster_original} and \code{na_cluster_synthetic}.
+\code{na_cluster_confidential} and \code{na_cluster_synthetic}.
 \item \code{na_cluster_difference_rmse}: root mean square error between
-\code{na_cluster_original} and \code{na_cluster_synthetic}.
+\code{na_cluster_confidential} and \code{na_cluster_synthetic}.
 }
 }
 \description{

@@ -10,8 +10,8 @@ pred_auc(pred)
 \item{pred}{A \code{pred} object created by \code{util_pred()}.}
 }
 \value{
-A tibble with one row per data source (\code{confidential}/\code{synthetic})
-and the ROC AUC for predictions from that source's model.
+A tibble with one row per \code{model}/\code{data} combination and the ROC
+AUC for those predictions.
 }
 \description{
 Area under the ROC curve for a \code{pred} object

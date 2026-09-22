@@ -13,12 +13,12 @@
 
 \item{holdout_data}{An optional data.frame with the holdout data}
 
-\item{na_values}{An optional scalar or vector of values (in addition to \code{NA})
-that should be treated as missing}
+\item{na_values}{A character vector of values that should be treated as
+missing in addition to \code{NA}}
 }
 \value{
 A tibble \code{na_prop} with one row per \code{variable} x \code{source}
-(\code{"original"}, \code{"synthetic"}, and \code{"holdout"} when supplied), with the
+(\code{"confidential"}, \code{"synthetic"}, and \code{"holdout"} when supplied), with the
 proportion of missing values in \code{na_prop}.
 }
 \description{

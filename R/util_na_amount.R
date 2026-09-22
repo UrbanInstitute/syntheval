@@ -4,11 +4,11 @@
 #' @param conf_data A data.frame with the confidential data
 #' @param synth_data A data.frame with the synthetic data
 #' @param holdout_data An optional data.frame with the holdout data
-#' @param na_values An optional scalar or vector of values (in addition to `NA`)
-#' that should be treated as missing
+#' @param na_values A character vector of values that should be treated as 
+#' missing in addition to `NA`
 #'
 #' @return A tibble `na_prop` with one row per `variable` x `source`
-#' (`"original"`, `"synthetic"`, and `"holdout"` when supplied), with the
+#' (`"confidential"`, `"synthetic"`, and `"holdout"` when supplied), with the
 #' proportion of missing values in `na_prop`.
 #'
 .util_na_amount <- function(conf_data, synth_data, holdout_data = NULL, na_values = NULL) {
@@ -32,10 +32,11 @@
   }
   
   na_prop <- dplyr::bind_rows(
-    na_prop_by_source(conf_data, source = "original"),
+    na_prop_by_source(conf_data, source = "confidential"),
     na_prop_by_source(synth_data, source = "synthetic")
   )
   
+  # add holdout results if holdout data is present
   if (!is.null(holdout_data)) {
     
     holdout_data <- .recode_custom_na(holdout_data, na_values = na_values)
@@ -52,11 +53,11 @@
 #' Calculate the proportion of missing values in each variable
 #'
 #' @param eval_data An `eval_data` object
-#' @param na_values An optional scalar or vector of values (in addition to `NA`)
-#' that should be treated as missing
+#' @param na_values A character vector of values that should be treated as 
+#' missing in addition to `NA`
 #'
 #' @return A tibble `na_prop` (one per synthetic data replicate) with one row
-#' per `variable` x `source` (`"original"`, `"synthetic"`, and `"holdout"`
+#' per `variable` x `source` (`"confidential"`, `"synthetic"`, and `"holdout"`
 #' when `eval_data$holdout_data` is supplied), with the proportion of missing
 #' values in `na_prop`.
 #'

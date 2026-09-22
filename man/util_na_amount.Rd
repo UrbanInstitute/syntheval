@@ -9,12 +9,12 @@ util_na_amount(eval_data, na_values = NULL)
 \arguments{
 \item{eval_data}{An \code{eval_data} object}
 
-\item{na_values}{An optional scalar or vector of values (in addition to \code{NA})
-that should be treated as missing}
+\item{na_values}{A character vector of values that should be treated as
+missing in addition to \code{NA}}
 }
 \value{
 A tibble \code{na_prop} (one per synthetic data replicate) with one row
-per \code{variable} x \code{source} (\code{"original"}, \code{"synthetic"}, and \code{"holdout"}
+per \code{variable} x \code{source} (\code{"confidential"}, \code{"synthetic"}, and \code{"holdout"}
 when \code{eval_data$holdout_data} is supplied), with the proportion of missing
 values in \code{na_prop}.
 }

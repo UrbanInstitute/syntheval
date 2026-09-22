@@ -1,25 +1,25 @@
 #'
 #' Calculate Pearson's linear correlation coefficient clustering of missingness across variables
 #'
-#' @param conf_data A data.frame with the confidential data
-#' @param synth_data A data.frame with the synthetic data
-#' @param holdout_data An optional data.frame with the holdout data
-#' @param na_values An optional scalar or vector of values (in addition to `NA`)
-#' that should be treated as missing
+#' @param conf_data A data frame with the confidential data
+#' @param synth_data A data frame with the synthetic data
+#' @param holdout_data An optional data frame with the holdout data
+#' @param na_values A character vector of values that should be treated as 
+#' missing in addition to `NA`
 #'
 #' @return A `list` of fit metrics, restricted to variables with at least one
 #' missing value in `conf_data` or `synth_data`:
-#'  - `na_cluster_original`: phi coefficient matrix (correlation of binary
-#'  missingness indicators) of the original data.
+#'  - `na_cluster_confidential`: phi coefficient matrix (correlation of binary
+#'  missingness indicators) of the confidential data.
 #'  - `na_cluster_synthetic`: phi coefficient matrix of the synthetic data.
 #'  - `na_cluster_holdout`: phi coefficient matrix of the holdout data (if
 #'  `holdout_data` is supplied).
 #'  - `na_cluster_difference`: difference between `na_cluster_synthetic` and
-#'  `na_cluster_original`.
+#'  `na_cluster_confidential`.
 #'  - `na_cluster_difference_mae`: mean absolute error between
-#'  `na_cluster_original` and `na_cluster_synthetic`.
+#'  `na_cluster_confidential` and `na_cluster_synthetic`.
 #'  - `na_cluster_difference_rmse`: root mean square error between
-#'  `na_cluster_original` and `na_cluster_synthetic`.
+#'  `na_cluster_confidential` and `na_cluster_synthetic`.
 #'
 .util_na_cluster <- function(conf_data, synth_data, holdout_data = NULL, na_values = NULL) {
   
@@ -50,19 +50,19 @@
     
   }
   
-  original_lt <- na_cluster_matrix(conf_data, has_na = has_na)
+  confidential_lt <- na_cluster_matrix(conf_data, has_na = has_na)
   synthetic_lt <- na_cluster_matrix(synth_data, has_na = has_na)
   
   # compare names
-  if (any(rownames(original_lt) != rownames(synthetic_lt))) {
+  if (any(rownames(confidential_lt) != rownames(synthetic_lt))) {
     stop("ERROR: rownames are not identical")
   }
   
-  if (any(colnames(original_lt) != colnames(synthetic_lt))) {
+  if (any(colnames(confidential_lt) != colnames(synthetic_lt))) {
     stop("ERROR: colnames are not identical")
   }
   
-  difference_lt <- synthetic_lt - original_lt
+  difference_lt <- synthetic_lt - confidential_lt
   
   difference_vec <- as.numeric(difference_lt)[!is.na(difference_lt)]
   
@@ -75,7 +75,7 @@
     sqrt()
   
   result <- list(
-    na_cluster_original = original_lt,
+    na_cluster_confidential = confidential_lt,
     na_cluster_synthetic = synthetic_lt,
     na_cluster_difference = difference_lt,
     na_cluster_difference_mae = na_cluster_difference_mae,
@@ -98,23 +98,23 @@
 #' Calculate Pearson's linear correlation coefficient clustering of missingness across variables
 #'
 #' @param eval_data An `eval_data` object
-#' @param na_values An optional scalar or vector of values (in addition to `NA`)
-#' that should be treated as missing
+#' @param na_values A character vector of values that should be treated as 
+#' missing in addition to `NA`
 #'
 #' @return A `list` of fit metrics (one per each synthetic data replicate),
 #' restricted to variables with at least one missing value in
 #' `eval_data$conf_data` or `eval_data$synth_data`:
-#'  - `na_cluster_original`: phi coefficient matrix (correlation of binary
-#'  missingness indicators) of the original data.
+#'  - `na_cluster_confidential`: phi coefficient matrix (correlation of binary
+#'  missingness indicators) of the confidential data.
 #'  - `na_cluster_synthetic`: phi coefficient matrix of the synthetic data.
 #'  - `na_cluster_holdout`: phi coefficient matrix of the holdout data (if
 #'  `eval_data$holdout_data` is supplied).
 #'  - `na_cluster_difference`: difference between `na_cluster_synthetic` and
-#'  `na_cluster_original`.
+#'  `na_cluster_confidential`.
 #'  - `na_cluster_difference_mae`: mean absolute error between
-#'  `na_cluster_original` and `na_cluster_synthetic`.
+#'  `na_cluster_confidential` and `na_cluster_synthetic`.
 #'  - `na_cluster_difference_rmse`: root mean square error between
-#'  `na_cluster_original` and `na_cluster_synthetic`.
+#'  `na_cluster_confidential` and `na_cluster_synthetic`.
 #'
 #' @family utility metrics
 #'
