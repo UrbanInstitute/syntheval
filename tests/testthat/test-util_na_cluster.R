@@ -24,7 +24,7 @@ test_that("util_na_cluster is 0 when conf and synth are identical", {
   
   result <- util_na_cluster(ed)
   
-  expect_equal(result$na_cluster_original, expected_matrix(conf))
+  expect_equal(result$na_cluster_confidential, expected_matrix(conf))
   expect_equal(result$na_cluster_difference_mae, 0)
   expect_equal(result$na_cluster_difference_rmse, 0)
   
@@ -37,7 +37,7 @@ test_that("util_na_cluster detects columns that are always missing together", {
   result <- util_na_cluster(ed)
   
   # the missingness is perfectly correlated in the two columns
-  expect_equal(result$na_cluster_original["b", "a"], 1)
+  expect_equal(result$na_cluster_confidential["b", "a"], 1)
   
 })
 
@@ -53,7 +53,7 @@ test_that("util_na_cluster detects differences between conf and synth", {
   
   result <- util_na_cluster(ed)
   
-  expect_equal(result$na_cluster_original, expected_matrix(conf))
+  expect_equal(result$na_cluster_confidential, expected_matrix(conf))
   expect_equal(result$na_cluster_synthetic, expected_matrix(synth_diff))
   expect_equal(
     result$na_cluster_difference,
@@ -75,7 +75,7 @@ test_that("util_na_cluster respects a custom na_values sentinel", {
   result <- util_na_cluster(ed, na_values = -99)
   
   # the missingness is perfectly correlated in the two columns
-  expect_equal(result$na_cluster_original["b", "a"], 1)
+  expect_equal(result$na_cluster_confidential["b", "a"], 1)
   expect_equal(result$na_cluster_difference_mae, 0)
   
 })
@@ -93,5 +93,54 @@ test_that("util_na_cluster includes a na_cluster_holdout matrix when supplied", 
   result <- util_na_cluster(ed)
   
   expect_equal(result$na_cluster_holdout, expected_matrix(holdout))
+  
+})
+
+conf_extra <- data.frame(
+  a = c(NA, 2, NA, 4),
+  b = c(NA, 2, NA, 4),
+  c = c(1, NA, 3, 4),
+  only_in_conf = c(1, 2, 3, 4)
+)
+
+synth_extra <- data.frame(
+  a = c(NA, 2, NA, 4),
+  b = c(NA, 2, NA, 4),
+  c = c(1, NA, 3, 4),
+  synth_id = c(1, 2, 3, 4)
+)
+
+test_that("util_na_cluster only compares variables common to conf and synth", {
+  
+  ed <- eval_data(conf_data = conf_extra, synth_data = synth_extra)
+  
+  result <- util_na_cluster(ed)
+  
+  expect_equal(rownames(result$na_cluster_confidential), c("a", "b", "c"))
+  expect_equal(result$na_cluster_confidential, expected_matrix(conf))
+  expect_equal(result$na_cluster_difference_mae, 0)
+  
+})
+
+holdout_no_c <- data.frame(
+  a = c(NA, 2, NA, 4),
+  b = c(NA, 2, 3, 4)
+)
+
+test_that("util_na_cluster narrows only the holdout matrix to the holdout's variables", {
+  
+  ed <- eval_data(
+    conf_data = conf,
+    synth_data = synth_same,
+    holdout_data = holdout_no_c
+  )
+  
+  result <- util_na_cluster(ed)
+  
+  # c is absent from the holdout, but conf vs. synth still compares it
+  expect_equal(rownames(result$na_cluster_confidential), c("a", "b", "c"))
+  expect_equal(rownames(result$na_cluster_synthetic), c("a", "b", "c"))
+  expect_equal(rownames(result$na_cluster_holdout), c("a", "b"))
+  expect_equal(result$na_cluster_holdout, expected_matrix(holdout_no_c))
   
 })

@@ -14,14 +14,15 @@ missing in addition to \code{NA}}
 }
 \value{
 A \code{list} of fit metrics (one per each synthetic data replicate),
-restricted to variables with at least one missing value in
-\code{eval_data$conf_data} or \code{eval_data$synth_data}:
+restricted to the variables common to \code{eval_data$conf_data} and
+\code{eval_data$synth_data} with at least one missing value in either:
 \itemize{
 \item \code{na_cluster_confidential}: phi coefficient matrix (correlation of binary
 missingness indicators) of the confidential data.
 \item \code{na_cluster_synthetic}: phi coefficient matrix of the synthetic data.
 \item \code{na_cluster_holdout}: phi coefficient matrix of the holdout data (if
-\code{eval_data$holdout_data} is supplied).
+\code{eval_data$holdout_data} is supplied), further restricted to the variables
+present in \code{eval_data$holdout_data}.
 \item \code{na_cluster_difference}: difference between \code{na_cluster_synthetic} and
 \code{na_cluster_confidential}.
 \item \code{na_cluster_difference_mae}: mean absolute error between
@@ -48,6 +49,7 @@ Other utility metrics:
 \code{\link[=util_corr_fit]{util_corr_fit()}},
 \code{\link[=util_moments]{util_moments()}},
 \code{\link[=util_na_amount]{util_na_amount()}},
+\code{\link[=util_na_relate]{util_na_relate()}},
 \code{\link[=util_percentiles]{util_percentiles()}},
 \code{\link[=util_totals]{util_totals()}}
 }
