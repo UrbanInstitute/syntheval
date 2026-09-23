@@ -4,7 +4,7 @@
 \alias{add_discriminator_auc}
 \title{Add discriminator AUC to discrimination object}
 \usage{
-add_discriminator_auc(discrimination, split = TRUE)
+add_discriminator_auc(discrimination, split = TRUE, group_by_q = NULL)
 }
 \arguments{
 \item{discrimination}{A discrimination object with propensities (likely
@@ -12,10 +12,14 @@ added using add_propensities())}
 
 \item{split}{A logical for if the metric should be calculated separately for
 the training/testing split. Defaults to TRUE.}
+
+\item{group_by_q}{An optional grouping variable to calculate the discriminator AUC within each group.__}
 }
 \value{
 A discrimination object with propensities (likely added using
-add_propensities()) with discriminator AUC
+add_propensities()) with discriminator AUC. When split is TRUE or when group_by_q is
+provided, the discriminator AUC will be calculated within each group and the returned table
+contains a ".group" and/or ".sample" column as appropriate.
 }
 \description{
 Add discriminator AUC to discrimination object

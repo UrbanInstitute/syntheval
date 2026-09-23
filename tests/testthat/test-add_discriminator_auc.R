@@ -1,7 +1,7 @@
 test_that("add_discriminator_auc returns perfect value for identical data (no split) " , {
-  
+
   set.seed(1)
-  
+
   data <-
     data.frame(
       x = rnorm(n = 1000, mean = 0, sd = 1),
@@ -16,36 +16,36 @@ test_that("add_discriminator_auc returns perfect value for identical data (no sp
       )
     ) %>%
     structure(class = "postsynth")
-  
+
   ed <- eval_data(conf_data = data, synth_data = postsynth)
-  
+
   logistic_mod <- parsnip::logistic_reg() %>%
     parsnip::set_mode(mode = "classification") %>%
     parsnip::set_engine(engine = "glm")
-  
+
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
-  
+
   disc <- discrimination(ed) %>%
     add_propensities(
       recipe = rec,
       spec = logistic_mod
     ) %>%
     add_discriminator_auc(split = FALSE)
-  
+
   expect_equal(disc$discriminator_auc$.estimate, 0.5)
-  
+
 })
 
-test_that("add_discriminator_auc returns perfect value for identical data (split) " , {
-  
+test_that("add_discriminator_auc returns perfect value for identical data (split)", {
+
   set.seed(1)
-  
+
   data <-
     data.frame(
       x = rep(1, 1000),
       y = rep(1, 1000)
     )
-  
+
   postsynth <-
     list(
       synthetic_data = data,
@@ -54,15 +54,15 @@ test_that("add_discriminator_auc returns perfect value for identical data (split
       )
     ) %>%
     structure(class = "postsynth")
-  
+
   ed <- eval_data(conf_data = data, synth_data = postsynth)
-  
+
   logistic_mod <- parsnip::logistic_reg() %>%
     parsnip::set_mode(mode = "classification") %>%
     parsnip::set_engine(engine = "glm")
-  
+
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
-  
+
   disc <- suppressWarnings(
     discrimination(ed) %>%
       add_propensities(
@@ -71,12 +71,54 @@ test_that("add_discriminator_auc returns perfect value for identical data (split
       ) %>%
       add_discriminator_auc()
   )
-  
+
   expect_equal(disc$discriminator_auc$.estimate, c(0.5, 0.5))
-  
+
 })
 
-test_that("add_pmse returns perfect value for seperable data (no split)" , {
+test_that("add_discriminator_auc returns perfect value for identical data (grouped and split)", {
+
+  set.seed(1)
+
+  data <-
+    data.frame(
+      x = rep(1, 1000),
+      y = rep(1, 1000),
+      g = rep(c("A", "B"), each = 500)
+    )
+
+  postsynth <-
+    list(
+      synthetic_data = data,
+      jth_synthesis_time = data.frame(
+        variable = factor(c("x", "y", "g"))
+      )
+    ) %>%
+    structure(class = "postsynth")
+
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+
+  logistic_mod <- parsnip::logistic_reg() %>%
+    parsnip::set_mode(mode = "classification") %>%
+    parsnip::set_engine(engine = "glm")
+
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
+
+  disc <- suppressWarnings(
+    discrimination(ed) %>%
+      add_propensities(
+        recipe = rec,
+        spec = logistic_mod
+      ) %>%
+      add_discriminator_auc(group_by_q = "g")
+  )
+
+  expect_equal(disc$discriminator_auc$.estimate, c(0.5, 0.5, 0.5, 0.5))
+  expect_true(".group" %in% names(disc$discriminator_auc))
+
+})
+
+test_that("add_pmse returns perfect value for separable data (no split)", {
   
   set.seed(1)
   
