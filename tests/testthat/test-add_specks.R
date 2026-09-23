@@ -14,22 +14,22 @@ test_that("add_specks returns perfect value for identical data (no split) " , {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
-  disc <- discrimination(ed) %>%
+  disc <- discrimination(ed) |>
     add_propensities(
       recipe = rec,
       spec = logistic_mod
-    ) %>%
+    ) |>
     add_specks(split = FALSE)
   
   expect_equal(disc$specks$.specks, 0)
@@ -52,23 +52,23 @@ test_that("add_specks returns perfect value for identical data (split) " , {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_specks()
   )
     
@@ -96,23 +96,23 @@ test_that("add_specks returns 1 for perfectly different data (no split) " , {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_specks(split = FALSE)
   )
   
@@ -140,23 +140,23 @@ test_that("add_specks returns 1 for perfectly different data (split) " , {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_specks()
   )
   
@@ -181,23 +181,23 @@ test_that("add_specks works with grouping variable", {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y", "group"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_specks(split = FALSE, group_by_q = "group")
   )
   
@@ -231,23 +231,23 @@ test_that("add_specks with grouping and split works correctly", {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y", "group"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_specks(split = TRUE, group_by_q = "group")
   )
   

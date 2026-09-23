@@ -15,7 +15,9 @@ the training/testing split. Defaults to TRUE.}
 \item{group_by_q}{An optional grouping variable to calculate SPECKS within each group.}
 }
 \value{
-A discrimination with SPECKS
+A discrimination with SPECKS. When split is TRUE or when group_by_q is
+provided, the SPECKS will be calculated within each group and the returned table
+contains a ".group" and/or ".sample" column as appropriate.
 }
 \description{
 Add SPECKS to discrimination object

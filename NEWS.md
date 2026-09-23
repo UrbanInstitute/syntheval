@@ -1,5 +1,6 @@
 # syntheval 0.1.0 (development)
 
+- Added `group_by_q` parameter to discriminant-based metrics functions `add_discriminator_auc`, `add_specks()`, `add_pmse()`, and `add_pmse_ratio()` to calculate metrics by group
 - Add `util_pred()` functionality for prediction accuracy metrics. (#129)
 - Add `attribute_target()` functionality for target attribute inference metrics. (#15)
 - Add `attribute_scan()` functionality for discovery attribute inference metrics. (#15)

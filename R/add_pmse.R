@@ -7,7 +7,9 @@
 #' @param group_by_q An optional grouping variable to calculate the pMSE within each group.
 #'
 #' @return A discrimination object with propensities (likely added using
-#' add_propensities()) with a pMSE
+#' add_propensities()) with a pMSE. When split is TRUE or when group_by_q is
+#' provided, the pMSEwill be calculated within each group and the returned table
+#' contains a ".group" and/or ".sample" column as appropriate.
 #'
 #' @family Utility metrics
 #'

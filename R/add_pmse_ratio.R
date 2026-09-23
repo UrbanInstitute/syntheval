@@ -29,7 +29,9 @@
 #' Snoke et al. (2018).
 #' @param group_by_q An optional grouping variable to calculate the pMSE ratio within each group.
 #'
-#' @return A discrimination with pMSE
+#' @return A discrimination with pMSE. When split is TRUE or when group_by_q is
+#' provided, the pMSE ratio will be calculated within each group and the returned table
+#' contains a ".group" and/or ".sample" column as appropriate.
 #'
 #' @family Utility metrics
 #'

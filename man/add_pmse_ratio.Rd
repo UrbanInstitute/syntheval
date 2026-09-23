@@ -33,7 +33,9 @@ Snoke et al. (2018).}
 \item{group_by_q}{An optional grouping variable to calculate the pMSE ratio within each group.}
 }
 \value{
-A discrimination with pMSE
+A discrimination with pMSE. When split is TRUE or when group_by_q is
+provided, the pMSE ratio will be calculated within each group and the returned table
+contains a ".group" and/or ".sample" column as appropriate.
 }
 \description{
 \code{method = "perm"} estimates the null pMSEs in the denominator of the ratio

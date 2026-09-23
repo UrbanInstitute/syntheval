@@ -7,7 +7,9 @@
 #'
 #' @family Utility metrics
 #'
-#' @return A discrimination with SPECKS
+#' @return A discrimination with SPECKS. When split is TRUE or when group_by_q is
+#' provided, the SPECKS will be calculated within each group and the returned table
+#' contains a ".group" and/or ".sample" column as appropriate.
 #'
 #' @export
 add_specks <- function(discrimination, split = TRUE, group_by_q = NULL) {
