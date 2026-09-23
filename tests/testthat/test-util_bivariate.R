@@ -119,16 +119,16 @@ testthat::test_that("util_bivariate covariance returns correct full output set",
   d <- actual_difference$difference
   n <- sum(!is.na(d))
   sse <- sum(d^2, na.rm = TRUE)
-  n_nonzero <- sum(!is.na(d) & d != 0)
+  n_cells <- length(d)
 
   expected_fit <- if (n == 0) {
     NA_real_
   } else if (sse == 0) {
     0
-  } else if (n_nonzero == 0) {
+  } else if (n_cells == 0) {
     NA_real_
   } else {
-    sqrt(sse) / n_nonzero
+    sqrt(sse) / n_cells
   }
 
   expected_mae <- if (n == 0) NA_real_ else mean(abs(d), na.rm = TRUE)
