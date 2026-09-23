@@ -90,9 +90,7 @@ test_that("util_corr_fit is correct with postsynth object, ungrouped", {
     dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
 
-  n_nonzero_cells <- corr$correlation_difference |>
-    dplyr::filter(.data$difference != 0) |>
-    nrow()
+  n_nonzero_cells <- corr$correlation_difference |> nrow()
 
   expected_diff <- diff_table |>
     dplyr::arrange(var1, var2)
@@ -132,9 +130,7 @@ test_that("util_corr_fit is correct with eval_data object, ungrouped", {
     dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
 
-  n_nonzero_cells <- corr$correlation_difference |>
-    dplyr::filter(.data$difference != 0) |>
-    nrow()
+  n_nonzero_cells <- corr$correlation_difference |> nrow()
 
   expected_diff <- diff_table |>
     dplyr::arrange(var1, var2)
