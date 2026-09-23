@@ -4,7 +4,12 @@
 \alias{util_corr_fit}
 \title{Calculate the correlation fit metric of a confidential data set.}
 \usage{
-util_corr_fit(eval_data, use = "everything")
+util_corr_fit(
+  eval_data,
+  use = "everything",
+  group_by_q = NULL,
+  method = "pearson"
+)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object}
@@ -13,28 +18,41 @@ util_corr_fit(eval_data, use = "everything")
 covariances in the presence of missing values. This must be (an abbreviation
 of) one of the strings "everything", "all.obs", "complete.obs",
 "na.or.complete", or "pairwise.complete.obs".}
+
+\item{group_by_q}{optional quoted character string of a variable name to
+group the data by. If provided, the correlation fit metric will be calculated
+for each group separately.}
+
+\item{method}{optional character string indicating which correlation
+coefficient is to be computed. One of "pearson" (default), "kendall", or
+"spearman".}
 }
 \value{
 A \code{list} of fit metrics (one per each synthetic data replicate):
 \itemize{
-\item \code{correlation_original}: correlation matrix of the original data.
-\item \code{correlation_synthetic}: correlation matrix of the synthetic data.
+\item \code{correlation_original}: correlation values from original data of pairs of
+numeric variables that appear in both original and synthetic datasets,
+formatted in a long tibble
+\item \code{correlation_synthetic}: correlation values from synthetic data of pairs of
+numeric variables that appear in both original and synthetic datasets,
+formatted in a long tibble
 \item \code{correlation_difference}: difference between \code{correlation_synthetic} and
 \code{correlation_original}.
 \item \code{correlation_fit}: square root of the sum of squared differences between
 \code{correlation_synthetic} and \code{correlation_original}, divided by the number of
-cells in the correlation matrix.
+cells in the complete correlation matrix prior to conversion to long tibbles
 }
 }
 \description{
 Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
-Other utility metrics:
-\code{\link[=util_moments]{util_moments()}},
-\code{\link[=util_na_amount]{util_na_amount()}},
-\code{\link[=util_na_cluster]{util_na_cluster()}},
-\code{\link[=util_percentiles]{util_percentiles()}},
-\code{\link[=util_totals]{util_totals()}}
+Other utility metrics: 
+\code{\link{util_bivariate}()},
+\code{\link{util_moments}()},
+\code{\link{util_na_amount}()},
+\code{\link{util_na_cluster}()},
+\code{\link{util_percentiles}()},
+\code{\link{util_totals}()}
 }
 \concept{utility metrics}

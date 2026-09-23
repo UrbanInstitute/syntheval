@@ -33,11 +33,12 @@ A \code{tibble} of totals.
 Calculate totals for original and synthetic data.
 }
 \seealso{
-Other utility metrics:
-\code{\link[=util_corr_fit]{util_corr_fit()}},
-\code{\link[=util_moments]{util_moments()}},
-\code{\link[=util_na_amount]{util_na_amount()}},
-\code{\link[=util_na_cluster]{util_na_cluster()}},
-\code{\link[=util_percentiles]{util_percentiles()}}
+Other utility metrics: 
+\code{\link{util_bivariate}()},
+\code{\link{util_corr_fit}()},
+\code{\link{util_moments}()},
+\code{\link{util_na_amount}()},
+\code{\link{util_na_cluster}()},
+\code{\link{util_percentiles}()}
 }
 \concept{utility metrics}
