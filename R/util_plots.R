@@ -164,74 +164,128 @@ plot_categorical_bar <- function(eval_data,
 #'
 #' @param data A data.frame/
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
 #' 
 #' @return A `ggplot2` plot
 #' 
 #' @export
-create_cormat_plot <- function(data, cor_method = "pearson") {
-  
-  # get numeric variable names
-  dtypes <- data %>% purrr::map_chr(~ pillar::type_sum(.x))
-  num_vars <- names(dtypes[dtypes == "dbl"])
-  
+create_cormat_plot <- function(data, cor_method = "pearson", group_by_q = NULL) {
+
+  if (!is.null(group_by_q)) {
+    if (!is.character(group_by_q)) {
+      stop("group_by_q must be a quoted string", call. = FALSE)
+    }
+    if (length(group_by_q) != 1) {
+      stop("only one variable is supported in group_by_q", call. = FALSE)
+    }
+    if (!(group_by_q %in% names(data))) {
+      stop("variable provided for group_by_q was not found in data", call. = FALSE)
+    }
+  }
+
+  # get numeric variables -- this also defines the order used for the axes so
+  # the heatmap renders as a clean triangle sloping downward left to right
+  var_order <- data |>
+    dplyr::select(tidyselect::where(is.numeric)) |>
+    names()
+
+  num_vars <- var_order
+  if (!is.null(group_by_q)) {
+    num_vars <- c(num_vars, group_by_q)
+  }
+
+  # subset to numeric variables and grouping variable if supplied
+  data <- data |>
+    dplyr::select(dplyr::all_of(num_vars))
+
   # get lower triangular correlation matrix
-  cmat <- stats::cor(data[num_vars], method = cor_method) %>%
-    round(digits = 2) 
-  cmat[upper.tri(cmat)] <- NA 
-  
-  # generate plot
-  cmat_df <- as.data.frame.table(cmat) %>%
-    tidyr::drop_na()
-  
-  plot <- ggplot2::ggplot(data = cmat_df, 
-                          mapping = ggplot2::aes(x = .data$Var1,
-                                                 y = .data$Var2, 
-                                                 fill = .data$Freq)) + 
-    ggplot2::geom_tile(color = "white") + 
+  cmat_raw <- .lower_triangle(
+    data,
+    use = "pairwise.complete.obs",
+    group_by_q = group_by_q
+  )
+
+  cmat <- cmat_raw |>
+    dplyr::mutate(
+      correlation = round(.data$correlation, digits = 2),
+      var1 = factor(.data$var1, levels = var_order),
+      var2 = factor(.data$var2, levels = rev(var_order))
+    ) |>
+    as.data.frame()
+
+  plot <-
+    ggplot2::ggplot(
+      data = cmat,
+      mapping = ggplot2::aes(
+        x = .data$var1,
+        y = .data$var2,
+        fill = .data$correlation
+      )
+    ) +
+    ggplot2::geom_tile(color = "white") +
     ggplot2::scale_fill_gradient2(
-      low = "firebrick", 
-      high= "chartreuse4", 
+      low = "firebrick",
+      high = "chartreuse4",
       mid = "white",
-      midpoint = 0, 
-      limit=c(-1, 1), 
+      midpoint = 0,
+      limit = c(-1, 1),
       space = "Lab",
-      name="Correlation"
+      name = "Correlation"
     ) +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_text(angle=90, vjust = 1),
+      axis.text.x = ggplot2::element_text(angle = 90, vjust = 1),
       axis.title.x = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank(),
       panel.background = ggplot2::element_blank(),
       panel.grid.major = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank()
-    ) + 
-    ggplot2::coord_fixed() + 
+    ) +
+    ggplot2::coord_fixed() +
     ggplot2::geom_text(
-      ggplot2::aes(label = .data$Freq), 
-      color = "black", 
+      ggplot2::aes(label = .data$correlation),
+      color = "black",
       size = 4
     )
-  
-  return(plot)
-  
+
+  if (!is.null(group_by_q)) {
+    plot <- plot +
+      ggplot2::facet_wrap(ggplot2::vars(.data[[group_by_q]]), ncol = 1)
+  }
+
+return(plot)
+
 }
 
 #' Create side-by-side correlation heatmaps for numeric random variables.
 #'
 #' @param eval_data An `eval_data` object.
 #' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param group_by_q optional quoted character string of a variable name to
+#' group the data by. If provided, the correlation fit metric will be calculated
+#' for each group separately.
 #'
 #' @return A `ggplot2` plot
 #'
 #' @export
-plot_cormat <- function(eval_data, cor_method = "pearson") {
+plot_cormat <- function(eval_data, cor_method = "pearson", group_by_q = NULL) {
 
   stopifnot(is_eval_data(eval_data))
 
-  p1 <- create_cormat_plot(eval_data[["conf_data"]], cor_method = cor_method) +
+  # subset datasets to numeric variables present in both datasets + grouping variable if supplied
+  intersect_numeric <- intersect(
+    names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], tidyselect::where(is.numeric))],
+    names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], tidyselect::where(is.numeric))]
+  )
+  if (!is.null(group_by_q)) {
+    intersect_numeric <- c(intersect_numeric, group_by_q)
+  }
+
+  p1 <- create_cormat_plot(eval_data[["conf_data"]][intersect_numeric], cor_method = cor_method, group_by_q = group_by_q) +
     ggplot2::ggtitle("Confidential data")
-  p2 <- create_cormat_plot(eval_data[["synth_data"]], cor_method = cor_method) +
+  p2 <- create_cormat_plot(eval_data[["synth_data"]][intersect_numeric], cor_method = cor_method, group_by_q = group_by_q) +
     ggplot2::ggtitle("Synthetic data")
 
   plot <- patchwork::wrap_plots(p1, p2, nrow = 1)
