@@ -96,12 +96,6 @@
     dplyr::mutate(difference = .data$correlation_synthetic - .data$correlation_original) |>
     dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "difference")))
 
-  # find the number of non-zero cells in the "lower triangle" for correlation_fit
-  # (aka among unique non-diagonal pairs)
-  # this matches the existing behavior of util_corr_fit
-  n_nonzero_cells <- difference_lt |>
-    dplyr::filter(.data$difference != 0) |>
-    nrow()
 
   if (!is.null(group_by_q)) {
 
@@ -109,13 +103,14 @@
       dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
       dplyr::summarise(
         n = sum(!is.na(.data$difference)),
+        n_cells = dplyr::n(),
         # sum of squared errors
         sse = sum(.data$difference ^ 2, na.rm = TRUE),
         correlation_fit = dplyr::case_when(
           n == 0 ~ NA_real_,
           sse == 0 ~ 0,
-          n_nonzero_cells == 0 ~ NA_real_,
-          TRUE ~ sqrt(sse) / n_nonzero_cells
+          n_cells == 0 ~ NA_real_,
+          TRUE ~ sqrt(sse) / n_cells
         ),
         correlation_difference_mae = if (n == 0) {
           NA_real_
@@ -149,8 +144,8 @@
     correlation_fit <- dplyr::case_when(
       n == 0 ~ NA_real_,
       sse == 0 ~ 0,
-      n_nonzero_cells == 0 ~ NA_real_,
-      TRUE ~ sqrt(sse) / n_nonzero_cells
+      nrow(difference_lt) == 0 ~ NA_real_,
+      TRUE ~ sqrt(sse) / nrow(difference_lt)
     )
     difference_vec <- difference_lt$difference[!is.na(difference_lt$difference)]
     correlation_difference_mae <- if (length(difference_vec) == 0) {
