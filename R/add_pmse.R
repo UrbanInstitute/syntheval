@@ -1,4 +1,4 @@
-#' Add pMSE (propensity score mean squared error) to discrimination object
+#' Add pMSE to discrimination object
 #'
 #' @param discrimination A discrimination object with propensities (likely
 #' added using add_propensities())
@@ -23,6 +23,7 @@ add_pmse <- function(discrimination, split = TRUE, group_by_q = NULL) {
         n_synthetic = sum(.data$.source_label == "synthetic"),
         n_total = dplyr::n()
       ) |>
+      dplyr::ungroup() |>
       dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) |>
       dplyr::pull("prop_synthetic")
 
@@ -42,16 +43,31 @@ add_pmse <- function(discrimination, split = TRUE, group_by_q = NULL) {
 
       propensities_by <- split(
         discrimination$propensities,
-        c(
+        list(
           discrimination$propensities[[group_by_q]],
           discrimination$propensities$.sample
-        )
+        ),
+        drop = FALSE
       )
       pmse_list <- lapply(propensities_by, calc_pmse)
-      pmse <- tibble::tibble(
-        .source = factor(names(pmse_list), levels = names(pmse_list)),
-        .pmse = unlist(pmse_list)
-      )
+
+      # Get unique group and sample values in order
+      groups <- unique(discrimination$propensities[[group_by_q]])
+      samples <- c("training", "testing")
+
+      # Create all combinations and look up pmse values
+      pmse_data <- expand.grid(.group = groups, .source = samples, stringsAsFactors = FALSE)
+      pmse_data$.source <- factor(pmse_data$.source, levels = c("training", "testing"))
+
+      # Create keys to match with pmse_list
+      pmse_data$.key <- paste(pmse_data$.group, pmse_data$.source, sep = ".")
+      pmse_data$.pmse <- sapply(pmse_data$.key, function(k) pmse_list[[k]], USE.NAMES = FALSE)
+      pmse_data$.key <- NULL
+
+      # Convert .group to factor
+      pmse_data$.group <- factor(pmse_data$.group)
+
+      pmse <- tibble::as_tibble(pmse_data)
 
     } else {
 
@@ -72,18 +88,21 @@ add_pmse <- function(discrimination, split = TRUE, group_by_q = NULL) {
 
       propensities_by <- split(
         discrimination$propensities,
-        discrimination$propensities[[group_by_q]]
+        discrimination$propensities[[group_by_q]],
+        drop = FALSE
       )
       pmse_list <- lapply(propensities_by, calc_pmse)
+
       pmse <- tibble::tibble(
-        .source = factor(names(pmse_list), levels = names(pmse_list)),
+        .group = factor(names(pmse_list)),
+        .source = factor("overall", levels = "overall"),
         .pmse = unlist(pmse_list)
       )
 
     } else {
 
       pmse_overall <- discrimination$propensities |>
-      calc_pmse()
+        calc_pmse()
 
       pmse <- tibble::tibble(
         .source = factor("overall", levels = "overall"),

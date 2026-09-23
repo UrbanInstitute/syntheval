@@ -262,8 +262,7 @@ test_that("add_pmse_ratio errors for an invalid method", {
 
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
 
-  disc <- 
-  discrimination(ed) |>
+  disc <- discrimination(ed) |>
     add_propensities(
     recipe = rec,
     spec = dt_mod
@@ -378,5 +377,156 @@ test_that("add_pmse returns perfect value for identical data without variation "
   # permuting labels on constant data can leave tiny rpart floating-point
   # noise rather than an exact 0, unlike the old bootstrap-based null
   expect_equal(disc$pmse$.null_pmse, c(0, 0), tolerance = 1e-3)
+  
+})
+
+
+test_that("add_pmse works with grouping variable", {
+  
+  set.seed(1)
+  
+  # Create data with a grouping variable
+  data <- data.frame(
+    x = rnorm(n = 1000, mean = 0, sd = 1),
+    y = rnorm(n = 1000, mean = 0, sd = 1),
+    group = rep(c("A", "B"), each = 500)
+  )
+  
+  postsynth <-
+    list(
+      synthetic_data = data,
+      jth_synthesis_time = data.frame(
+        variable = factor(c("x", "y", "group"))
+      )
+    ) |>
+    structure(class = "postsynth")
+  
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+  
+  dt_mod <- parsnip::decision_tree() |>
+    parsnip::set_mode(mode = "classification") |>
+    parsnip::set_engine(engine = "rpart")
+  
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
+  
+  disc <- suppressWarnings(
+    discrimination(ed) |>
+      add_propensities(
+        recipe = rec,
+        spec = dt_mod
+      ) |>
+      add_pmse(split = FALSE, group_by_q = "group")
+  )
+  
+  # Check structure
+  expect_equal(nrow(disc$pmse), 2)  # One row per group
+  expect_true(".group" %in% names(disc$pmse))
+  expect_true(".pmse" %in% names(disc$pmse))
+  expect_true(is.factor(disc$pmse$.group))
+  expect_equal(levels(disc$pmse$.group), c("A", "B"))
+  
+  # Check that pMSE values are numeric and non-negative
+  expect_true(all(is.numeric(disc$pmse$.pmse)))
+  expect_true(all(disc$pmse$.pmse >= 0))
+  
+})
+
+test_that("add_pmse with grouping and split works correctly", {
+  
+  set.seed(1)
+  
+  data <- data.frame(
+    x = rnorm(n = 1000, mean = 0, sd = 1),
+    y = rnorm(n = 1000, mean = 0, sd = 1),
+    group = rep(c("A", "B"), each = 500)
+  )
+  
+  postsynth <-
+    list(
+      synthetic_data = data,
+      jth_synthesis_time = data.frame(
+        variable = factor(c("x", "y", "group"))
+      )
+    ) |>
+    structure(class = "postsynth")
+  
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+  
+  dt_mod <- parsnip::decision_tree() |>
+    parsnip::set_mode(mode = "classification") |>
+    parsnip::set_engine(engine = "rpart")
+  
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
+  
+  disc <- suppressWarnings(
+    discrimination(ed) |>
+      add_propensities(
+        recipe = rec,
+        spec = dt_mod
+      ) |>
+      add_pmse(split = TRUE, group_by_q = "group")
+  )
+  
+  # Check structure: 2 groups × 2 splits = 4 rows
+  expect_equal(nrow(disc$pmse), 4)
+  expect_true(".group" %in% names(disc$pmse))
+  expect_true(".source" %in% names(disc$pmse))
+  expect_true(".pmse" %in% names(disc$pmse))
+  expect_true(is.factor(disc$pmse$.group))
+  expect_equal(levels(disc$pmse$.group), c("A", "B"))
+  expect_true(is.factor(disc$pmse$.source))
+  expect_equal(levels(disc$pmse$.source), c("training", "testing"))
+  
+})
+
+
+test_that("add_pmse_ratio works correctly with grouping from add_pmse", {
+  
+  set.seed(1)
+  
+  data <- data.frame(
+    x = rnorm(n = 1000, mean = 0, sd = 1),
+    y = rnorm(n = 1000, mean = 0, sd = 1),
+    group = rep(c("A", "B"), each = 500)
+  )
+  
+  postsynth <-
+    list(
+      synthetic_data = data,
+      jth_synthesis_time = data.frame(
+        variable = factor(c("x", "y", "group"))
+      )
+    ) |>
+    structure(class = "postsynth")
+  
+  ed <- eval_data(conf_data = data, synth_data = postsynth)
+  
+  dt_mod <- parsnip::decision_tree() |>
+    parsnip::set_mode(mode = "classification") |>
+    parsnip::set_engine(engine = "rpart")
+  
+  rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
+  
+  disc <- suppressWarnings(
+    discrimination(ed) |>
+      add_propensities(
+        recipe = rec,
+        spec = dt_mod
+      ) |>
+      add_pmse(split = TRUE, group_by_q = "group") |>
+      add_pmse_ratio(times = 25)
+  )
+  
+  # Check structure: 2 groups × 2 splits = 4 rows
+  expect_equal(nrow(disc$pmse), 4)
+  expect_true(".group" %in% names(disc$pmse))
+  expect_true(".source" %in% names(disc$pmse))
+  expect_true(".pmse" %in% names(disc$pmse))
+  expect_true(".null_pmse" %in% names(disc$pmse))
+  expect_true(".pmse_ratio" %in% names(disc$pmse))
+  expect_true(is.factor(disc$pmse$.group))
+  expect_equal(levels(disc$pmse$.group), c("A", "B"))
+  expect_true(is.factor(disc$pmse$.source))
+  expect_equal(levels(disc$pmse$.source), c("training", "testing"))
   
 })

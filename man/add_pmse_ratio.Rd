@@ -9,7 +9,8 @@ add_pmse_ratio(
   split = TRUE,
   prop = 4/5,
   times = NULL,
-  method = "perm"
+  method = "perm",
+  group_by_q = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ synthetic data.}
 default) permutes the confidential/synthetic labels. \code{"logistic"} uses the
 closed-form approximation for logistic regression discriminators from
 Snoke et al. (2018).}
+
+\item{group_by_q}{An optional grouping variable to calculate the pMSE ratio within each group.}
 }
 \value{
 A discrimination with pMSE
@@ -51,16 +54,16 @@ requires the discriminator to be a \code{parsnip::logistic_reg()} model with the
 \code{"glm"} engine and does not require \code{times}.
 }
 \seealso{
-Other Utility metrics:
-\code{\link[=add_pmse]{add_pmse()}},
-\code{\link[=add_propensities]{add_propensities()}},
-\code{\link[=add_propensities_tuned]{add_propensities_tuned()}},
-\code{\link[=add_specks]{add_specks()}},
-\code{\link[=compute_ci_overlap]{compute_ci_overlap()}},
-\code{\link[=discrimination]{discrimination()}},
-\code{\link[=util_ci_overlap]{util_ci_overlap()}},
-\code{\link[=util_co_occurrence]{util_co_occurrence()}},
-\code{\link[=util_ks_distance]{util_ks_distance()}},
-\code{\link[=util_proportions]{util_proportions()}}
+Other Utility metrics: 
+\code{\link{add_pmse}()},
+\code{\link{add_propensities}()},
+\code{\link{add_propensities_tuned}()},
+\code{\link{add_specks}()},
+\code{\link{compute_ci_overlap}()},
+\code{\link{discrimination}()},
+\code{\link{util_ci_overlap}()},
+\code{\link{util_co_occurrence}()},
+\code{\link{util_ks_distance}()},
+\code{\link{util_proportions}()}
 }
 \concept{Utility metrics}

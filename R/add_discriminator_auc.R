@@ -30,7 +30,8 @@ add_discriminator_auc <- function(discrimination, split = TRUE, group_by_q = NUL
 
     if (!is.null(group_by_q)) {
       discriminator_auc <- discriminator_auc |>
-        dplyr::rename(".group" := !!rlang::sym(group_by_q))
+        dplyr::rename(".group" := !!rlang::sym(group_by_q)) |>
+        dplyr::mutate(.group = factor(.data$.group))
     }
 
     discriminator_auc <- discriminator_auc |>
@@ -52,7 +53,8 @@ add_discriminator_auc <- function(discrimination, split = TRUE, group_by_q = NUL
 
     if (!is.null(group_by_q)) {
       discriminator_auc <- discriminator_auc |>
-        dplyr::rename(".group" := !!rlang::sym(group_by_q))
+        dplyr::rename(".group" := !!rlang::sym(group_by_q)) |>
+        dplyr::mutate(.group = factor(.data$.group))
     }
 
     discriminator_auc <- discriminator_auc |>

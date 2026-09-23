@@ -14,22 +14,22 @@ test_that("add_discriminator_auc returns perfect value for identical data (no sp
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
 
   ed <- eval_data(conf_data = data, synth_data = postsynth)
 
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
 
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
 
-  disc <- discrimination(ed) %>%
+  disc <- discrimination(ed) |>
     add_propensities(
       recipe = rec,
       spec = logistic_mod
-    ) %>%
+    ) |>
     add_discriminator_auc(split = FALSE)
 
   expect_equal(disc$discriminator_auc$.estimate, 0.5)
@@ -52,23 +52,23 @@ test_that("add_discriminator_auc returns perfect value for identical data (split
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
 
   ed <- eval_data(conf_data = data, synth_data = postsynth)
 
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
 
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
 
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_discriminator_auc()
   )
 
@@ -93,23 +93,23 @@ test_that("add_discriminator_auc returns perfect value for identical data (group
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y", "g"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
 
   ed <- eval_data(conf_data = data, synth_data = postsynth)
 
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
 
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
 
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_discriminator_auc(group_by_q = "g")
   )
 
@@ -118,7 +118,7 @@ test_that("add_discriminator_auc returns perfect value for identical data (group
 
 })
 
-test_that("add_pmse returns perfect value for separable data (no split)", {
+test_that("add_pmse_ratio returns perfect value for separable data (no split)", {
   
   set.seed(1)
   
@@ -140,30 +140,30 @@ test_that("add_pmse returns perfect value for separable data (no split)", {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
-  
+
   ed <- eval_data(conf_data = data, synth_data = postsynth)
-  
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
-  
+
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
-  
+
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) 
+      )
   )
-  
+
   expect_error(add_pmse_ratio(disc))
-  
-  disc <- disc %>%
+
+  disc <- disc |>
     add_discriminator_auc(split = FALSE)
-  
+
   expect_equal(disc$discriminator_auc$.estimate, 1)
-  
+
 })

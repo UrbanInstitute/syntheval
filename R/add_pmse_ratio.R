@@ -27,13 +27,14 @@
 #' default) permutes the confidential/synthetic labels. `"logistic"` uses the
 #' closed-form approximation for logistic regression discriminators from
 #' Snoke et al. (2018).
+#' @param group_by_q An optional grouping variable to calculate the pMSE ratio within each group.
 #'
 #' @return A discrimination with pMSE
 #'
 #' @family Utility metrics
 #'
 #' @export
-add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = NULL, method = "perm") {
+add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = NULL, method = "perm", group_by_q = NULL) {
 
   method <- match.arg(method, choices = c("perm", "logistic"))
 
@@ -55,16 +56,21 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = N
 
   }
 
-  calc_pmse <- function(propensities) {
+  calc_pmse <- function(propensities, group_by_q = NULL) {
 
     # calculate the expected propensity
-    prop_synthetic <- propensities |>
-      dplyr::summarize(
-        n_synthetic = sum(.data$.source_label == "synthetic"),
-        n_total = dplyr::n()
-      ) |>
-      dplyr::mutate(prop_synthetic = .data$n_synthetic / .data$n_total) |>
-      dplyr::pull("prop_synthetic")
+    if (!is.null(group_by_q)) {
+      prop_synthetic <- propensities |>
+        dplyr::ungroup() |>
+        dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
+        dplyr::summarize(
+          prop_synthetic = sum(.data$.source_label == "synthetic") / dplyr::n(),
+          .groups = "drop"
+        ) |>
+        dplyr::pull("prop_synthetic")
+    } else {
+      prop_synthetic <- sum(propensities$.source_label == "synthetic") / nrow(propensities)
+    }
 
     propensities_vec <- propensities |>
       dplyr::pull(".pred_synthetic")
@@ -119,13 +125,13 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = N
 
       # calculate the pmse for each permutation
       pmse_null <- list(
-        overall = calc_pmse(propensities_df),
+        overall = calc_pmse(propensities_df, group_by_q = group_by_q),
         training = propensities_df |>
           dplyr::filter(.data$.sample == "training") |>
-          calc_pmse(),
+          calc_pmse(group_by_q = group_by_q),
         testing = propensities_df |>
           dplyr::filter(.data$.sample == "testing") |>
-          calc_pmse()
+          calc_pmse(group_by_q = group_by_q)
       )
 
     } else {
@@ -144,7 +150,7 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = N
 
       # calculate the pmse for each permutation
       pmse_null <- list(
-        overall = calc_pmse(propensities_df),
+        overall = calc_pmse(propensities_df, group_by_q = group_by_q),
         training = NA_real_,
         testing = NA_real_
       )
@@ -184,11 +190,35 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = N
 
     }
 
-    pmse <- dplyr::bind_cols(
-      discrimination$pmse,
-      tibble::tibble(.null_pmse = c(mean_null_pmse_training, mean_null_pmse_testing))
-    ) |>
-      dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+    # Check if there's grouping in the pmse
+    if (".group" %in% names(discrimination$pmse)) {
+      
+      # Create null pMSE values for each group-split combination
+      null_pmse_vec <- discrimination$pmse |>
+        dplyr::mutate(
+          .null_pmse = dplyr::if_else(
+            .data$.source == "training",
+            mean_null_pmse_training,
+            mean_null_pmse_testing
+          )
+        ) |>
+        dplyr::pull(".null_pmse")
+      
+      pmse <- dplyr::bind_cols(
+        discrimination$pmse,
+        tibble::tibble(.null_pmse = null_pmse_vec)
+      ) |>
+        dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+      
+    } else {
+      
+      pmse <- dplyr::bind_cols(
+        discrimination$pmse,
+        tibble::tibble(.null_pmse = c(mean_null_pmse_training, mean_null_pmse_testing))
+      ) |>
+        dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+      
+    }
 
   } else {
 
@@ -244,11 +274,29 @@ add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = N
       dplyr::filter(.data$.sample == "testing") |>
       calc_null_pmse()
 
-    pmse <- dplyr::bind_cols(
-      discrimination$pmse,
-      tibble::tibble(.null_pmse = c(null_pmse_training, null_pmse_testing))
-    ) |>
-      dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+    # Check if there's grouping in the pmse
+    if (".group" %in% names(discrimination$pmse)) {
+      
+      # Replicate null pMSE for each group-split combination
+      pmse <- discrimination$pmse |>
+        dplyr::mutate(
+          .null_pmse = dplyr::if_else(
+            .data$.source == "training",
+            null_pmse_training,
+            null_pmse_testing
+          )
+        ) |>
+        dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+      
+    } else {
+      
+      pmse <- dplyr::bind_cols(
+        discrimination$pmse,
+        tibble::tibble(.null_pmse = c(null_pmse_training, null_pmse_testing))
+      ) |>
+        dplyr::mutate(.pmse_ratio = .data$.pmse / .data$.null_pmse)
+      
+    }
 
   } else {
 
