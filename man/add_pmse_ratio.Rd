@@ -4,7 +4,13 @@
 \alias{add_pmse_ratio}
 \title{Add pMSE ratio to discrimination object}
 \usage{
-add_pmse_ratio(discrimination, split = TRUE, prop = 3/4, times)
+add_pmse_ratio(
+  discrimination,
+  split = TRUE,
+  prop = 4/5,
+  times = NULL,
+  method = "perm"
+)
 }
 \arguments{
 \item{discrimination}{A discrimination with added propensities}
@@ -13,21 +19,36 @@ add_pmse_ratio(discrimination, split = TRUE, prop = 3/4, times)
 the training/testing split. Defaults to TRUE.}
 
 \item{prop}{The proportion of data to be retained for modeling/analysis in
-the training/testing split. The sampling is stratified by the original and
+the training/testing split. The sampling is stratified by the confidential and
 synthetic data.}
 
-\item{times}{The number of bootstrap samples.}
+\item{times}{The number of permutations. Only used when \code{method = "perm"}.}
+
+\item{method}{The method used to estimate the null pMSE. \code{"perm"} (the
+default) permutes the confidential/synthetic labels. \code{"logistic"} uses the
+closed-form approximation for logistic regression discriminators from
+Snoke et al. (2018).}
 }
 \value{
 A discrimination with pMSE
 }
 \description{
-The null pMSEs in the denominator of the ratio are estimated with bootstrap
-samples that can be computed in parallel. The bootstrap iterations are
-evaluated with \code{furrr::future_map()}, so they run sequentially by default
-and in parallel under a non-sequential \code{\link[future:plan]{future::plan()}} (for example,
+\code{method = "perm"} estimates the null pMSEs in the denominator of the ratio
+by randomly permuting the confidential/synthetic labels, which can be computed
+in parallel. The permutation iterations are evaluated with
+\code{furrr::future_map()}, so they run sequentially by default and in parallel
+under a non-sequential \code{\link[future:plan]{future::plan()}} (for example,
 \code{future::plan(future::multisession)}). Results are reproducible for a given
 seed and identical under sequential and parallel plans.
+}
+\details{
+\code{method = "logistic"} instead calculates the null pMSE with the closed-form
+approximation for logistic regression discriminators from Snoke et al.
+(2018): \eqn{(k - 1)(1 - c)^2 / N}, where \eqn{k} is the number of
+coefficients in the fitted model (including the intercept), \eqn{c} is the
+proportion of synthetic records, and \eqn{N} is the number of records. This
+requires the discriminator to be a \code{parsnip::logistic_reg()} model with the
+\code{"glm"} engine and does not require \code{times}.
 }
 \seealso{
 Other Utility metrics: 

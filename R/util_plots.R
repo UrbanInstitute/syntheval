@@ -391,7 +391,7 @@ plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q
     fill_limits = shared_limits
   ) + ggplot2::ggtitle("Synthetic data")
 
-  plot <- gridExtra::grid.arrange(p1, p2, nrow = 1)
+  plot <- patchwork::wrap_plots(p1, p2, nrow = 1)
 
   return(plot)
 
@@ -406,4 +406,82 @@ plot_bivariate <- function(eval_data, statistic, cor_method = "pearson", group_b
     cor_method = cor_method,
     group_by_q = group_by_q
   )
+}
+
+#' Create a black/white missingness matrix plot for a data set.
+#'
+#' @param data A data.frame
+#' @param na_values An optional scalar or vector of values (in addition to `NA`)
+#' that should be treated as missing
+#'
+#' @return A `ggplot2` plot
+#'
+#' @export
+create_na_matrix_plot <- function(data, na_values = NULL) {
+  
+  data <- .recode_custom_na(data, na_values = na_values)
+  
+  na_df <- data |>
+    dplyr::mutate(row_id = dplyr::row_number()) |>
+    tidyr::pivot_longer(
+      cols = -"row_id",
+      names_to = "variable",
+      values_to = "value"
+    ) |>
+    dplyr::mutate(is_na = is.na(.data$value))
+  
+  plot <- ggplot2::ggplot(
+    data = na_df,
+    mapping = ggplot2::aes(x = .data$variable, y = .data$row_id, fill = .data$is_na)
+  ) +
+    ggplot2::geom_tile() +
+    ggplot2::scale_fill_manual(
+      values = c(`FALSE` = "white", `TRUE` = "black"),
+      name = "Missing"
+    ) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 90, vjust = 1),
+      axis.title.x = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank()
+    )
+  
+  return(plot)
+  
+}
+
+#' Create side-by-side black/white missingness matrix plots.
+#'
+#' @param eval_data An `eval_data` object.
+#' @param na_values An optional scalar or vector of values (in addition to `NA`)
+#' that should be treated as missing
+#'
+#' @return A `ggplot2` plot
+#'
+#' @export
+plot_na_matrix <- function(eval_data, na_values = NULL) {
+  
+  stopifnot(is_eval_data(eval_data))
+  
+  p1 <- create_na_matrix_plot(eval_data[["conf_data"]], na_values = na_values) +
+    ggplot2::labs(title = "Confidential data")
+  p2 <- create_na_matrix_plot(eval_data[["synth_data"]], na_values = na_values) +
+    ggplot2::labs(title = "Synthetic data")
+  
+  plots <- list(p1, p2)
+  
+  if (!is.null(eval_data[["holdout_data"]])) {
+    
+    p3 <- create_na_matrix_plot(eval_data[["holdout_data"]], na_values = na_values) +
+      ggplot2::labs(title = "Holdout data")
+    
+    plots <- c(plots, list(p3))
+    
+  }
+  
+  plot <- patchwork::wrap_plots(plots, nrow = 1)
+  
+  return(plot)
+  
 }

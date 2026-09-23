@@ -56,5 +56,32 @@ test_that("prep_combined_data_for_na.rm functionality", {
   
 })
 
+df_with_sentinel <- data.frame(
+  a = c(1, -99, 3, 4),
+  b = c("x", "y", "-99", "z")
+)
+
+test_that(".recode_custom_na functionality", {
+  
+  # na_values = NULL returns data unchanged
+  expect_identical(
+    syntheval:::.recode_custom_na(df_with_sentinel, na_values = NULL),
+    df_with_sentinel
+  )
+  
+  # a custom sentinel is recoded to NA across all columns
+  recoded <- syntheval:::.recode_custom_na(df_with_sentinel, na_values = -99)
+  
+  expect_identical(recoded$a, c(1, NA, 3, 4))
+  expect_identical(recoded$b, c("x", "y", NA, "z"))
+  
+  # a vector of sentinels is recoded to NA across all columns
+  recoded_vec <- syntheval:::.recode_custom_na(df_with_sentinel, na_values = c(-99, "z"))
+  
+  expect_identical(recoded_vec$a, c(1, NA, 3, 4))
+  expect_identical(recoded_vec$b, c("x", "y", NA, NA))
+  
+})
+
 
 

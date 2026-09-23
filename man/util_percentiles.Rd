@@ -47,6 +47,8 @@ Other utility metrics:
 \code{\link{util_bivariate}()},
 \code{\link{util_corr_fit}()},
 \code{\link{util_moments}()},
+\code{\link{util_na_amount}()},
+\code{\link{util_na_cluster}()},
 \code{\link{util_totals}()}
 }
 \concept{utility metrics}
