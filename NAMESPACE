@@ -79,12 +79,11 @@ export(util_ks_distance)
 export(util_moments)
 export(util_na_amount)
 export(util_na_cluster)
+export(util_na_relate)
 export(util_percentiles)
 export(util_pred)
 export(util_proportions)
 export(util_totals)
 importFrom(magrittr,"%>%")
-importFrom(rlang,
-  ":=",
-  .data
-)
+importFrom(rlang,":=")
+importFrom(rlang,.data)
