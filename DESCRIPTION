@@ -45,6 +45,7 @@ Imports:
     recipes,
     rlang,
     rsample,
+    stats,
     tibble,
     tidyr,
     tidyselect,
