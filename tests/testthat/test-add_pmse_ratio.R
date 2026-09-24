@@ -33,7 +33,7 @@ test_that("add_pmse returns ideal value for identical data with variation " , {
       ) 
   )
   
-  expect_error(add_pmse_ratio(disc))
+  expect_error(add_pmse_ratio(disc), regexp = "add_pmse\\(\\)")
   
   disc <- disc |>
     add_pmse(split = FALSE) |>
@@ -379,4 +379,10 @@ test_that("add_pmse returns perfect value for identical data without variation "
   # noise rather than an exact 0, unlike the old bootstrap-based null
   expect_equal(disc$pmse$.null_pmse, c(0, 0), tolerance = 1e-3)
   
+})
+
+test_that("add_pmse_ratio errors on non-discrimination input", {
+
+  expect_error(add_pmse_ratio(list(), times = 5), regexp = "discrimination object")
+
 })
