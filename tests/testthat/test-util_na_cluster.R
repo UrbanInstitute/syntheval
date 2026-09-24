@@ -127,7 +127,7 @@ holdout_no_c <- data.frame(
   b = c(NA, 2, 3, 4)
 )
 
-test_that("util_na_cluster narrows only the holdout matrix to the holdout's variables", {
+test_that("util_na_cluster doesn't drop variables from the conf/synth comparison if they are absent from the holdout data", {
   
   ed <- eval_data(
     conf_data = conf,
