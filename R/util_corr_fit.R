@@ -203,9 +203,9 @@
         # sum of squared errors
         sse = sum(.data$difference ^ 2, na.rm = TRUE),
         correlation_fit = dplyr::case_when(
-          n == 0 ~ NA_real_,
-          sse == 0 ~ 0,
-          n_cells == 0 ~ NA_real_,
+          .data$n == 0 ~ NA_real_,
+          .data$sse == 0 ~ 0,
+          .data$n_cells == 0 ~ NA_real_,
           .default = sqrt(sse) / n_cells
         ),
         correlation_difference_mae = if (n == 0) {
