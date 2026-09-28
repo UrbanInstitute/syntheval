@@ -35,17 +35,13 @@
 #' @export
 add_pmse_ratio <- function(discrimination, split = TRUE, prop = 4 / 5, times = NULL, method = "perm") {
 
+  .validate_discrimination(discrimination, requires = c(pmse = "add_pmse()"))
+
   method <- match.arg(method, choices = c("perm", "logistic"))
 
   if (method == "perm" && (is.null(times) || times %% 1 != 0 || times < 1)) {
 
     stop('Error: times must be a positive integer when method is "perm"')
-
-  }
-
-  if (is.null(discrimination$pmse)) {
-
-    stop("Error: discrimination must have a pmse. Use add_pmse() before add_pmse_ratio()")
 
   }
 

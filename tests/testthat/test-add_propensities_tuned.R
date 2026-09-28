@@ -43,3 +43,16 @@ test_that("add_propensities_tuned returns propensities and fitted workflow", {
   expect_s3_class(out$discriminator, "workflow")
 
 })
+
+test_that("add_propensities_tuned errors on non-discrimination input", {
+
+  logistic_mod <- parsnip::logistic_reg(penalty = tune::tune()) |>
+    parsnip::set_mode(mode = "classification") |>
+    parsnip::set_engine(engine = "glmnet")
+
+  expect_error(
+    add_propensities_tuned(list(), spec = logistic_mod),
+    regexp = "discrimination object"
+  )
+
+})

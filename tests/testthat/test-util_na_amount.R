@@ -17,7 +17,7 @@ test_that("util_na_amount matches when conf and synth are identical", {
   result <- util_na_amount(ed)
   
   expect_equal(
-    result$na_prop[result$source == "original"],
+    result$na_prop[result$source == "confidential"],
     result$na_prop[result$source == "synthetic"]
   )
   
@@ -36,7 +36,7 @@ test_that("util_na_amount detects differences in missingness between conf and sy
   result <- util_na_amount(ed)
   
   expect_equal(
-    result$na_prop[result$variable == "a" & result$source == "original"],
+    result$na_prop[result$variable == "a" & result$source == "confidential"],
     0.25
   )
   expect_equal(
@@ -64,7 +64,7 @@ test_that("util_na_amount includes holdout rows when supplied", {
   
   expect_setequal(
     unique(result$source),
-    c("original", "synthetic", "holdout")
+    c("confidential", "synthetic", "holdout")
   )
   
 })
@@ -81,7 +81,7 @@ test_that("util_na_amount respects a custom na_values sentinel", {
   result <- util_na_amount(ed, na_values = -99)
   
   expect_equal(
-    result$na_prop[result$variable == "a" & result$source == "original"],
+    result$na_prop[result$variable == "a" & result$source == "confidential"],
     0.5
   )
   expect_equal(

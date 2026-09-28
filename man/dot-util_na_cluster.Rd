@@ -17,14 +17,15 @@
 missing in addition to \code{NA}}
 }
 \value{
-A \code{list} of fit metrics, restricted to variables with at least one
-missing value in \code{conf_data} or \code{synth_data}:
+A \code{list} of fit metrics, restricted to the variables common to
+\code{conf_data} and \code{synth_data} with at least one missing value in either:
 \itemize{
 \item \code{na_cluster_confidential}: phi coefficient matrix (correlation of binary
 missingness indicators) of the confidential data.
 \item \code{na_cluster_synthetic}: phi coefficient matrix of the synthetic data.
 \item \code{na_cluster_holdout}: phi coefficient matrix of the holdout data (if
-\code{holdout_data} is supplied).
+\code{holdout_data} is supplied), further restricted to the variables present
+in \code{holdout_data}.
 \item \code{na_cluster_difference}: difference between \code{na_cluster_synthetic} and
 \code{na_cluster_confidential}.
 \item \code{na_cluster_difference_mae}: mean absolute error between
