@@ -1,4 +1,4 @@
-#' Calculate the lower triangle of a correlation matrix for numeric random variables.
+#' Calculate the lower triangle of a correlation matrix for numeric random variables
 #' 
 #' @param x A data.frame
 #' @param use optional character string giving a method for computing
