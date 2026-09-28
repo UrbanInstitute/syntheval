@@ -129,13 +129,38 @@
     empty_tibble_diff <- empty_tibble |>
       dplyr::rename(difference = "correlation")
 
+    # keep the shape of the metric outputs consistent with the non-edge-case
+    # path: when group_by_q is supplied, return a tibble keyed by the group(s)
+    # (with NA metric values) rather than a bare scalar, so callers can rely
+    # on a consistent structure (e.g. `$correlation_fit$correlation_fit`)
+    # regardless of whether grouping is used.
+    if (!is.null(group_by_q)) {
+
+      group_keys <- dplyr::bind_rows(
+        dplyr::distinct(dplyr::select(conf_data, dplyr::all_of(group_by_q))),
+        dplyr::distinct(dplyr::select(synth_data, dplyr::all_of(group_by_q)))
+      ) |>
+        dplyr::distinct()
+
+      correlation_fit <- dplyr::mutate(group_keys, correlation_fit = NA_real_)
+      correlation_difference_mae <- dplyr::mutate(group_keys, correlation_difference_mae = NA_real_)
+      correlation_difference_rmse <- dplyr::mutate(group_keys, correlation_difference_rmse = NA_real_)
+
+    } else {
+
+      correlation_fit <- NA_real_
+      correlation_difference_mae <- NA_real_
+      correlation_difference_rmse <- NA_real_
+
+    }
+
     return(list(
       correlation_original =  empty_tibble,
       correlation_synthetic =  empty_tibble,
       correlation_difference = empty_tibble_diff,
-      correlation_fit = NA_real_,
-      correlation_difference_mae = NA_real_,
-      correlation_difference_rmse = NA_real_
+      correlation_fit = correlation_fit,
+      correlation_difference_mae = correlation_difference_mae,
+      correlation_difference_rmse = correlation_difference_rmse
     ))
   }
 
@@ -181,7 +206,7 @@
           n == 0 ~ NA_real_,
           sse == 0 ~ 0,
           n_cells == 0 ~ NA_real_,
-          TRUE ~ sqrt(sse) / n_cells
+          .default = sqrt(sse) / n_cells
         ),
         correlation_difference_mae = if (n == 0) {
           NA_real_
@@ -216,7 +241,7 @@
       n == 0 ~ NA_real_,
       sse == 0 ~ 0,
       nrow(difference_lt) == 0 ~ NA_real_,
-      TRUE ~ sqrt(sse) / nrow(difference_lt)
+      .default = sqrt(sse) / nrow(difference_lt)
     )
     difference_vec <- difference_lt$difference[!is.na(difference_lt$difference)]
     correlation_difference_mae <- if (length(difference_vec) == 0) {
