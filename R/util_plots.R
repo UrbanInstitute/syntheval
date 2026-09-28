@@ -276,8 +276,12 @@ plot_cormat <- function(eval_data, cor_method = "pearson", group_by_q = NULL) {
 
   # subset datasets to numeric variables present in both datasets + grouping variable if supplied
   intersect_numeric <- intersect(
-    names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], tidyselect::where(is.numeric))],
-    names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], tidyselect::where(is.numeric))]
+    eval_data[["conf_data"]] |>
+      dplyr::select(tidyselect::where(is.numeric)) |>
+      names(),
+    eval_data[["synth_data"]] |>
+      dplyr::select(tidyselect::where(is.numeric)) |>
+      names()
   )
   if (!is.null(group_by_q)) {
     intersect_numeric <- c(intersect_numeric, group_by_q)
