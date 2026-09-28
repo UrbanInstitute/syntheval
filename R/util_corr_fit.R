@@ -300,7 +300,7 @@
 #'  `correlation_original`.
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
-#'  cells in the complete correlation matrix prior to conversion to long tibbles
+# divided by the number of unique variable pairs, i.e. the number of cells in the lower triangle of the correlation matrix, prior to conversion to long tibbles
 #'
 #' @family utility metrics
 #'
