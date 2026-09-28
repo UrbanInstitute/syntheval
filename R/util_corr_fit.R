@@ -140,7 +140,8 @@
         dplyr::distinct(dplyr::select(conf_data, dplyr::all_of(group_by_q))),
         dplyr::distinct(dplyr::select(synth_data, dplyr::all_of(group_by_q)))
       ) |>
-        dplyr::distinct()
+        dplyr::distinct() |>
+        tibble::as_tibble()
 
       correlation_fit <- dplyr::mutate(group_keys, correlation_fit = NA_real_)
       correlation_difference_mae <- dplyr::mutate(group_keys, correlation_difference_mae = NA_real_)
