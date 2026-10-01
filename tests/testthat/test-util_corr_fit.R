@@ -23,7 +23,7 @@ test_that("util_corr_fit returns a true lower triangle correlation matrix", {
   
   ed <- eval_data(conf_data = df, synth_data = synth_data)
   
-  corr <- util_corr_fit(ed)
+  corr <- util_corr_fit(ed, method = "pearson")
   
   original_lt <- corr$correlation_original
   synthetic_lt <- corr$correlation_synthetic
@@ -52,7 +52,7 @@ test_that("util_corr_fit returns a true lower triangle correlation matrix", {
 
   ed_grouped <- eval_data(conf_data = df_grouped, synth_data = df_grouped)
 
-  corr_grouped <- util_corr_fit(ed_grouped, group_by_q = "group")
+  corr_grouped <- util_corr_fit(ed_grouped, group_by_q = "group", method = "pearson")
 
   correlation_matrix <- corr_grouped$correlation_original
 
@@ -83,9 +83,9 @@ test_that("util_corr_fit is correct with postsynth object, ungrouped", {
               )) |>
     structure(class = "postsynth")
   ed <- eval_data(conf_data = df, synth_data = syn)
-
-  corr <- util_corr_fit(ed)
-
+  
+  corr <- util_corr_fit(ed, method = "pearson")
+  
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
     dplyr::arrange(var1, var2)
@@ -123,8 +123,8 @@ test_that("util_corr_fit is correct with eval_data object, ungrouped", {
                     RECID = c("a", "b", "c"))
   
   ed <- eval_data(conf_data = df, synth_data = syn)
-
-  corr <- util_corr_fit(ed)
+  
+  corr <- util_corr_fit(ed, method = "pearson")
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
@@ -156,7 +156,7 @@ test_that("util_corr_fit works with NA ", {
   
   ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
   
-  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs")
+  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", method = "pearson")
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
@@ -174,7 +174,7 @@ test_that("util_corr_fit works with group_by_q", {
   
   ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
   
-  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", group_by_q = "marst")
+  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", group_by_q = "marst", method = "pearson")
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(marst, var1, var2, difference) |>
@@ -186,6 +186,28 @@ test_that("util_corr_fit works with group_by_q", {
   expect_equal(max(corr$correlation_difference_mae$correlation_difference_mae, na.rm = TRUE), 0)
   expect_equal(max(corr$correlation_difference_rmse$correlation_difference_rmse, na.rm = TRUE), 0)
   expect_equal(max(corr$correlation_fit$correlation_fit, na.rm = TRUE), 0)
+})
+
+test_that("util_corr_fit works with spearman method", {
+
+  ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
+
+  corr <- util_corr_fit(
+    eval_data = ed,
+    use = "pairwise.complete.obs",
+    method = "spearman"
+  )
+
+  actual_diff <- corr$correlation_difference |>
+    dplyr::select(var1, var2, difference) |>
+    dplyr::arrange(var1, var2)
+
+  expect_true(!any(actual_diff$var1 == actual_diff$var2))
+  expect_equal(max(corr$correlation_difference$difference, na.rm = TRUE), 0)
+  expect_equal(corr$correlation_fit, 0)
+  expect_equal(corr$correlation_difference_mae, 0)
+  expect_equal(corr$correlation_difference_rmse, 0)
+
 })
 
 test_that("util_corr_fit handles different conf/syn with NA values", {

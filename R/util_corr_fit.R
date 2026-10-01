@@ -1,81 +1,3 @@
-#' Calculate the lower triangle of a correlation matrix for numeric random variables
-#' 
-#' @param x A data.frame
-#' @param use optional character string giving a method for computing
-#' covariances in the presence of missing values. This must be (an abbreviation
-#' of) one of the strings "everything", "all.obs", "complete.obs",
-#' "na.or.complete", or "pairwise.complete.obs".
-#' @param group_by_q optional quoted character string of a variable name to
-#' group the data by. If provided, the correlations will be calculated
-#' for each group separately
-#' 
-#' @return A data.frame with columns for the variable pairs and their correlation values.
-
-.lower_triangle <- function(x, use, group_by_q = NULL) {
-
-    var_order <- x |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      names()
-
-  # find the linear correlation matrix of numeric variables from a data set
-  if (!is.null(group_by_q)) {
-
-    correlation_matrix <-
-      x |>
-      dplyr::group_by(dplyr::across(dplyr::all_of(group_by_q))) |>
-      dplyr::summarise(
-        cor = list({
-          m <-
-            stats::cor(
-              dplyr::pick(tidyselect::where(is.numeric)),
-              use = use
-            )
-          tibble::as_tibble(m, rownames = "var1")
-        }),
-        .groups = "drop"
-      ) |>
-      tidyr::unnest("cor")
-
-  } else {
-
-    # ungrouped version
-    correlation_matrix <-
-      x |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
-      stats::cor(use = use)
-
-  }
-
-  # convert correlation matrix to long format to facilitate
-  # comparisons between original and synthetic data correlation matrices
-  # that are robust to the presence of grouping variables
-
-  # handle matrix (no groups) vs tibble (grouped) uniformly
-  if (is.matrix(correlation_matrix)) {
-    correlation_matrix <- tibble::as_tibble(correlation_matrix, rownames = "var1")
-  }
-
-  # capture before pivot
-  id_cols <- intersect(c("var1", group_by_q), names(correlation_matrix))
-
-  correlation_matrix <- correlation_matrix |>
-    tidyr::pivot_longer(
-      cols = -dplyr::all_of(id_cols),
-      names_to = "var2",
-      values_to = "correlation"
-    ) |>
-    dplyr::select(dplyr::any_of(c(group_by_q, "var1", "var2", "correlation")))
-
-  # delete duplicate correlations so it is a true lower triangle
-  correlation_matrix <- correlation_matrix |>
-    dplyr::filter(
-      match(.data$var1, var_order) > match(.data$var2, var_order)
-    )
-
-  return(correlation_matrix)
-
-}
-
 #' Calculate the correlation fit metric of a confidential data set.
 #'
 #' @param synth_data A data.frame with synthetic data
@@ -84,6 +6,9 @@
 #' covariances in the presence of missing values. This must be (an abbreviation
 #' of) one of the strings "everything", "all.obs", "complete.obs",
 #' "na.or.complete", or "pairwise.complete.obs".
+#' @param method optional character string indicating which correlation
+#' coefficient is to be computed. One of "pearson" (default), "kendall", or
+#' "spearman".
 #' @param group_by_q optional quoted character string of a variable name to
 #' group the data by. If provided, the correlation fit metric will be calculated
 #' for each group separately.
@@ -99,9 +24,13 @@
 #'  `correlation_original`, formatted in a long tibble.
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
-# divided by the number of unique variable pairs, i.e. the number of cells in the lower triangle of the correlation matrix, prior to conversion to long tibbles
-
-.util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL) {
+#' divided by the number of unique variable pairs, i.e. the number of cells in the 
+#' lower triangle of the correlation matrix, prior to conversion to long tibbles
+#'  - `correlation_difference_mae`: mean absolute error of pairwise correlation
+#'    differences.
+#'  - `correlation_difference_rmse`: root mean squared error of pairwise
+#'    correlation differences.
+.util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL, method = "pearson") {
 
   # Create list of variables to subset synth_data and conf_data
   # First, get numeric variables present in both data sets
@@ -177,10 +106,15 @@
   conf_data <- dplyr::select(conf_data, dplyr::all_of(vars_select))
 
   # find the lower triangle of the original data linear correlation matrix
-  original_lt <- .lower_triangle(conf_data, use = use, group_by_q = group_by_q)
+  # .lower_triangle() (shared with util_bivariate()) returns the value column
+  # named "statistic"; rename to "correlation" to preserve util_corr_fit()'s
+  # documented output shape
+  original_lt <- .lower_triangle(conf_data, use = use, statistic = "correlation", group_by_q = group_by_q, method = method) |>
+    dplyr::rename(correlation = "statistic")
 
   # find the lower triangle of the synthetic data linear correlation matrix
-  synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q)
+  synthetic_lt <- .lower_triangle(synth_data, use = use, statistic = "correlation", group_by_q = group_by_q, method = method) |>
+    dplyr::rename(correlation = "statistic")
 
   # find the difference between the matrices
   difference_lt <-
@@ -288,6 +222,9 @@
 #' @param group_by_q optional quoted character string of a variable name to
 #' group the data by. If provided, the correlation fit metric will be calculated
 #' for each group separately.
+#' @param method optional character string indicating which correlation
+#' coefficient is to be computed. One of "pearson" (default), "kendall", or
+#' "spearman".
 #'
 #' @return A `list` of fit metrics (one per each synthetic data replicate):
 #'  - `correlation_original`: correlation values from original data of pairs of
@@ -306,7 +243,7 @@
 #'
 #' @export
 #'
-util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL) {
+util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL, method = "pearson") {
 
   stopifnot(is_eval_data(eval_data))
 
@@ -317,7 +254,8 @@ util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL) {
         conf_data = eval_data$conf_data,
         synth_data = eval_data$synth_data,
         use = use,
-        group_by_q = group_by_q
+        group_by_q = group_by_q,
+        method = method
       )
     )
 
@@ -331,7 +269,8 @@ util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL) {
           conf_data = eval_data$conf_data,
           synth_data = sd,
           use = use,
-          group_by_q = group_by_q
+          group_by_q = group_by_q,
+          method = method
         )
 
       }
