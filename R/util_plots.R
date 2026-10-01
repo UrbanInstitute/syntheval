@@ -336,18 +336,26 @@ plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q
   # subset datasets to numeric or factor variables present in both datasets + grouping variable if supplied
   if (statistic != "rmi") {
     intersect_vars <- intersect(
-      names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], tidyselect::where(is.numeric))],
-      names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], tidyselect::where(is.numeric))]
+      eval_data[["conf_data"]] |>
+        dplyr::select(tidyselect::where(is.numeric)) |>
+        names(),
+      eval_data[["synth_data"]] |>
+        dplyr::select(tidyselect::where(is.numeric)) |>
+        names()
     )
   } else {
     intersect_vars <- intersect(
-      names(eval_data[["conf_data"]])[sapply(eval_data[["conf_data"]], tidyselect::where(is.factor))],
-      names(eval_data[["synth_data"]])[sapply(eval_data[["synth_data"]], tidyselect::where(is.factor))]
-  )
+      eval_data[["conf_data"]] |>
+        dplyr::select(tidyselect::where(is.factor)) |>
+        names(),
+      eval_data[["synth_data"]] |>
+        dplyr::select(tidyselect::where(is.factor)) |>
+        names()
+    )
   }
   
-  if(length(intersect_vars) < 2 & statistic != "rmi") stop("Must supply at least two numeric variables shared by synth_data and conf_data")
-  if(length(intersect_vars) < 2 & statistic == "rmi") stop("Must supply at least two factor variables shared by synth_data and conf_data")
+  if(length(intersect_vars) < 2 && statistic != "rmi") stop("Must supply at least two numeric variables shared by synth_data and conf_data")
+  if(length(intersect_vars) < 2 && statistic == "rmi") stop("Must supply at least two factor variables shared by synth_data and conf_data")
   
 
   if (!is.null(group_by_q)) {

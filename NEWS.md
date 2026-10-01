@@ -3,6 +3,8 @@
 - Add `util_bivariate()` to compute pairwise correlation, covariance, or RMI in a unified interface, with consistent list outputs (`*_original`, `*_synthetic`, *_difference, fit/MAE/RMSE) and group_by_q support. `util_corr_fit()` is maintained as a legacy function.
 - Update` plot_cormat()`/`create_cormat_plot()` to support statistic-specific fill scales (including RMI), shared panel limits, and add` plot_bivariate()` as an alias.
 - Added `group_by_q` parameter to `util_corr_fit()` and `plot_cormat` (#135). `util_corr_fit()` now returns correlations as long tibbles showing each unique variable pairing rowwise with a column for its respective correlation or correlation difference value and a column for grouping variables if provided. If util_corr_fit is supplied with an `eval_data` object with fewer than two shared numeric variables across conf_data and synth_data, `util_corr_fit()` returns a list of empty tibbles plus `NA_real_` summary metrics formatted consistently with valid `util_corr_fit()` outputs
+- Add a `print()` method for `discrimination` objects that shows the combined data size, the fitted discriminator, and a table of every computed metric by sample split. (#111)
+- `add_pmse()`, `add_specks()`, `add_discriminator_auc()`, and `add_pmse_ratio()` now error with a clear message when called on a non-`discrimination` object or before their prerequisite step. (#111)
 - Add `util_pred()` functionality for prediction accuracy metrics. (#129)
 - Add `attribute_target()` functionality for target attribute inference metrics. (#15)
 - Add `attribute_scan()` functionality for discovery attribute inference metrics. (#15)

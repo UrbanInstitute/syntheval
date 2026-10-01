@@ -114,7 +114,7 @@
     )
   } else if (statistic == "covariance") {
     matrix <- matrix |>
-      dplyr::filter(var1 >= var2)
+      dplyr::filter(.data$var1 >= .data$var2)
   }
 
   return(matrix)

@@ -43,7 +43,8 @@ formatted in a long tibble
 \code{correlation_original}, formatted in a long tibble.
 \item \code{correlation_fit}: square root of the sum of squared differences between
 \code{correlation_synthetic} and \code{correlation_original}, divided by the number of
-cells in the complete correlation matrix prior to conversion to long tibbles.
+divided by the number of unique variable pairs, i.e. the number of cells in the
+lower triangle of the correlation matrix, prior to conversion to long tibbles
 \item \code{correlation_difference_mae}: mean absolute error of pairwise correlation
 differences.
 \item \code{correlation_difference_rmse}: root mean squared error of pairwise

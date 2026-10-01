@@ -24,12 +24,12 @@
 #'  `correlation_original`, formatted in a long tibble.
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
-#'  cells in the complete correlation matrix prior to conversion to long tibbles.
+#' divided by the number of unique variable pairs, i.e. the number of cells in the 
+#' lower triangle of the correlation matrix, prior to conversion to long tibbles
 #'  - `correlation_difference_mae`: mean absolute error of pairwise correlation
 #'    differences.
 #'  - `correlation_difference_rmse`: root mean squared error of pairwise
 #'    correlation differences.
-
 .util_corr_fit <- function(synth_data, conf_data, use = "everything", group_by_q = NULL, method = "pearson") {
 
   # Create list of variables to subset synth_data and conf_data
@@ -58,13 +58,39 @@
     empty_tibble_diff <- empty_tibble |>
       dplyr::rename(difference = "correlation")
 
+    # keep the shape of the metric outputs consistent with the non-edge-case
+    # path: when group_by_q is supplied, return a tibble keyed by the group(s)
+    # (with NA metric values) rather than a bare scalar, so callers can rely
+    # on a consistent structure (e.g. `$correlation_fit$correlation_fit`)
+    # regardless of whether grouping is used.
+    if (!is.null(group_by_q)) {
+
+      group_keys <- dplyr::bind_rows(
+        dplyr::distinct(dplyr::select(conf_data, dplyr::all_of(group_by_q))),
+        dplyr::distinct(dplyr::select(synth_data, dplyr::all_of(group_by_q)))
+      ) |>
+        dplyr::distinct() |>
+        tibble::as_tibble()
+
+      correlation_fit <- dplyr::mutate(group_keys, correlation_fit = NA_real_)
+      correlation_difference_mae <- dplyr::mutate(group_keys, correlation_difference_mae = NA_real_)
+      correlation_difference_rmse <- dplyr::mutate(group_keys, correlation_difference_rmse = NA_real_)
+
+    } else {
+
+      correlation_fit <- NA_real_
+      correlation_difference_mae <- NA_real_
+      correlation_difference_rmse <- NA_real_
+
+    }
+
     return(list(
       correlation_original =  empty_tibble,
       correlation_synthetic =  empty_tibble,
       correlation_difference = empty_tibble_diff,
-      correlation_fit = NA_real_,
-      correlation_difference_mae = NA_real_,
-      correlation_difference_rmse = NA_real_
+      correlation_fit = correlation_fit,
+      correlation_difference_mae = correlation_difference_mae,
+      correlation_difference_rmse = correlation_difference_rmse
     ))
   }
 
@@ -80,10 +106,15 @@
   conf_data <- dplyr::select(conf_data, dplyr::all_of(vars_select))
 
   # find the lower triangle of the original data linear correlation matrix
-  original_lt <- .lower_triangle(conf_data, use = use, group_by_q = group_by_q, method = method)
+  # .lower_triangle() (shared with util_bivariate()) returns the value column
+  # named "statistic"; rename to "correlation" to preserve util_corr_fit()'s
+  # documented output shape
+  original_lt <- .lower_triangle(conf_data, use = use, statistic = "correlation", group_by_q = group_by_q, method = method) |>
+    dplyr::rename(correlation = "statistic")
 
   # find the lower triangle of the synthetic data linear correlation matrix
-  synthetic_lt <- .lower_triangle(synth_data, use = use, group_by_q = group_by_q, method = method)
+  synthetic_lt <- .lower_triangle(synth_data, use = use, statistic = "correlation", group_by_q = group_by_q, method = method) |>
+    dplyr::rename(correlation = "statistic")
 
   # find the difference between the matrices
   difference_lt <-
@@ -107,10 +138,10 @@
         # sum of squared errors
         sse = sum(.data$difference ^ 2, na.rm = TRUE),
         correlation_fit = dplyr::case_when(
-          n == 0 ~ NA_real_,
-          sse == 0 ~ 0,
-          n_cells == 0 ~ NA_real_,
-          TRUE ~ sqrt(sse) / n_cells
+          .data$n == 0 ~ NA_real_,
+          .data$sse == 0 ~ 0,
+          .data$n_cells == 0 ~ NA_real_,
+          .default = sqrt(sse) / n_cells
         ),
         correlation_difference_mae = if (n == 0) {
           NA_real_
@@ -145,7 +176,7 @@
       n == 0 ~ NA_real_,
       sse == 0 ~ 0,
       nrow(difference_lt) == 0 ~ NA_real_,
-      TRUE ~ sqrt(sse) / nrow(difference_lt)
+      .default = sqrt(sse) / nrow(difference_lt)
     )
     difference_vec <- difference_lt$difference[!is.na(difference_lt$difference)]
     correlation_difference_mae <- if (length(difference_vec) == 0) {
@@ -206,7 +237,7 @@
 #'  `correlation_original`.
 #'  - `correlation_fit`: square root of the sum of squared differences between
 #'  `correlation_synthetic` and `correlation_original`, divided by the number of
-#'  cells in the complete correlation matrix prior to conversion to long tibbles
+# divided by the number of unique variable pairs, i.e. the number of cells in the lower triangle of the correlation matrix, prior to conversion to long tibbles
 #'
 #' @family utility metrics
 #'

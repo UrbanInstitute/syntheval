@@ -40,19 +40,19 @@ formatted in a long tibble
 \code{correlation_original}.
 \item \code{correlation_fit}: square root of the sum of squared differences between
 \code{correlation_synthetic} and \code{correlation_original}, divided by the number of
-cells in the complete correlation matrix prior to conversion to long tibbles
 }
 }
 \description{
 Calculate the correlation fit metric of a confidential data set.
 }
 \seealso{
-Other utility metrics: 
-\code{\link{util_bivariate}()},
-\code{\link{util_moments}()},
-\code{\link{util_na_amount}()},
-\code{\link{util_na_cluster}()},
-\code{\link{util_percentiles}()},
-\code{\link{util_totals}()}
+Other utility metrics:
+\code{\link[=util_bivariate]{util_bivariate()}},
+\code{\link[=util_moments]{util_moments()}},
+\code{\link[=util_na_amount]{util_na_amount()}},
+\code{\link[=util_na_cluster]{util_na_cluster()}},
+\code{\link[=util_na_relate]{util_na_relate()}},
+\code{\link[=util_percentiles]{util_percentiles()}},
+\code{\link[=util_totals]{util_totals()}}
 }
 \concept{utility metrics}

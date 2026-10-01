@@ -14,22 +14,22 @@ test_that("add_discriminator_auc returns perfect value for identical data (no sp
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
-  disc <- discrimination(ed) %>%
+  disc <- discrimination(ed) |>
     add_propensities(
       recipe = rec,
       spec = logistic_mod
-    ) %>%
+    ) |>
     add_discriminator_auc(split = FALSE)
   
   expect_equal(disc$discriminator_auc$.estimate, 0.5)
@@ -52,23 +52,23 @@ test_that("add_discriminator_auc returns perfect value for identical data (split
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
-      ) %>%
+      ) |>
       add_discriminator_auc()
   )
   
@@ -98,19 +98,19 @@ test_that("add_pmse returns perfect value for seperable data (no split)" , {
       jth_synthesis_time = data.frame(
         variable = factor(c("x", "y"))
       )
-    ) %>%
+    ) |>
     structure(class = "postsynth")
   
   ed <- eval_data(conf_data = data, synth_data = postsynth)
   
-  logistic_mod <- parsnip::logistic_reg() %>%
-    parsnip::set_mode(mode = "classification") %>%
+  logistic_mod <- parsnip::logistic_reg() |>
+    parsnip::set_mode(mode = "classification") |>
     parsnip::set_engine(engine = "glm")
   
   rec <- recipes::recipe(.source_label ~ ., data = discrimination(ed)$combined_data)
   
   disc <- suppressWarnings(
-    discrimination(ed) %>%
+    discrimination(ed) |>
       add_propensities(
         recipe = rec,
         spec = logistic_mod
@@ -119,9 +119,23 @@ test_that("add_pmse returns perfect value for seperable data (no split)" , {
   
   expect_error(add_pmse_ratio(disc))
   
-  disc <- disc %>%
+  disc <- disc |>
     add_discriminator_auc(split = FALSE)
   
   expect_equal(disc$discriminator_auc$.estimate, 1)
   
+})
+
+test_that("add_discriminator_auc errors on non-discrimination input", {
+
+    expect_error(add_discriminator_auc(list()), regexp = "discrimination object")
+
+})
+
+test_that("add_discriminator_auc errors when propensities are missing", {
+
+    ed <- eval_data(conf_data = penguins_conf, synth_data = penguins_postsynth)
+
+    expect_error(add_discriminator_auc(discrimination(ed)), regexp = "add_propensities\\(\\)")
+
 })

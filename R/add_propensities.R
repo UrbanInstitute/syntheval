@@ -28,11 +28,7 @@ add_propensities <- function(
     save_fit = TRUE
 ) {
   
-  if (!is_discrimination(discrimination)) {
-    
-    stop("Error: discrimination must be of class discrimination. Use discrimination() before add_propensities()")
-    
-  }
+  .validate_discrimination(discrimination)
   
   if (!is.null(recipe) & !is.null(formula)) {
     
@@ -55,8 +51,8 @@ add_propensities <- function(
   }
   
   # create a workflow to organize the recipe and model
-  wf <- workflows::workflow() %>%
-    workflows::add_model(spec = spec) %>%
+  wf <- workflows::workflow() |>
+    workflows::add_model(spec = spec) |>
     workflows::add_recipe(recipe = recipe) 
   
   # make training/testing split
@@ -67,20 +63,20 @@ add_propensities <- function(
   )
   
   # fit the model
-  fitted_model <- wf %>%
+  fitted_model <- wf |>
     parsnip::fit(data = rsample::training(data_split))
 
   propensities_df <- dplyr::bind_cols(
     stats::predict(fitted_model, new_data = discrimination$combined_data, type = "prob")[, ".pred_synthetic"],
     discrimination$combined_data
-  ) %>%
+  ) |>
     dplyr::mutate(
       .sample = dplyr::if_else(
         dplyr::row_number() %in% data_split$in_id, 
         true = "training", 
         false = "testing"
       )
-    ) %>%
+    ) |>
     dplyr::relocate(
       dplyr::all_of(c(".pred_synthetic", ".source_label", ".sample")), 
       dplyr::everything()
