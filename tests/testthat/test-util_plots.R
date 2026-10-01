@@ -239,9 +239,9 @@ testthat::test_that("plot_cormat returns arranged grob for correlation/covarianc
 
   ed <- eval_data(conf_data = conf, synth_data = syn)
 
-  testthat::expect_true(inherits(plot_cormat(ed, "correlation"), "gtable"))
-  testthat::expect_true(inherits(plot_cormat(ed, "covariance"), "gtable"))
-  testthat::expect_true(inherits(plot_cormat(ed, "rmi"), "gtable"))
+  testthat::expect_true(inherits(plot_cormat(ed, "correlation"), "patchwork"))
+  testthat::expect_true(inherits(plot_cormat(ed, "covariance"), "patchwork"))
+  testthat::expect_true(inherits(plot_cormat(ed, "rmi"), "patchwork"))
 })
 
 testthat::test_that("plot_bivariate is an alias of plot_cormat", {
@@ -253,8 +253,8 @@ testthat::test_that("plot_bivariate is an alias of plot_cormat", {
   p_alias <- plot_bivariate(ed, statistic = "correlation", cor_method = "pearson")
   p_base  <- plot_cormat(ed, statistic = "correlation", cor_method = "pearson")
 
-  testthat::expect_true(inherits(p_alias, "gtable"))
-  testthat::expect_true(inherits(p_base, "gtable"))
+  testthat::expect_true(inherits(p_alias, "patchwork"))
+  testthat::expect_true(inherits(p_base, "patchwork"))
 })
 
 testthat::test_that("create_cormat_plot validates group_by_q input", {
