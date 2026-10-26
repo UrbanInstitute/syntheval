@@ -4,17 +4,22 @@
 \alias{target_log_loss}
 \title{Measure the quality of predicted class probabilities}
 \usage{
-target_log_loss(target, on = "confidential")
+target_log_loss(target)
 }
 \arguments{
 \item{target}{An \code{attribute_target} object with a classification mode.}
-
-\item{on}{Either \code{"confidential"} (default, the attack result), \code{"train"},
-or \code{"test"} (model-quality diagnostics on the fitting data).}
 }
 \value{
-A tibble with columns \code{source} (\code{"synthetic"} or \code{"holdout"}),
-\code{on}, and \code{log_loss}.
+A tibble with columns:
+\itemize{
+\item \code{modeling_data}: the data the attack model was fit on, a factor with
+levels \code{"synthetic"} and, if available, \code{"holdout"}.
+\item \code{prediction_data}: the data the log loss is evaluated on, a factor with
+levels \code{"training"} and \code{"testing"} (the internal split of the modeling
+data) and \code{"confidential"} (the attack result).
+\item \code{n}: the number of records in \code{prediction_data}.
+\item \code{log_loss}: the mean log loss of the predicted class probabilities.
+}
 }
 \description{
 Measure the quality of predicted class probabilities

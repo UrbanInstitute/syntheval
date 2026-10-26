@@ -31,7 +31,6 @@ formatted in a long tibble
 \code{correlation_original}.
 \item \code{correlation_fit}: square root of the sum of squared differences between
 \code{correlation_synthetic} and \code{correlation_original}, divided by the number of
-cells in the complete correlation matrix prior to conversion to long tibbles
 }
 }
 \description{

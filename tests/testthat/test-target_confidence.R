@@ -44,7 +44,7 @@ test_that("target_confidence returns a tibble in [0.5, 1] for a binary target", 
   
   result <- target_confidence(class_target)
   
-  expect_identical(names(result), c("source", "on", "confidence"))
-  expect_true(result$confidence >= 0.5 && result$confidence <= 1)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "confidence"))
+  expect_true(all(result$confidence >= 0.5 & result$confidence <= 1))
   
 })

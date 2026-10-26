@@ -44,7 +44,7 @@ test_that("target_balanced_accuracy returns a tibble in [0, 1]", {
   
   result <- target_balanced_accuracy(class_target)
   
-  expect_identical(names(result), c("source", "on", "balanced_accuracy"))
-  expect_true(result$balanced_accuracy >= 0 && result$balanced_accuracy <= 1)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "balanced_accuracy"))
+  expect_true(all(result$balanced_accuracy >= 0 & result$balanced_accuracy <= 1))
   
 })

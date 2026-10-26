@@ -2,15 +2,19 @@
 #' Measure the mean absolute error between predicted and observed confidential values
 #' 
 #' @param target An `attribute_target` object with a regression mode.
-#' @param on Either `"confidential"` (default, the attack result), `"train"`, 
-#' or `"test"` (model-quality diagnostics on the fitting data).
 #' 
-#' @returns A tibble with columns `source` (`"synthetic"` or `"holdout"`), 
-#' `on`, and `mae`.
+#' @returns A tibble with columns:
+#' * `modeling_data`: the data the attack model was fit on, a factor with 
+#'   levels `"synthetic"` and, if available, `"holdout"`.
+#' * `prediction_data`: the data the MAE is evaluated on, a factor with levels 
+#'   `"training"` and `"testing"` (the internal split of the modeling data) and 
+#'   `"confidential"` (the attack result).
+#' * `n`: the number of records in `prediction_data`.
+#' * `mae`: the mean absolute error.
 #' 
 #' @export
 #' 
-target_mae <- function(target, on = "confidential") {
+target_mae <- function(target) {
   
   stopifnot(is_attribute_target(target))
   
@@ -20,11 +24,8 @@ target_mae <- function(target, on = "confidential") {
     
   }
   
-  on <- match.arg(on, c("confidential", "train", "test"))
-  
-  result <- .target_metric_table(
+  result <- .target_metric_grid(
     target = target,
-    on = on,
     metric_name = "mae",
     metric_fn = function(predictions) {
       

@@ -4,17 +4,23 @@
 \alias{target_spearman}
 \title{Measure rank-order agreement between predicted and observed confidential values}
 \usage{
-target_spearman(target, on = "confidential")
+target_spearman(target)
 }
 \arguments{
 \item{target}{An \code{attribute_target} object with a regression mode.}
-
-\item{on}{Either \code{"confidential"} (default, the attack result), \code{"train"},
-or \code{"test"} (model-quality diagnostics on the fitting data).}
 }
 \value{
-A tibble with columns \code{source} (\code{"synthetic"} or \code{"holdout"}),
-\code{on}, and \code{spearman}.
+A tibble with columns:
+\itemize{
+\item \code{modeling_data}: the data the attack model was fit on, a factor with
+levels \code{"synthetic"} and, if available, \code{"holdout"}.
+\item \code{prediction_data}: the data the Spearman correlation is evaluated on, a
+factor with levels \code{"training"} and \code{"testing"} (the internal split of the
+modeling data) and \code{"confidential"} (the attack result).
+\item \code{n}: the number of records in \code{prediction_data}.
+\item \code{spearman}: the Spearman rank correlation between predicted and observed
+values.
+}
 }
 \description{
 Measure rank-order agreement between predicted and observed confidential values

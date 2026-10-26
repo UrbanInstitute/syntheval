@@ -44,7 +44,7 @@ test_that("target_mae returns a non-negative tibble", {
   
   result <- target_mae(reg_target)
   
-  expect_identical(names(result), c("source", "on", "mae"))
-  expect_true(result$mae >= 0)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "mae"))
+  expect_true(all(result$mae >= 0))
   
 })

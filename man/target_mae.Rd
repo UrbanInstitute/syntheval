@@ -4,17 +4,22 @@
 \alias{target_mae}
 \title{Measure the mean absolute error between predicted and observed confidential values}
 \usage{
-target_mae(target, on = "confidential")
+target_mae(target)
 }
 \arguments{
 \item{target}{An \code{attribute_target} object with a regression mode.}
-
-\item{on}{Either \code{"confidential"} (default, the attack result), \code{"train"},
-or \code{"test"} (model-quality diagnostics on the fitting data).}
 }
 \value{
-A tibble with columns \code{source} (\code{"synthetic"} or \code{"holdout"}),
-\code{on}, and \code{mae}.
+A tibble with columns:
+\itemize{
+\item \code{modeling_data}: the data the attack model was fit on, a factor with
+levels \code{"synthetic"} and, if available, \code{"holdout"}.
+\item \code{prediction_data}: the data the MAE is evaluated on, a factor with levels
+\code{"training"} and \code{"testing"} (the internal split of the modeling data) and
+\code{"confidential"} (the attack result).
+\item \code{n}: the number of records in \code{prediction_data}.
+\item \code{mae}: the mean absolute error.
+}
 }
 \description{
 Measure the mean absolute error between predicted and observed confidential values

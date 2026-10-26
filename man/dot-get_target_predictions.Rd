@@ -4,16 +4,16 @@
 \alias{.get_target_predictions}
 \title{Retrieve a predictions tibble from an attribute_target object}
 \usage{
-.get_target_predictions(target, source, on)
+.get_target_predictions(target, modeling_data, prediction_data)
 }
 \arguments{
 \item{target}{An \code{attribute_target} object.}
 
-\item{source}{Either \code{"synthetic"} or \code{"holdout"} - which fitted branch's
-predictions to retrieve.}
+\item{modeling_data}{Either \code{"synthetic"} or \code{"holdout"} - which fitted
+branch's predictions to retrieve.}
 
-\item{on}{Either \code{"confidential"}, \code{"train"}, or \code{"test"} - which
-predictions tibble to retrieve from the branch.}
+\item{prediction_data}{Either \code{"training"}, \code{"testing"}, or
+\code{"confidential"} - which predictions tibble to retrieve from the branch.}
 }
 \value{
 A predictions tibble.

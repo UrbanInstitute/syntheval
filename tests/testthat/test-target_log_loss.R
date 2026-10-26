@@ -44,7 +44,7 @@ test_that("target_log_loss returns a non-negative tibble", {
   
   result <- target_log_loss(class_target)
   
-  expect_identical(names(result), c("source", "on", "log_loss"))
-  expect_true(result$log_loss >= 0)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "log_loss"))
+  expect_true(all(result$log_loss >= 0))
   
 })

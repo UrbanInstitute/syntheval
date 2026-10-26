@@ -422,7 +422,7 @@ pred_visualize <- function(pred, coord_equal = TRUE) {
       tidyr::pivot_wider(
         id_cols = c(".id", "data"),
         names_from = "model",
-        values_from = c(".pred_class", prob_col)
+        values_from = dplyr::all_of(c(".pred_class", prob_col))
       ) |>
       dplyr::mutate(
         match = .data$.pred_class_confidential == .data$.pred_class_synthetic

@@ -44,7 +44,7 @@ test_that("target_rsq returns a tibble", {
   
   result <- target_rsq(reg_target)
   
-  expect_identical(names(result), c("source", "on", "rsq"))
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "rsq"))
   expect_true(is.numeric(result$rsq))
   
 })

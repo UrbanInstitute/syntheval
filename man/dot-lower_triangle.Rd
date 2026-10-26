@@ -2,7 +2,7 @@
 % Please edit documentation in R/util_corr_fit.R
 \name{.lower_triangle}
 \alias{.lower_triangle}
-\title{Calculate the lower triangle of a correlation matrix for numeric random variables.}
+\title{Calculate the lower triangle of a correlation matrix for numeric random variables}
 \usage{
 .lower_triangle(x, use, group_by_q = NULL)
 }
@@ -22,5 +22,5 @@ for each group separately}
 A data.frame with columns for the variable pairs and their correlation values.
 }
 \description{
-Calculate the lower triangle of a correlation matrix for numeric random variables.
+Calculate the lower triangle of a correlation matrix for numeric random variables
 }
