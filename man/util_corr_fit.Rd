@@ -43,7 +43,7 @@ formatted in a long tibble
 }
 }
 \description{
-Calculate the correlation fit metric of a confidential data set.
+\code{util_corr_fit()} is deprecated in favor of \code{util_bivariate(statistic = "correlation")}.
 }
 \seealso{
 Other utility metrics:

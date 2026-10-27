@@ -214,6 +214,9 @@
 #' 
 #' Calculate the correlation fit metric of a confidential data set.
 #'
+#' @description
+#' `util_corr_fit()` is deprecated in favor of `util_bivariate(statistic = "correlation")`.
+#'
 #' @param eval_data An `eval_data` object
 #' @param use optional character string giving a method for computing
 #' covariances in the presence of missing values. This must be (an abbreviation
@@ -244,6 +247,8 @@
 #' @export
 #'
 util_corr_fit <- function(eval_data, use = "everything", group_by_q = NULL, method = "pearson") {
+
+  .Deprecated("util_bivariate")
 
   stopifnot(is_eval_data(eval_data))
 

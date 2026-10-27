@@ -7,7 +7,7 @@
 create_cormat_plot(
   data,
   statistic,
-  cor_method = "pearson",
+  method = "pearson",
   group_by_q = NULL,
   fill_limits = NULL
 )
@@ -19,7 +19,7 @@ create_cormat_plot(
 to be returned by the function. One of "correlation", "covariance", or "rmi" or an
 abbreviation}
 
-\item{cor_method}{A correlation method to pass to \verb{stats::cor(., method=<cor_method>)}
+\item{method}{A correlation method to pass to \verb{stats::cor(., method=<method>)}
 or \code{stats::cov()}. Ignored when statistic = "rmi"}
 
 \item{group_by_q}{Optional quoted character string of a variable name to

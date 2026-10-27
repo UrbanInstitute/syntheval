@@ -166,7 +166,7 @@ plot_categorical_bar <- function(eval_data,
 #' @param statistic A character string specifying which bivariate statistic
 #' to be returned by the function. One of "correlation", "covariance", or "rmi" or an
 #' abbreviation
-#' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param method A correlation method to pass to `stats::cor(., method=<method>)`
 #' or `stats::cov()`. Ignored when statistic = "rmi"
 #' @param group_by_q Optional quoted character string of a variable name to
 #' group the data by. If provided, the statistics will be plotted for each group separately
@@ -177,7 +177,7 @@ plot_categorical_bar <- function(eval_data,
 #' @return A `ggplot2` plot
 #' 
 #' @export
-create_cormat_plot <- function(data, statistic, cor_method = "pearson", group_by_q = NULL, fill_limits = NULL) {
+create_cormat_plot <- function(data, statistic, method = "pearson", group_by_q = NULL, fill_limits = NULL) {
 
   # parameter validation
   valid_statistics <- c("correlation", "covariance", "rmi")
@@ -230,7 +230,7 @@ create_cormat_plot <- function(data, statistic, cor_method = "pearson", group_by
       statistic = statistic,
       use = "pairwise.complete.obs",
       group_by_q = group_by_q,
-      method = cor_method
+      method = method
     )
   } else {
     mat_raw <- .calc_rmi_tibble(
@@ -282,7 +282,7 @@ create_cormat_plot <- function(data, statistic, cor_method = "pearson", group_by
           midpoint = 0,
           limits = fill_limits %||% c(-1, 1),
           space = "Lab",
-          name = paste0(statistic, ": ", cor_method, " method")
+          name = paste0(statistic, ": ", method, " method")
         )
     } else if (statistic == "covariance") {
       plot <- plot +
@@ -293,7 +293,7 @@ create_cormat_plot <- function(data, statistic, cor_method = "pearson", group_by
           midpoint = 0,
           limits = fill_limits,
           space = "Lab",
-          name = paste0(statistic, ": ", cor_method, " method")
+          name = paste0(statistic, ": ", method, " method")
         )
     } else if (statistic == "rmi") {
       plot <- plot +
@@ -317,10 +317,16 @@ return(plot)
 
 #' Create side-by-side bivariate heatmaps for numeric random variables.
 #'
+#' @description
+#' Computes the confidential- and synthetic-data bivariate statistic
+#' (correlation, covariance, or relative mutual information) for each pair of
+#' shared variables and plots the two correlation/covariance/RMI matrices as
+#' side-by-side heatmaps on a shared fill scale.
+#'
 #' @param eval_data An `eval_data` object.
 #' @param statistic A character string specifying which bivariate statistic.
 #' One of "correlation", "covariance", or "rmi"
-#' @param cor_method A correlation method to pass to `stats::cor(., method=<cor_method>)`
+#' @param method A correlation method to pass to `stats::cor(., method=<method>)`
 #' or `stats::cov`. Ignored when statistic = "rmi".
 #' @param group_by_q Optional quoted character string of a variable name to
 #' group the data by. If provided, the correlation fit metric will be calculated
@@ -329,7 +335,12 @@ return(plot)
 #' @return A `ggplot2` plot
 #'
 #' @export
-plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q = NULL) {
+plot_bivariate <- function(
+  eval_data, 
+  statistic, 
+  method = "pearson", 
+  group_by_q = NULL
+) {
 
   stopifnot(is_eval_data(eval_data))
 
@@ -372,13 +383,13 @@ plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q
       eval_data$conf_data[intersect_vars],
       statistic = "covariance",
       use = "pairwise.complete.obs",
-      method = cor_method
+      method = method
     )
     syn_vals <- .lower_triangle(
       eval_data$synth_data[intersect_vars],
       statistic = "covariance",
       use = "pairwise.complete.obs",
-      method = cor_method
+      method = method
     )
     shared_limits <- range(c(conf_vals$statistic, syn_vals$statistic), na.rm = TRUE)
   }
@@ -386,7 +397,7 @@ plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q
   p1 <- create_cormat_plot(
     eval_data$conf_data[intersect_vars],
     statistic = statistic,
-    cor_method = cor_method,
+    method = method,
     group_by_q = group_by_q,
     fill_limits = shared_limits
   ) + ggplot2::ggtitle("Confidential data")
@@ -394,7 +405,7 @@ plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q
   p2 <- create_cormat_plot(
     eval_data$synth_data[intersect_vars],
     statistic = statistic,
-    cor_method = cor_method,
+    method = method,
     group_by_q = group_by_q,
     fill_limits = shared_limits
   ) + ggplot2::ggtitle("Synthetic data")
@@ -405,13 +416,19 @@ plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q
 
 }
 
-#' @rdname plot_cormat
+#' @rdname plot_bivariate
+#' @description
+#' `plot_cormat()` is deprecated in favor of `plot_bivariate()`.
+#'
+#' @param cor_method Deprecated alias for `method`.
+#'
 #' @export
-plot_bivariate <- function(eval_data, statistic, cor_method = "pearson", group_by_q = NULL) {
-  plot_cormat(
+plot_cormat <- function(eval_data, statistic, cor_method = "pearson", group_by_q = NULL) {
+  .Deprecated("plot_bivariate")
+  plot_bivariate(
     eval_data = eval_data,
     statistic = statistic,
-    cor_method = cor_method,
+    method = cor_method,
     group_by_q = group_by_q
   )
 }

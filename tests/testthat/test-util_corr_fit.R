@@ -12,6 +12,16 @@ diff_table <- tibble::tibble(
   difference = c(0, -2, -2)
 )
 
+test_that("util_corr_fit is deprecated in favor of util_bivariate", {
+
+  ed <- eval_data(conf_data = df, synth_data = df)
+
+  expect_warning(
+    util_corr_fit(ed, method = "pearson"),
+    "deprecated"
+  )
+
+})
 
 test_that("util_corr_fit returns a true lower triangle correlation matrix", {
   
@@ -23,7 +33,7 @@ test_that("util_corr_fit returns a true lower triangle correlation matrix", {
   
   ed <- eval_data(conf_data = df, synth_data = synth_data)
   
-  corr <- util_corr_fit(ed, method = "pearson")
+  corr <- suppressWarnings(util_corr_fit(ed, method = "pearson"))
   
   original_lt <- corr$correlation_original
   synthetic_lt <- corr$correlation_synthetic
@@ -52,7 +62,7 @@ test_that("util_corr_fit returns a true lower triangle correlation matrix", {
 
   ed_grouped <- eval_data(conf_data = df_grouped, synth_data = df_grouped)
 
-  corr_grouped <- util_corr_fit(ed_grouped, group_by_q = "group", method = "pearson")
+  corr_grouped <- suppressWarnings(util_corr_fit(ed_grouped, group_by_q = "group", method = "pearson"))
 
   correlation_matrix <- corr_grouped$correlation_original
 
@@ -84,7 +94,7 @@ test_that("util_corr_fit is correct with postsynth object, ungrouped", {
     structure(class = "postsynth")
   ed <- eval_data(conf_data = df, synth_data = syn)
   
-  corr <- util_corr_fit(ed, method = "pearson")
+  corr <- suppressWarnings(util_corr_fit(ed, method = "pearson"))
   
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
@@ -124,7 +134,7 @@ test_that("util_corr_fit is correct with eval_data object, ungrouped", {
   
   ed <- eval_data(conf_data = df, synth_data = syn)
   
-  corr <- util_corr_fit(ed, method = "pearson")
+  corr <- suppressWarnings(util_corr_fit(ed, method = "pearson"))
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
@@ -156,7 +166,7 @@ test_that("util_corr_fit works with NA ", {
   
   ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
   
-  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", method = "pearson")
+  corr <- suppressWarnings(util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", method = "pearson"))
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
@@ -174,7 +184,7 @@ test_that("util_corr_fit works with group_by_q", {
   
   ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
   
-  corr <- util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", group_by_q = "marst", method = "pearson")
+  corr <- suppressWarnings(util_corr_fit(eval_data = ed, use = "pairwise.complete.obs", group_by_q = "marst", method = "pearson"))
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(marst, var1, var2, difference) |>
@@ -192,11 +202,11 @@ test_that("util_corr_fit works with spearman method", {
 
   ed <- eval_data(synth_data = acs_conf, conf_data = acs_conf)
 
-  corr <- util_corr_fit(
+  corr <- suppressWarnings(util_corr_fit(
     eval_data = ed,
     use = "pairwise.complete.obs",
     method = "spearman"
-  )
+  ))
 
   actual_diff <- corr$correlation_difference |>
     dplyr::select(var1, var2, difference) |>
@@ -230,7 +240,7 @@ test_that("util_corr_fit handles different conf/syn with NA values", {
 
   ed2 <- eval_data(conf_data = conf2, synth_data = syn2)
 
-  corr2 <- util_corr_fit(ed2, use = "pairwise.complete.obs")
+  corr2 <- suppressWarnings(util_corr_fit(ed2, use = "pairwise.complete.obs"))
 
   expect_true(!any(corr2$correlation_difference$var1 == corr2$correlation_difference$var2))
   expect_true(any(is.na(corr2$correlation_difference$difference)))
@@ -257,7 +267,7 @@ test_that("util_corr_fit correctly handles eval_data objects with <2 common nume
   ed3 <- eval_data(conf_data = conf3, synth_data = syn3)
 
   # ungrouped
-  corr3a <- util_corr_fit(ed3, use = "pairwise.complete.obs")
+  corr3a <- suppressWarnings(util_corr_fit(ed3, use = "pairwise.complete.obs"))
   expect_named(corr3a$correlation_original, c("var1", "var2", "correlation"))
   expect_named(corr3a$correlation_synthetic, c("var1", "var2", "correlation"))
   expect_named(corr3a$correlation_difference, c("var1", "var2", "difference"))
@@ -267,7 +277,7 @@ test_that("util_corr_fit correctly handles eval_data objects with <2 common nume
   expect_equal(corr3a$correlation_difference_rmse, NA_real_)
 
   # grouped
-  corr3b <- util_corr_fit(ed3, use = "pairwise.complete.obs", group_by_q = "grp")
+  corr3b <- suppressWarnings(util_corr_fit(ed3, use = "pairwise.complete.obs", group_by_q = "grp"))
   expect_true("grp" %in% names(corr3b$correlation_original))
   expect_true("grp" %in% names(corr3b$correlation_synthetic))
   expect_true("grp" %in% names(corr3b$correlation_difference))

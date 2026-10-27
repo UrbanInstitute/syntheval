@@ -88,7 +88,7 @@ test_that("plot_cormat throws expected errors", {
 
 test_that("plot_cormat creates the right ggplot", {
 
-  plot <- plot_cormat(ed, statistic = "correlation",)
+  plot <- suppressWarnings(plot_cormat(ed, statistic = "correlation",))
 
   expect_equal(length(plot), 2)
 
@@ -110,13 +110,13 @@ test_that("plot_cormat uses the same variable set for conf and synth plots", {
   captured <- list()
 
   testthat::local_mocked_bindings(
-    create_cormat_plot = function(data, statistic = "correlation", cor_method = "pearson", group_by_q = NULL, fill_limits = NULL) {
+    create_cormat_plot = function(data, statistic = "correlation", method = "pearson", group_by_q = NULL, fill_limits = NULL) {
       captured[[length(captured) + 1]] <<- names(data)
       ggplot2::ggplot()
     },
     .package = "syntheval"
   )
-  expect_no_error(plot_cormat(ed2, statistic = "correlation",))
+  expect_no_error(suppressWarnings(plot_cormat(ed2, statistic = "correlation",)))
 
   expected <- intersect(
     names(conf_df)[sapply(conf_df, is.numeric)],
@@ -140,14 +140,14 @@ test_that("plot_cormat works with grouping variable", {
   }
 
   testthat::local_mocked_bindings(
-    create_cormat_plot = function(data, statistic = "correlation", cor_method = "pearson", group_by_q = NULL, fill_limits = NULL) {
+    create_cormat_plot = function(data, statistic = "correlation", method = "pearson", group_by_q = NULL, fill_limits = NULL) {
       captured_group[[length(captured_group) + 1]] <<- group_by_q
       ggplot2::ggplot()
     },
     .package = "syntheval"
   )
 
-  expect_no_error(plot_cormat(ed, statistic = "correlation", group_by_q = "c1"))
+  expect_no_error(suppressWarnings(plot_cormat(ed, statistic = "correlation", group_by_q = "c1")))
   expect_length(captured_group, 2)
 
   # grouping argument should be forwarded both times
@@ -164,7 +164,7 @@ testthat::test_that("create_cormat_plot correlation uses default [-1, 1] fill li
     z = c(5, 4, 3, 2, 1)
   )
 
-  p <- create_cormat_plot(conf, statistic = "correlation", cor_method = "pearson")
+  p <- create_cormat_plot(conf, statistic = "correlation", method = "pearson")
   sc <- p$scales$get_scales("fill")
 
   testthat::expect_s3_class(p, "ggplot")
@@ -181,7 +181,7 @@ testthat::test_that("create_cormat_plot covariance honors explicit fill_limits",
   p <- create_cormat_plot(
     conf,
     statistic = "covariance",
-    cor_method = "pearson",
+    method = "pearson",
     fill_limits = c(-3, 3)
   )
   sc <- p$scales$get_scales("fill")
@@ -239,22 +239,25 @@ testthat::test_that("plot_cormat returns arranged grob for correlation/covarianc
 
   ed <- eval_data(conf_data = conf, synth_data = syn)
 
-  testthat::expect_true(inherits(plot_cormat(ed, "correlation"), "patchwork"))
-  testthat::expect_true(inherits(plot_cormat(ed, "covariance"), "patchwork"))
-  testthat::expect_true(inherits(plot_cormat(ed, "rmi"), "patchwork"))
+  testthat::expect_true(inherits(suppressWarnings(plot_cormat(ed, "correlation")), "patchwork"))
+  testthat::expect_true(inherits(suppressWarnings(plot_cormat(ed, "covariance")), "patchwork"))
+  testthat::expect_true(inherits(suppressWarnings(plot_cormat(ed, "rmi")), "patchwork"))
 })
 
-testthat::test_that("plot_bivariate is an alias of plot_cormat", {
+testthat::test_that("plot_cormat is a deprecated alias of plot_bivariate", {
   set.seed(4)
   conf <- data.frame(a = rnorm(40), b = rnorm(40), c = rnorm(40))
   syn  <- data.frame(a = rnorm(40), b = rnorm(40), c = rnorm(40))
   ed <- eval_data(conf_data = conf, synth_data = syn)
 
-  p_alias <- plot_bivariate(ed, statistic = "correlation", cor_method = "pearson")
-  p_base  <- plot_cormat(ed, statistic = "correlation", cor_method = "pearson")
+  testthat::expect_warning(
+    p_deprecated <- plot_cormat(ed, statistic = "correlation", cor_method = "pearson"),
+    "deprecated"
+  )
+  p_current <- plot_bivariate(ed, statistic = "correlation", method = "pearson")
 
-  testthat::expect_true(inherits(p_alias, "patchwork"))
-  testthat::expect_true(inherits(p_base, "patchwork"))
+  testthat::expect_true(inherits(p_deprecated, "patchwork"))
+  testthat::expect_true(inherits(p_current, "patchwork"))
 })
 
 testthat::test_that("create_cormat_plot validates group_by_q input", {
