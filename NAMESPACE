@@ -65,6 +65,7 @@ export(scan_weighted_probability)
 export(target_accuracy)
 export(target_auc)
 export(target_balanced_accuracy)
+export(target_brier_score)
 export(target_confidence)
 export(target_log_loss)
 export(target_mae)
@@ -87,7 +88,5 @@ export(util_pred)
 export(util_proportions)
 export(util_totals)
 importFrom(magrittr,"%>%")
-importFrom(rlang,
-  ":=",
-  .data
-)
+importFrom(rlang,":=")
+importFrom(rlang,.data)
