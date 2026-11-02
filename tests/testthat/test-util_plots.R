@@ -63,7 +63,7 @@ test_that("plot_categorical_bar creates the right ggplot", {
 
 test_that("create_cormat_plot creates the right ggplot", {
   
-  plot <- create_cormat_plot(synth_df, statistic = "correlation")
+  plot <- .create_cormat_plot(synth_df, statistic = "correlation")
   
   expect_s3_class(plot$layers[[1]]$geom, "GeomTile")
   expect_s3_class(plot$layers[[2]]$geom, "GeomText")
@@ -78,23 +78,86 @@ test_that("create_cormat_plot creates the right ggplot", {
   
 })
 
-test_that("plot_cormat throws expected errors", {
+test_that("plot_bivariate throws expected errors", {
 
   expect_error(
-    plot_cormat(conf_df, statistic = "correlation",)
+    plot_bivariate(conf_df, statistic = "correlation")
   )
 
 })
 
-test_that("plot_cormat creates the right ggplot", {
+test_that("plot_bivariate validates and normalizes statistic", {
 
-  plot <- suppressWarnings(plot_cormat(ed, statistic = "correlation",))
+  expect_error(plot_bivariate(ed, statistic = "bogus"), "should be one of")
+
+  expect_s3_class(plot_bivariate(ed, statistic = "Correlation"), "patchwork")
+
+})
+
+test_that("plot_bivariate covariance limits are computed per group when grouped", {
+
+  set.seed(5)
+  make_df <- function(scale) {
+    data.frame(
+      a = rnorm(40, sd = scale),
+      b = rnorm(40, sd = scale),
+      g = factor(rep(c("small", "large"), each = 20))
+    )
+  }
+  conf <- make_df(1)
+  conf$a[21:40] <- conf$a[21:40] * 10
+  conf$b[21:40] <- conf$b[21:40] * 10
+  syn <- conf
+
+  ed_grp <- eval_data(conf_data = conf, synth_data = syn)
+
+  captured_limits <- NULL
+  testthat::local_mocked_bindings(
+    .create_cormat_plot = function(data, statistic = "correlation", method = "pearson", group_by_q = NULL, fill_limits = NULL) {
+      captured_limits <<- fill_limits
+      ggplot2::ggplot()
+    },
+    .package = "syntheval"
+  )
+
+  plot_bivariate(ed_grp, statistic = "covariance", group_by_q = "g")
+
+  expected <- .lower_triangle(
+    conf,
+    statistic = "covariance",
+    use = "pairwise.complete.obs",
+    group_by_q = "g"
+  )$statistic
+
+  expect_equal(captured_limits, range(expected, na.rm = TRUE))
+
+})
+
+test_that("plot_bivariate difference = TRUE plots synthetic minus confidential", {
+
+  plot <- plot_bivariate(ed, statistic = "correlation", difference = TRUE)
+
+  expected <- stats::cor(synth_df$n1, synth_df$n2) - stats::cor(conf_df$n1, conf_df$n2)
+
+  expect_s3_class(plot, "ggplot")
+  expect_false(inherits(plot, "patchwork"))
+  expect_equal(plot$data$statistic, round(expected, 2))
+
+  # diverging scale is centered at zero
+  limits <- plot$scales$get_scales("fill")$limits
+  expect_equal(limits[1], -limits[2])
+
+})
+
+test_that("plot_bivariate creates the right ggplot", {
+
+  plot <- plot_bivariate(ed, statistic = "correlation")
 
   expect_equal(length(plot), 2)
 
 })
 
-test_that("plot_cormat uses the same variable set for conf and synth plots", {
+test_that("plot_bivariate uses the same variable set for conf and synth plots", {
 
   # synth_df2 has an extra numeric variable (n3) not present in conf_df
   synth_df2 <- data.frame(
@@ -110,13 +173,13 @@ test_that("plot_cormat uses the same variable set for conf and synth plots", {
   captured <- list()
 
   testthat::local_mocked_bindings(
-    create_cormat_plot = function(data, statistic = "correlation", method = "pearson", group_by_q = NULL, fill_limits = NULL) {
+    .create_cormat_plot = function(data, statistic = "correlation", method = "pearson", group_by_q = NULL, fill_limits = NULL) {
       captured[[length(captured) + 1]] <<- names(data)
       ggplot2::ggplot()
     },
     .package = "syntheval"
   )
-  expect_no_error(suppressWarnings(plot_cormat(ed2, statistic = "correlation",)))
+  expect_no_error(plot_bivariate(ed2, statistic = "correlation"))
 
   expected <- intersect(
     names(conf_df)[sapply(conf_df, is.numeric)],
@@ -129,7 +192,7 @@ test_that("plot_cormat uses the same variable set for conf and synth plots", {
 
 })
 
-test_that("plot_cormat works with grouping variable", {
+test_that("plot_bivariate works with grouping variable", {
 
   captured_group <- list()
 
@@ -140,14 +203,14 @@ test_that("plot_cormat works with grouping variable", {
   }
 
   testthat::local_mocked_bindings(
-    create_cormat_plot = function(data, statistic = "correlation", method = "pearson", group_by_q = NULL, fill_limits = NULL) {
+    .create_cormat_plot = function(data, statistic = "correlation", method = "pearson", group_by_q = NULL, fill_limits = NULL) {
       captured_group[[length(captured_group) + 1]] <<- group_by_q
       ggplot2::ggplot()
     },
     .package = "syntheval"
   )
 
-  expect_no_error(suppressWarnings(plot_cormat(ed, statistic = "correlation", group_by_q = "c1")))
+  expect_no_error(plot_bivariate(ed, statistic = "correlation", group_by_q = "c1"))
   expect_length(captured_group, 2)
 
   # grouping argument should be forwarded both times
@@ -164,7 +227,7 @@ testthat::test_that("create_cormat_plot correlation uses default [-1, 1] fill li
     z = c(5, 4, 3, 2, 1)
   )
 
-  p <- create_cormat_plot(conf, statistic = "correlation", method = "pearson")
+  p <- .create_cormat_plot(conf, statistic = "correlation", method = "pearson")
   sc <- p$scales$get_scales("fill")
 
   testthat::expect_s3_class(p, "ggplot")
@@ -178,7 +241,7 @@ testthat::test_that("create_cormat_plot covariance honors explicit fill_limits",
     z = c(5, 4, 3, 2, 1)
   )
 
-  p <- create_cormat_plot(
+  p <- .create_cormat_plot(
     conf,
     statistic = "covariance",
     method = "pearson",
@@ -197,7 +260,7 @@ testthat::test_that("create_cormat_plot rmi uses default [0, 1] fill limits", {
     c = factor(sample(c("L", "M"), 80, replace = TRUE))
   )
 
-  p <- create_cormat_plot(dat, statistic = "rmi")
+  p <- .create_cormat_plot(dat, statistic = "rmi")
   sc <- p$scales$get_scales("fill")
 
   testthat::expect_s3_class(p, "ggplot")
@@ -213,12 +276,12 @@ testthat::test_that("create_cormat_plot facets when group_by_q is provided", {
     grp = factor(sample(c("G1", "G2"), 60, replace = TRUE))
   )
 
-  p <- create_cormat_plot(dat, statistic = "correlation", group_by_q = "grp")
+  p <- .create_cormat_plot(dat, statistic = "correlation", group_by_q = "grp")
 
   testthat::expect_true(inherits(p$facet, "FacetWrap"))
 })
 
-testthat::test_that("plot_cormat returns arranged grob for correlation/covariance/rmi", {
+testthat::test_that("plot_bivariate returns arranged grob for correlation/covariance/rmi", {
   set.seed(3)
 
   conf <- data.frame(
@@ -239,32 +302,20 @@ testthat::test_that("plot_cormat returns arranged grob for correlation/covarianc
 
   ed <- eval_data(conf_data = conf, synth_data = syn)
 
-  testthat::expect_true(inherits(suppressWarnings(plot_cormat(ed, "correlation")), "patchwork"))
-  testthat::expect_true(inherits(suppressWarnings(plot_cormat(ed, "covariance")), "patchwork"))
-  testthat::expect_true(inherits(suppressWarnings(plot_cormat(ed, "rmi")), "patchwork"))
+  testthat::expect_true(inherits(plot_bivariate(ed, "correlation"), "patchwork"))
+  testthat::expect_true(inherits(plot_bivariate(ed, "covariance"), "patchwork"))
+  testthat::expect_true(inherits(plot_bivariate(ed, "rmi"), "patchwork"))
 })
 
-testthat::test_that("plot_cormat is a deprecated alias of plot_bivariate", {
-  set.seed(4)
-  conf <- data.frame(a = rnorm(40), b = rnorm(40), c = rnorm(40))
-  syn  <- data.frame(a = rnorm(40), b = rnorm(40), c = rnorm(40))
-  ed <- eval_data(conf_data = conf, synth_data = syn)
-
-  testthat::expect_warning(
-    p_deprecated <- plot_cormat(ed, statistic = "correlation", cor_method = "pearson"),
-    "deprecated"
-  )
-  p_current <- plot_bivariate(ed, statistic = "correlation", method = "pearson")
-
-  testthat::expect_true(inherits(p_deprecated, "patchwork"))
-  testthat::expect_true(inherits(p_current, "patchwork"))
+testthat::test_that("plot_cormat is defunct", {
+  testthat::expect_error(plot_cormat(), "defunct")
 })
 
 testthat::test_that("create_cormat_plot validates group_by_q input", {
   dat <- data.frame(x = 1:5, y = 2:6)
 
   testthat::expect_error(
-    create_cormat_plot(dat, statistic = "correlation", group_by_q = "missing_col"),
+    .create_cormat_plot(dat, statistic = "correlation", group_by_q = "missing_col"),
     "not found"
   )
 })

@@ -5,9 +5,15 @@
 \alias{plot_cormat}
 \title{Create side-by-side bivariate heatmaps for numeric random variables.}
 \usage{
-plot_bivariate(eval_data, statistic, method = "pearson", group_by_q = NULL)
+plot_bivariate(
+  eval_data,
+  statistic,
+  method = "pearson",
+  group_by_q = NULL,
+  difference = FALSE
+)
 
-plot_cormat(eval_data, statistic, cor_method = "pearson", group_by_q = NULL)
+plot_cormat(...)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}
@@ -22,7 +28,11 @@ or \code{stats::cov}. Ignored when statistic = "rmi".}
 group the data by. If provided, the correlation fit metric will be calculated
 for each group separately.}
 
-\item{cor_method}{Deprecated alias for \code{method}.}
+\item{difference}{If \code{TRUE}, plot a single matrix of differences (synthetic
+minus confidential) on a diverging color scale centered at zero instead of
+the two side-by-side matrices. Defaults to \code{FALSE}.}
+
+\item{...}{Ignored.}
 }
 \value{
 A \code{ggplot2} plot
@@ -33,5 +43,5 @@ Computes the confidential- and synthetic-data bivariate statistic
 shared variables and plots the two correlation/covariance/RMI matrices as
 side-by-side heatmaps on a shared fill scale.
 
-\code{plot_cormat()} is deprecated in favor of \code{plot_bivariate()}.
+\code{plot_cormat()} is defunct. Use \code{plot_bivariate(statistic = "correlation")}.
 }

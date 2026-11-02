@@ -51,6 +51,25 @@ test_that("util_bivariate returns a true lower-triangle long covariance table", 
   expect_equal(nrow(actual), 6)
 })
 
+testthat::test_that(".lower_triangle follows column order for non-alphabetical, mixed-case names", {
+  df <- data.frame(
+    Zeta = c(1, 2, 3, 5),
+    alpha = c(2, 1, 4, 3),
+    Beta = c(5, 3, 4, 1)
+  )
+
+  cor_out <- .lower_triangle(df, statistic = "correlation", use = "everything")
+  cov_out <- .lower_triangle(df, statistic = "covariance", use = "everything")
+
+  off_diag <- c("alpha Zeta", "Beta Zeta", "Beta alpha")
+
+  expect_setequal(paste(cor_out$var1, cor_out$var2), off_diag)
+  expect_setequal(
+    paste(cov_out$var1, cov_out$var2),
+    c(off_diag, "Zeta Zeta", "alpha alpha", "Beta Beta")
+  )
+})
+
 testthat::test_that("util_bivariate covariance returns correct full output set", {
   ed <- eval_data(conf_data = conf, synth_data = syn)
 
@@ -250,6 +269,50 @@ testthat::test_that(".calc_rmi_tibble returns expected number of non-diagonal va
 
   testthat::expect_equal(n_actual, n_expected)
   testthat::expect_equal(n_diag, 0)
+
+})
+
+testthat::test_that(".relative_mutual_information is 1 for identical variables", {
+
+  x <- factor(rep(c("a", "b"), 5))
+
+  testthat::expect_equal(.relative_mutual_information(x, x), 1)
+
+})
+
+testthat::test_that(".relative_mutual_information matches a hand-computed value", {
+
+  # y collapses the 4 equally likely levels of x into 2, so
+  # I(x; y) = H(y) = 1 and H(x) = 2, giving RMI = 1 / 2
+  x <- factor(rep(c("a", "b", "c", "d"), 5))
+  y <- factor(ifelse(x %in% c("a", "b"), "u", "v"))
+
+  testthat::expect_equal(.relative_mutual_information(x, y), 1 / 2)
+
+})
+
+testthat::test_that(".relative_mutual_information returns 0 instead of NaN for a constant variable", {
+
+  constant <- factor(rep("a", 10))
+  varying <- factor(rep(c("x", "y"), 5))
+
+  testthat::expect_identical(.relative_mutual_information(constant, varying), 0)
+  testthat::expect_identical(.relative_mutual_information(constant, constant), 0)
+  testthat::expect_equal(.relative_mutual_information(varying, constant), 0)
+
+})
+
+testthat::test_that(".calc_rmi_tibble contains no NaN when a variable is constant", {
+
+  df <- data.frame(
+    a = factor(rep("a", 10)),
+    b = factor(rep(c("x", "y"), 5)),
+    c = factor(rep(c("u", "v", "w", "u", "v"), 2))
+  )
+
+  out <- .calc_rmi_tibble(df = df, group_by_q = NULL)
+
+  testthat::expect_false(any(is.nan(out$statistic)))
 
 })
 

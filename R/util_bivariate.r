@@ -23,10 +23,7 @@
 .lower_triangle <- function(x, statistic, use, group_by_q = NULL, method = "pearson") {
 
   # parameter validation
-  valid_statistics <- c("correlation", "covariance")
-  na.statistic <- pmatch(x = statistic, table = valid_statistics)
-  if (is.na(na.statistic)) stop("invalid 'statistic' argument")
-  statistic <- match.arg(arg = statistic, choice = valid_statistics)
+  statistic <- match.arg(statistic, c("correlation", "covariance"))
 
   var_order <- x |>
     dplyr::select(tidyselect::where(is.numeric)) |>
@@ -114,7 +111,10 @@
     )
   } else if (statistic == "covariance") {
     matrix <- matrix |>
-      dplyr::filter(.data$var1 >= .data$var2)
+      dplyr::filter(
+        match(.data$var1, var_order) >=
+          match(.data$var2, var_order)
+      )
   }
 
   return(matrix)
@@ -141,16 +141,22 @@
 
 #' Calculate relative mutual information
 #'
-#' @param x A numeric or factor vector
-#' @param y A numeric or factor vector
+#' @param x A numeric, factor, or character vector
+#' @param y A numeric, factor, or character vector
 #'
-#' @return A numeric relative mutual information between 0 and 1
+#' @return A numeric relative mutual information between 0 and 1. Returns 0
+#' when `x` has zero entropy (a constant variable), where the ratio is 0 / 0.
 
 .relative_mutual_information <- function(x, y) {
 
+  # NA is a category, not an omission; see @details
   Px <- unname(prop.table(table(x, useNA = "ifany")))
   Py <- unname(prop.table(table(y, useNA = "ifany")))
   Pxy <- unname(prop.table(table(x, y, useNA = "ifany")))
+
+  if (.rmi_entropy(Px) == 0) {
+    return(0)
+  }
 
   mutual_info <- .rmi_entropy(Px) + .rmi_entropy(Py) - .rmi_entropy(as.vector(Pxy))
 
@@ -162,11 +168,11 @@
 
 #' Calculate relative mutual information
 #'
-#' @param df a dataframe containing factor variables
+#' @param df a dataframe containing factor or character variables
 #' @param group_by_q optional quoted character string of a variable name to
 #' group the data by. If provided, the RMI will be calculated by group
 #' @return A long tibble with relative mutual information
-#
+#'
 .calc_rmi_tibble <- function(df, group_by_q) {
 
   calc_one_rmi <- function(df) {
@@ -252,7 +258,7 @@
 #'  `<statistic>_original`, formatted in a long tibble.
 #'  - `<statistic>_fit`: square root of the sum of squared differences between
 #'  `<statistic>_synthetic` and `<statistic>_original`, divided by the number of
-#'  ????
+#'  non-diagonal elements in the lower triangle.
 #'  - `<statistic>_difference_mae`: mean absolute error of pairwise differences.
 #'  - `<statistic>_difference_rmse`: root mean squared error of pairwise differences.
 
@@ -261,12 +267,7 @@
                             group_by_q = NULL, method = "pearson") {
 
   # parameter validation
-  valid_statistics <- c("correlation", "covariance", "rmi")
-  na.statistic <- pmatch(x = tolower(statistic), table = valid_statistics)
-  if (is.na(na.statistic)) stop("invalid 'statistic' argument")
-  statistic <- match.arg(arg = tolower(statistic), choice = valid_statistics)
-
-  if (statistic == "rmi" && (!is.null(method) || !is.null(use))) message("NOTE: RMI ignores the 'method' and 'use' arguments")
+  statistic <- match.arg(tolower(statistic), c("correlation", "covariance", "rmi"))
 
   # Create list of variables to subset synth_data and conf_data
   # First, get numeric variables present in both data sets
@@ -283,10 +284,10 @@
   } else {
     intersect_vars <- intersect(
       synth_data |>
-        dplyr::select(tidyselect::where(is.factor)) |>
+        dplyr::select(tidyselect::where(function(x) is.factor(x) || is.character(x))) |>
         names(),
       conf_data |>
-        dplyr::select(tidyselect::where(is.factor)) |>
+        dplyr::select(tidyselect::where(function(x) is.factor(x) || is.character(x))) |>
         names()
     )
   }
@@ -452,7 +453,7 @@
 #' Supported statistics:
 #' - `"correlation"`: lower triangle (diagonal excluded) of numeric correlation matrices
 #' - `"covariance"`: lower triangle (diagonal included) of numeric covariance matrices
-#' - `"rmi"`: non-diagonal pairwise relative mutual information for factor variables
+#' - `"rmi"`: non-diagonal pairwise relative mutual information for factor or character variables
 #'
 #'
 #' @param eval_data An `eval_data` object
