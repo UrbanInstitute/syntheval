@@ -84,7 +84,11 @@ test_that("attribute_target object structure without holdout data", {
 
 test_that("attribute_target object structure with holdout data", {
   
-  target <- attribute_target(toy_ed_holdout, workflow = class_workflow)
+  withr::local_options(list(lifecycle_verbosity = "warning"))
+
+  expect_no_warning(
+    target <- attribute_target(toy_ed_holdout, workflow = class_workflow)
+  )
   
   expect_identical(target$target_var, "y_cat")
   expect_identical(target$mode, "classification")
@@ -137,6 +141,8 @@ test_that("attribute_target n_rep > 1 uses the first replicate with a message", 
 
 test_that("attribute_target tuning fits a finalized workflow and records tuned = TRUE", {
   
+  withr::local_options(list(lifecycle_verbosity = "warning"))
+
   tune_workflow <- workflows::workflow() |>
     workflows::add_formula(y_num ~ x1 + x2) |>
     workflows::add_model(
@@ -147,7 +153,9 @@ test_that("attribute_target tuning fits a finalized workflow and records tuned =
   
   grid <- dials::grid_regular(dials::penalty(), levels = 3)
   
-  target <- attribute_target(toy_ed, workflow = tune_workflow, grid = grid, v = 3)
+  expect_no_warning(
+    target <- attribute_target(toy_ed, workflow = tune_workflow, grid = grid, v = 3)
+  )
   
   expect_true(target$metadata$tuned)
   expect_true(target$synthetic$tuned)

@@ -61,8 +61,8 @@ util_pred <- function(eval_data, workflow, equalize_data = FALSE, prop = 0.8) {
     # partition is available for the diagnostic comparison; stratify by the
     # outcome so imbalanced classes aren't dropped from either partition
     outcome <- .workflow_outcome_name(workflow)
-    conf_split <- rsample::initial_split(conf_data, prop = prop, strata = outcome)
-    synth_split <- rsample::initial_split(synth_data, prop = prop, strata = outcome)
+    conf_split <- rsample::initial_split(conf_data, prop = prop, strata = dplyr::all_of(outcome))
+    synth_split <- rsample::initial_split(synth_data, prop = prop, strata = dplyr::all_of(outcome))
     
     conf_modeling <- rsample::training(conf_split)
     conf_implementation <- rsample::testing(conf_split)
@@ -284,7 +284,7 @@ pred_precision <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$model, .data$data) |>
-    yardstick::precision(truth = !!rlang::sym(outcome), estimate = .data$.pred_class) |>
+    yardstick::precision(truth = !!rlang::sym(outcome), estimate = ".pred_class") |>
     dplyr::ungroup()
 
 }
@@ -308,7 +308,7 @@ pred_recall <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$model, .data$data) |>
-    yardstick::recall(truth = !!rlang::sym(outcome), estimate = .data$.pred_class) |>
+    yardstick::recall(truth = !!rlang::sym(outcome), estimate = ".pred_class") |>
     dplyr::ungroup()
 
 }
@@ -332,7 +332,7 @@ pred_rmse <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$model, .data$data) |>
-    yardstick::rmse(truth = !!rlang::sym(outcome), estimate = .data$.pred) |>
+    yardstick::rmse(truth = !!rlang::sym(outcome), estimate = ".pred") |>
     dplyr::ungroup()
 
 }
@@ -356,7 +356,7 @@ pred_mae <- function(pred) {
 
   pred$predictions |>
     dplyr::group_by(.data$model, .data$data) |>
-    yardstick::mae(truth = !!rlang::sym(outcome), estimate = .data$.pred) |>
+    yardstick::mae(truth = !!rlang::sym(outcome), estimate = ".pred") |>
     dplyr::ungroup()
 
 }
