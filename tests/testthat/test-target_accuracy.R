@@ -55,24 +55,20 @@ test_that("target_accuracy requires a classification target", {
   
 })
 
-test_that("target_accuracy returns one row per available source", {
+test_that("target_accuracy returns one row per modeling/prediction data combination", {
   
   result <- target_accuracy(class_target)
   
-  expect_identical(names(result), c("source", "on", "accuracy"))
-  expect_identical(result$source, "synthetic")
-  expect_true(result$accuracy >= 0 && result$accuracy <= 1)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "accuracy"))
+  expect_identical(as.character(result$modeling_data), rep("synthetic", 3))
+  expect_identical(
+    as.character(result$prediction_data), 
+    c("training", "testing", "confidential")
+  )
+  expect_true(all(result$accuracy >= 0 & result$accuracy <= 1))
   
   result_holdout <- target_accuracy(class_target_holdout)
   
-  expect_identical(result_holdout$source, c("synthetic", "holdout"))
-  
-})
-
-test_that("target_accuracy supports on = 'train'/'test'", {
-  
-  result <- target_accuracy(class_target, on = "train")
-  
-  expect_identical(result$on, "train")
+  expect_identical(as.character(result_holdout$modeling_data), rep(c("synthetic", "holdout"), each = 3))
   
 })

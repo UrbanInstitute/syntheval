@@ -277,6 +277,8 @@ test_that("pred_auc, pred_precision, and pred_recall return one row per model x 
 
 test_that("pred_auc, pred_precision, and pred_recall return one row per model with holdout data", {
 
+  withr::local_options(list(lifecycle_verbosity = "warning"))
+
   ed <- eval_data(
     conf_data = acs_conf,
     synth_data = acs_lr_synths[[1]],
@@ -286,9 +288,9 @@ test_that("pred_auc, pred_precision, and pred_recall return one row per model wi
   # sex is roughly balanced, so predictions naturally vary between classes
   pred <- util_pred(ed, workflow = test_wf)
 
-  auc <- pred_auc(pred)
-  precision <- pred_precision(pred)
-  recall <- pred_recall(pred)
+  expect_no_warning(auc <- pred_auc(pred))
+  expect_no_warning(precision <- pred_precision(pred))
+  expect_no_warning(recall <- pred_recall(pred))
 
   expect_setequal(auc$model, c("confidential", "synthetic"))
   expect_setequal(precision$model, c("confidential", "synthetic"))
@@ -333,6 +335,8 @@ test_that("pred_auc, pred_precision, and pred_recall match when confidential and
 
 test_that("util_pred supports regression workflows and pred_rmse/pred_mae return one row per model", {
 
+  withr::local_options(list(lifecycle_verbosity = "warning"))
+
   ed <- eval_data(
     conf_data = acs_conf,
     synth_data = acs_lr_synths[[1]],
@@ -347,8 +351,8 @@ test_that("util_pred supports regression workflows and pred_rmse/pred_mae return
   # regression predictions have no class probabilities
   expect_false(any(c(".pred_class") %in% names(pred$predictions)))
 
-  rmse <- pred_rmse(pred)
-  mae <- pred_mae(pred)
+  expect_no_warning(rmse <- pred_rmse(pred))
+  expect_no_warning(mae <- pred_mae(pred))
 
   expect_setequal(rmse$model, c("confidential", "synthetic"))
   expect_setequal(mae$model, c("confidential", "synthetic"))
@@ -385,6 +389,8 @@ test_that("pred_rmse and pred_mae match when confidential, synthetic, and holdou
 
 test_that("pred_visualize returns a scatterplot of confidential vs. synthetic probabilities for binary classification", {
 
+  withr::local_options(list(lifecycle_verbosity = "warning"))
+
   ed <- eval_data(
     conf_data = acs_conf,
     synth_data = acs_lr_synths[[1]],
@@ -393,7 +399,7 @@ test_that("pred_visualize returns a scatterplot of confidential vs. synthetic pr
 
   pred <- util_pred(ed, workflow = test_wf)
 
-  plot <- pred_visualize(pred)
+  expect_no_warning(plot <- pred_visualize(pred))
 
   expect_s3_class(plot, "ggplot")
   expect_equal(nrow(plot$data), nrow(acs_holdout))

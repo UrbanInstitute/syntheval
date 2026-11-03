@@ -55,16 +55,16 @@ test_that("target_rmse requires a regression target", {
   
 })
 
-test_that("target_rmse returns a non-negative tibble with one row per source", {
+test_that("target_rmse returns one row per modeling/prediction data combination", {
   
   result <- target_rmse(reg_target)
   
-  expect_identical(names(result), c("source", "on", "rmse"))
-  expect_identical(result$source, "synthetic")
-  expect_true(result$rmse >= 0)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "rmse"))
+  expect_identical(as.character(result$modeling_data), rep("synthetic", 3))
+  expect_true(all(result$rmse >= 0))
   
   result_holdout <- target_rmse(reg_target_holdout)
   
-  expect_identical(result_holdout$source, c("synthetic", "holdout"))
+  expect_identical(as.character(result_holdout$modeling_data), rep(c("synthetic", "holdout"), each = 3))
   
 })

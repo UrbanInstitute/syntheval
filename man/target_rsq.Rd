@@ -4,17 +4,22 @@
 \alias{target_rsq}
 \title{Measure the proportion of variation in the confidential target explained by the predictions}
 \usage{
-target_rsq(target, on = "confidential")
+target_rsq(target)
 }
 \arguments{
 \item{target}{An \code{attribute_target} object with a regression mode.}
-
-\item{on}{Either \code{"confidential"} (default, the attack result), \code{"train"},
-or \code{"test"} (model-quality diagnostics on the fitting data).}
 }
 \value{
-A tibble with columns \code{source} (\code{"synthetic"} or \code{"holdout"}),
-\code{on}, and \code{rsq}.
+A tibble with columns:
+\itemize{
+\item \code{modeling_data}: the data the attack model was fit on, a factor with
+levels \code{"synthetic"} and, if available, \code{"holdout"}.
+\item \code{prediction_data}: the data the R-squared is evaluated on, a factor with
+levels \code{"training"} and \code{"testing"} (the internal split of the modeling
+data) and \code{"confidential"} (the attack result).
+\item \code{n}: the number of records in \code{prediction_data}.
+\item \code{rsq}: the squared correlation between predicted and observed values.
+}
 }
 \description{
 Measure the proportion of variation in the confidential target explained by the predictions

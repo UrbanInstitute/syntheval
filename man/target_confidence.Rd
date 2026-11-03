@@ -4,18 +4,23 @@
 \alias{target_confidence}
 \title{Summarize the confidence assigned to predicted classes}
 \usage{
-target_confidence(target, on = "confidential")
+target_confidence(target)
 }
 \arguments{
 \item{target}{An \code{attribute_target} object with a classification mode.}
-
-\item{on}{Either \code{"confidential"} (default, the attack result), \code{"train"},
-or \code{"test"} (model-quality diagnostics on the fitting data).}
 }
 \value{
-A tibble with columns \code{source} (\code{"synthetic"} or \code{"holdout"}),
-\code{on}, and \code{confidence} (the average, across records, of the probability
-assigned to each record's predicted class).
+A tibble with columns:
+\itemize{
+\item \code{modeling_data}: the data the attack model was fit on, a factor with
+levels \code{"synthetic"} and, if available, \code{"holdout"}.
+\item \code{prediction_data}: the data the confidence is evaluated on, a factor with
+levels \code{"training"} and \code{"testing"} (the internal split of the modeling
+data) and \code{"confidential"} (the attack result).
+\item \code{n}: the number of records in \code{prediction_data}.
+\item \code{confidence}: the average, across records, of the probability assigned
+to each record's predicted class.
+}
 }
 \description{
 Summarize the confidence assigned to predicted classes

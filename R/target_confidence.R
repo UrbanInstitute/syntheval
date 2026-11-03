@@ -2,16 +2,20 @@
 #' Summarize the confidence assigned to predicted classes
 #' 
 #' @param target An `attribute_target` object with a classification mode.
-#' @param on Either `"confidential"` (default, the attack result), `"train"`, 
-#' or `"test"` (model-quality diagnostics on the fitting data).
 #' 
-#' @returns A tibble with columns `source` (`"synthetic"` or `"holdout"`), 
-#' `on`, and `confidence` (the average, across records, of the probability 
-#' assigned to each record's predicted class).
+#' @returns A tibble with columns:
+#' * `modeling_data`: the data the attack model was fit on, a factor with 
+#'   levels `"synthetic"` and, if available, `"holdout"`.
+#' * `prediction_data`: the data the confidence is evaluated on, a factor with 
+#'   levels `"training"` and `"testing"` (the internal split of the modeling 
+#'   data) and `"confidential"` (the attack result).
+#' * `n`: the number of records in `prediction_data`.
+#' * `confidence`: the average, across records, of the probability assigned 
+#'   to each record's predicted class.
 #' 
 #' @export
 #' 
-target_confidence <- function(target, on = "confidential") {
+target_confidence <- function(target) {
   
   stopifnot(is_attribute_target(target))
   
@@ -21,11 +25,8 @@ target_confidence <- function(target, on = "confidential") {
     
   }
   
-  on <- match.arg(on, c("confidential", "train", "test"))
-  
-  result <- .target_metric_table(
+  result <- .target_metric_grid(
     target = target,
-    on = on,
     metric_name = "confidence",
     metric_fn = function(predictions) {
       
