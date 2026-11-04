@@ -200,9 +200,10 @@ plot_categorical_bar <- function(eval_data,
   # get numeric variables -- this also defines the order used for the axes so
   # the heatmap renders as a clean triangle sloping downward left to right
 
+  # the grouping variable is excluded from the axes; it only facets the plot
   if (statistic != "rmi") {
     var_order <- data |>
-      dplyr::select(tidyselect::where(is.numeric)) |>
+      dplyr::select(tidyselect::where(is.numeric), -dplyr::any_of(group_by_q)) |>
       names()
 
     vars_select <- var_order
@@ -211,7 +212,10 @@ plot_categorical_bar <- function(eval_data,
     }
   } else {
     var_order <- data |>
-      dplyr::select(tidyselect::where(function(x) is.factor(x) || is.character(x))) |>
+      dplyr::select(
+        tidyselect::where(function(x) is.factor(x) || is.character(x)),
+        -dplyr::any_of(group_by_q)
+      ) |>
       names()
 
     vars_select <- var_order
@@ -406,7 +410,8 @@ plot_bivariate <- function(
   
 
   if (!is.null(group_by_q)) {
-    intersect_vars <- c(intersect_vars, group_by_q)
+    # avoids duplicating group_by_q when it already matches the variable type
+    intersect_vars <- c(setdiff(intersect_vars, group_by_q), group_by_q)
   }
 
   if (difference) {
