@@ -34,6 +34,7 @@ Calculate totals for original and synthetic data.
 }
 \seealso{
 Other utility metrics:
+\code{\link[=util_bivariate]{util_bivariate()}},
 \code{\link[=util_corr_fit]{util_corr_fit()}},
 \code{\link[=util_moments]{util_moments()}},
 \code{\link[=util_na_amount]{util_na_amount()}},
