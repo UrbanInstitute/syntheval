@@ -44,7 +44,7 @@ test_that("target_truth_probability returns a tibble in [0, 1]", {
   
   result <- target_truth_probability(class_target)
   
-  expect_identical(names(result), c("source", "on", "truth_probability"))
-  expect_true(result$truth_probability >= 0 && result$truth_probability <= 1)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "truth_probability"))
+  expect_true(all(result$truth_probability >= 0 & result$truth_probability <= 1))
   
 })

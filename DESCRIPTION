@@ -27,6 +27,7 @@ Suggests:
     forcats,
     future,
     glmnet,
+    rpart,
     stringr,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
@@ -53,8 +54,6 @@ Imports:
     twosamples,
     workflows,
     yardstick
-Suggestions:
-    rpart
 Depends: 
     R (>= 3.5)
 LazyData: true

@@ -77,7 +77,7 @@
   
   strata <- if (mode == "classification") target_var else NULL
   
-  data_split <- rsample::initial_split(data = data, prop = prop, strata = strata)
+  data_split <- rsample::initial_split(data = data, prop = prop, strata = dplyr::all_of(strata))
   
   training_data <- rsample::training(data_split)
   testing_data <- rsample::testing(data_split)
@@ -89,7 +89,7 @@
     
   } else {
     
-    folds <- rsample::vfold_cv(data = training_data, v = v, strata = strata)
+    folds <- rsample::vfold_cv(data = training_data, v = v, strata = dplyr::all_of(strata))
     
     tune_metric <- if (mode == "classification") "roc_auc" else "rmse"
     

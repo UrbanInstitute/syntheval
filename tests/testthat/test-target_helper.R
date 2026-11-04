@@ -53,16 +53,16 @@ class_target_holdout <- attribute_target(toy_ed_holdout, workflow = class_workfl
 test_that(".get_target_predictions errors on a missing branch", {
   
   expect_error(
-    .get_target_predictions(reg_target, source = "holdout", on = "confidential")
+    .get_target_predictions(reg_target, modeling_data = "holdout", prediction_data = "confidential")
   )
   
 })
 
-test_that(".get_target_predictions retrieves the requested branch/on combination", {
+test_that(".get_target_predictions retrieves the requested branch/prediction data combination", {
   
-  train_predictions <- .get_target_predictions(reg_target, source = "synthetic", on = "train")
-  test_predictions <- .get_target_predictions(reg_target, source = "synthetic", on = "test")
-  conf_predictions <- .get_target_predictions(reg_target, source = "synthetic", on = "confidential")
+  train_predictions <- .get_target_predictions(reg_target, modeling_data = "synthetic", prediction_data = "training")
+  test_predictions <- .get_target_predictions(reg_target, modeling_data = "synthetic", prediction_data = "testing")
+  conf_predictions <- .get_target_predictions(reg_target, modeling_data = "synthetic", prediction_data = "confidential")
   
   expect_equal(nrow(train_predictions) + nrow(test_predictions), nrow(toy_synth))
   expect_equal(nrow(conf_predictions), nrow(toy_conf))
@@ -82,7 +82,7 @@ test_that(".available_sources reflects whether a holdout branch exists", {
 
 test_that(".class_prob_estimate returns a vector for binary and a matrix for multiclass", {
   
-  predictions <- .get_target_predictions(class_target, source = "synthetic", on = "confidential")
+  predictions <- .get_target_predictions(class_target, modeling_data = "synthetic", prediction_data = "confidential")
   
   binary_estimate <- .class_prob_estimate(predictions, "y_cat")
   

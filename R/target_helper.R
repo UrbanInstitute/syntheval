@@ -24,37 +24,37 @@
 #' Retrieve a predictions tibble from an attribute_target object
 #' 
 #' @param target An `attribute_target` object.
-#' @param source Either `"synthetic"` or `"holdout"` - which fitted branch's 
-#' predictions to retrieve.
-#' @param on Either `"confidential"`, `"train"`, or `"test"` - which 
-#' predictions tibble to retrieve from the branch.
+#' @param modeling_data Either `"synthetic"` or `"holdout"` - which fitted 
+#' branch's predictions to retrieve.
+#' @param prediction_data Either `"training"`, `"testing"`, or 
+#' `"confidential"` - which predictions tibble to retrieve from the branch.
 #' 
 #' @return A predictions tibble.
 #' 
-.get_target_predictions <- function(target, source, on) {
+.get_target_predictions <- function(target, modeling_data, prediction_data) {
   
-  branch <- target[[source]]
+  branch <- target[[modeling_data]]
   
   if (is.null(branch)) {
     
     stop(
       paste0(
-        "Error: target does not have a '", source, "' branch. Supply ",
+        "Error: target does not have a '", modeling_data, "' branch. Supply ",
         "eval_data$holdout_data and fit_holdout = TRUE in attribute_target()."
       )
     )
     
   }
   
-  if (on == "confidential") {
+  if (prediction_data == "confidential") {
 
     predictions <- branch$predictions_confidential
 
-  } else if (on == "train") {
+  } else if (prediction_data == "training") {
     
     predictions <- branch$predictions_train
     
-  } else if (on == "test") {
+  } else if (prediction_data == "testing") {
     
     predictions <- branch$predictions_test
     
@@ -65,37 +65,45 @@
 }
 
 #' 
-#' Compute a metric across every available source of an attribute_target object
+#' Compute a metric for every modeling data and prediction data combination of 
+#' an attribute_target object
 #' 
 #' @param target An `attribute_target` object.
-#' @param on Either `"confidential"`, `"train"`, or `"test"`.
 #' @param metric_name The name of the metric column in the returned tibble.
 #' @param metric_fn A function that takes a predictions tibble and returns a 
 #' single numeric value.
 #' 
-#' @return A tibble with columns `source`, `on`, and `metric_name`.
+#' @return A tibble with columns `modeling_data` (a factor ordered 
+#' `"synthetic"`, `"holdout"`), `prediction_data` (a factor ordered 
+#' `"training"`, `"testing"`, `"confidential"`), `n` (the number of records 
+#' predicted), and `metric_name`.
 #' 
-.target_metric_table <- function(target, on, metric_name, metric_fn) {
+.target_metric_grid <- function(target, metric_name, metric_fn) {
   
-  sources <- .available_sources(target)
+  modeling_levels <- .available_sources(target)
+  prediction_levels <- c("training", "testing", "confidential")
   
-  values <- purrr::map_dbl(
-    .x = sources,
-    .f = function(source) {
+  result <- tidyr::expand_grid(
+    modeling_data = factor(modeling_levels, levels = modeling_levels),
+    prediction_data = factor(prediction_levels, levels = prediction_levels)
+  )
+  
+  predictions <- purrr::map2(
+    .x = as.character(result$modeling_data),
+    .y = as.character(result$prediction_data),
+    .f = function(modeling_data, prediction_data) {
       
-      predictions <- .get_target_predictions(target, source = source, on = on)
-      
-      return(metric_fn(predictions))
+      .get_target_predictions(
+        target, 
+        modeling_data = modeling_data, 
+        prediction_data = prediction_data
+      )
       
     }
   )
   
-  result <- tibble::tibble(source = sources, on = on, value = values)
-  
-  # rename the placeholder "value" column to the caller-supplied metric name
-  # (e.g. "accuracy", "rmse") so each target_*() function controls its own
-  # output column name without duplicating the tibble-building logic
-  names(result)[names(result) == "value"] <- metric_name
+  result$n <- purrr::map_int(predictions, nrow)
+  result[[metric_name]] <- purrr::map_dbl(predictions, metric_fn)
   
   return(result)
   

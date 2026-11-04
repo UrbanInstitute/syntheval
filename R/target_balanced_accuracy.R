@@ -2,15 +2,19 @@
 #' Measure classification accuracy while accounting for class imbalance
 #' 
 #' @param target An `attribute_target` object with a classification mode.
-#' @param on Either `"confidential"` (default, the attack result), `"train"`, 
-#' or `"test"` (model-quality diagnostics on the fitting data).
 #' 
-#' @returns A tibble with columns `source` (`"synthetic"` or `"holdout"`), 
-#' `on`, and `balanced_accuracy`.
+#' @returns A tibble with columns:
+#' * `modeling_data`: the data the attack model was fit on, a factor with 
+#'   levels `"synthetic"` and, if available, `"holdout"`.
+#' * `prediction_data`: the data the balanced accuracy is evaluated on, a 
+#'   factor with levels `"training"` and `"testing"` (the internal split of the 
+#'   modeling data) and `"confidential"` (the attack result).
+#' * `n`: the number of records in `prediction_data`.
+#' * `balanced_accuracy`: the average of sensitivity and specificity.
 #' 
 #' @export
 #' 
-target_balanced_accuracy <- function(target, on = "confidential") {
+target_balanced_accuracy <- function(target) {
   
   stopifnot(is_attribute_target(target))
   
@@ -20,11 +24,8 @@ target_balanced_accuracy <- function(target, on = "confidential") {
     
   }
   
-  on <- match.arg(on, c("confidential", "train", "test"))
-  
-  result <- .target_metric_table(
+  result <- .target_metric_grid(
     target = target,
-    on = on,
     metric_name = "balanced_accuracy",
     metric_fn = function(predictions) {
       

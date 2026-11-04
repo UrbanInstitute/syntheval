@@ -44,7 +44,7 @@ test_that("target_spearman returns a tibble in [-1, 1]", {
   
   result <- target_spearman(reg_target)
   
-  expect_identical(names(result), c("source", "on", "spearman"))
-  expect_true(result$spearman >= -1 && result$spearman <= 1)
+  expect_identical(names(result), c("modeling_data", "prediction_data", "n", "spearman"))
+  expect_true(all(result$spearman >= -1 & result$spearman <= 1))
   
 })
