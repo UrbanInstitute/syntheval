@@ -4,7 +4,12 @@
 \alias{disc_mit}
 \title{Run a nearest-neighbor membership inference test}
 \usage{
-disc_mit(eval_data, threshold_percentile = NULL, summary = TRUE)
+disc_mit(
+  eval_data,
+  threshold_percentile = NULL,
+  keep_row_level = FALSE,
+  blocked_variables = NULL
+)
 }
 \arguments{
 \item{eval_data}{An \code{eval_data} object.}
@@ -14,11 +19,22 @@ percentile will be predicted as in the training data. If the
 threshold_percentile is not provided, the function calculates it with the
 following formula: \code{nrow(data) / (nrow(data) + nrow(holdout_data))}}
 
-\item{summary}{Boolean if TRUE, returns summary statistics, if FALSE, returns
-two disaggregated dataframes of individual distances and ROC curve points.}
+\item{keep_row_level}{Boolean. If \code{FALSE}, the default, only the summary
+metrics are returned. If \code{TRUE}, the row-level \code{results} tibble and the \code{roc}
+curve points are also returned; both have one row per scored record, so they
+can be large.}
+
+\item{blocked_variables}{An optional character vector of variable names that
+must match exactly. Each confidential or holdout record is only compared to
+synthetic records with the same values of these variables, and the variables
+are excluded from the Gower distance. A record with no matching synthetic
+records is assigned the maximum distance of 1.}
 }
 \value{
-A list with precision, recall, the confusion matrix, and ROC AUC
+A list with \code{precision}, \code{recall}, \code{auc}, and \code{conf_mat}. If
+\code{keep_row_level = TRUE}, the list also contains \code{results}, a tibble of each
+record's distance, pseudo-probability, and prediction, and \code{roc}, a tibble of
+ROC curve points.
 }
 \description{
 Run a nearest-neighbor membership inference test
